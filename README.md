@@ -10,6 +10,7 @@ This repository is still a work in progress. The GAN in this repos was adapted f
 The loss from these 2 parts of the discriminator are combined to determine the total loss for the discriminator. In doing this, the hope is that the trained GAN would be able to Generate realistic binary enhanced fingerprints from poor fingerprint images, while also preserving the underlying ridge structure.
 
 ## Experimenets
+<ins>2/12/2023</ins>
 Training for a normal GAN (no Siamese Neural Network Used) GAN on images of size 256 x 256.
 
 [Fingerprint GAN 2/12/2023](http://htmlpreview.github.io/?https://github.com/denkovarik/Fingerprint/blob/main/Fingerprint%20GAN_20230212.html)
