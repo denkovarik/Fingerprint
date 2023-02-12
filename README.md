@@ -1,6 +1,6 @@
 # Fingerprint
 
-This repository contains some of the work for my unfinished Master's degree from 2021. I ended up lossig some of my work, so I had to create it. 
+This repo contains some of the work from my unfinished Master's degree from 2021. I ended up lossig some of my work, so I had to create it. 
 
 ## Introduction
 An open problem in the area of Latent Fingerprint Recognition is the enhancement of poor quality fingerprints for the purpose of improving fingerprint matching accuracy. Although there a lots of algorithms out there to enhance fingerprint images, the results for some of the best solutions are less than satisfactory when used on latent fingerprints. For this reason, my research was on the use of Generative Adversarial Networks for the purpose of enhacing images of latent fingerprints for improving matching accuracy.
