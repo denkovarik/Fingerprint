@@ -12,7 +12,7 @@ The loss from these 2 parts of the discriminator are combined to determine the t
 ## Experimenets
 <ins>2/12/2023</ins>: [Fingerprint GAN 2/12/2023](http://htmlpreview.github.io/?https://github.com/denkovarik/Fingerprint/blob/main/Fingerprint%20GAN_20230212.html)  
 
-Training for a normal GAN (no Siamese Neural Network Used) GAN on images of size 256 x 256.  
+&nbsp;&nbsp;&nbsp;&nbsp;Training for a normal GAN (no Siamese Neural Network Used) GAN on images of size 256 x 256.  
 
 Initial result in training looked promising, but mode collapse prevented the GAN from being trained until the desired performance was reached. This happened at around epoch 6, and it seemed to have been caused by the disciminator outcompeting the generator. It is possible that the discriminator is powerful enough to be trained to distinquish different classes from the dataset.  
 
