@@ -22,5 +22,12 @@ Initial result in training looked promising, but mode collapse prevented the GAN
 
 One way to fix this could be to group the classes in the dataset. This could be done by modifying the dataloader to only provide mulitiple impressions of the same fingerprint (instead of impressions of multiple different fingerprints) in each batch. This would allow the discriminator to classify each batch as real or fake. 
 
+### <ins>2/15/2023</ins>  
+Training for Siamese Neural Network on images of size 300 x 300.    
+
+[Fingerprint Siamese NN 2/12/2023](http://htmlpreview.github.io/?)  
+
+It appears that the model was able to achieve decent performance. The model acheived a validation accuracy of 98% during training, and it correctly classified each pair of fingerprints above as the same or different (at least in most cases). One limitation of this model though could be the data that it was trained on. This project assumes that the fingerprints in the dataset are representative of real fingerprints (at least for good impression fingerprints). If there is some problem with the software that was used to generate the fingerprints in this dataset, then the model may not preform will when used on enhanced images of real (good quality) fingerprints.
+
 ## Author
 Dennis Kovarik
