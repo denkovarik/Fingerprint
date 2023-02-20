@@ -1,6 +1,6 @@
 # Fingerprint
 
-This repo contains some of the work from my unfinished Master's degree from 2021. I ended up lossig some of my work, so I had to create it. 
+![Sample Images](https://github.com/denkovarik/Fingerprint/blob/main/images/GAN%20Generated%20Images.PNG)
 
 ## Introduction
 An open problem in the area of Latent Fingerprint Recognition is the enhancement of poor quality fingerprints. Although there are alot of algorithms out there to enhance fingerprints, the results for some of the best solutions are less than satisfactory when used on latent fingerprints. For this reason, my research was on the use of Generative Adversarial Networks for the purpose of enhacing images of latent fingerprints for improving matching accuracy.
@@ -14,7 +14,7 @@ It was difficult to get access to large enough fingerprint datasets for training
 
 Below are some sample images that the GAN will be trained on. The top row represents the input fingerprint images that the generator is to enhanced. The bottom row are the enhanced versions of the fingerprints above, where were enhanced using Gabor Filters (a common method for enhancing fignerprint images).
 
-![Sample Images](https://github.com/denkovarik/Fingerprint/blob/main/images/datasetSample.PNG)
+![Sample Images](https://github.com/denkovarik/Fingerprint/blob/main/images/generated%20fingerprints%20comp%2020230220.PNG)
 
 ## Usage
 This project is currently being developed in Paperspace. You can access this Notebook using the following link: [Fingerprint](https://console.paperspace.com/denkovarik123/notebook/r8krvughxoashik).
