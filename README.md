@@ -13,6 +13,14 @@ The loss from these 2 parts of the discriminator are combined to determine the t
 This project is currently being developed in Paperspace. You can access this Notebook using the following link: [Fingerprint](https://console.paperspace.com/denkovarik123/notebook/r8krvughxoashik).
 
 ## Experiments
+
+### <ins>2/15/2023</ins>  
+Training for Siamese Neural Network on images of size 300 x 300.    
+
+[Fingerprint Siamese NN 2/12/2023](https://denkovarik.github.io/Fingerprint/Experiments/Fingerprint%20Siamese%20Neural%20Network_20230215.html)  
+
+It appears that the model was able to achieve decent performance. The model acheived a validation accuracy of 98% during training, and it correctly classified each pair of fingerprints above as the same or different (at least in most cases). One limitation of this model though could be the data that it was trained on. This project assumes that the fingerprints in the dataset are representative of real fingerprints (at least for good impression fingerprints). If there is some problem with the software that was used to generate the fingerprints in this dataset, then the model may not preform will when used on enhanced images of real (good quality) fingerprints.
+
 ### <ins>2/12/2023</ins>  
 Training for a normal GAN (no Siamese Neural Network Used) GAN on images of size 256 x 256.    
 
@@ -21,13 +29,6 @@ Training for a normal GAN (no Siamese Neural Network Used) GAN on images of size
 Initial result in training looked promising, but mode collapse prevented the GAN from being trained until the desired performance was reached. This happened at around epoch 6, and it seemed to have been caused by the disciminator outcompeting the generator. It is possible that the discriminator is powerful enough to be trained to distinquish different classes from the dataset.  
 
 One way to fix this could be to group the classes in the dataset. This could be done by modifying the dataloader to only provide mulitiple impressions of the same fingerprint (instead of impressions of multiple different fingerprints) in each batch. This would allow the discriminator to classify each batch as real or fake. 
-
-### <ins>2/15/2023</ins>  
-Training for Siamese Neural Network on images of size 300 x 300.    
-
-[Fingerprint Siamese NN 2/12/2023](https://denkovarik.github.io/Fingerprint/Experiments/Fingerprint%20Siamese%20Neural%20Network_20230215.html)  
-
-It appears that the model was able to achieve decent performance. The model acheived a validation accuracy of 98% during training, and it correctly classified each pair of fingerprints above as the same or different (at least in most cases). One limitation of this model though could be the data that it was trained on. This project assumes that the fingerprints in the dataset are representative of real fingerprints (at least for good impression fingerprints). If there is some problem with the software that was used to generate the fingerprints in this dataset, then the model may not preform will when used on enhanced images of real (good quality) fingerprints.
 
 ## Author
 Dennis Kovarik
