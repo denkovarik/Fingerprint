@@ -10,7 +10,7 @@ This repository is still a work in progress. The GAN in this repos was adapted f
 The loss from these 2 parts of the discriminator are combined to determine the total loss for the discriminator. In doing this, the hope is that the trained GAN would be able to Generate realistic binary enhanced fingerprints from poor fingerprint images, while also preserving the underlying ridge structure.
 
 ## Usage
-This project is currently being developed in Paperspace. You can access this this Notebook using the following link: [Fingerprint](https://console.paperspace.com/denkovarik123/notebook/r8krvughxoashik).
+This project is currently being developed in Paperspace. You can access this Notebook using the following link: [Fingerprint](https://console.paperspace.com/denkovarik123/notebook/r8krvughxoashik).
 
 ## Experiments
 ### <ins>2/12/2023</ins>  
