@@ -14,6 +14,8 @@ It was difficult to get access to large enough fingerprint datasets for training
 
 Below are some sample images that the GAN will be trained on. The top row represents the input fingerprint images that the generator is to enhanced. The bottom row are the enhanced versions of the fingerprints above, where were enhanced using Gabor Filters (a common method for enhancing fignerprint images).
 
+![Sample Images](https://github.com/denkovarik/Fingerprint/blob/main/images/datasetSample.PNG)
+
 ## Usage
 This project is currently being developed in Paperspace. You can access this Notebook using the following link: [Fingerprint](https://console.paperspace.com/denkovarik123/notebook/r8krvughxoashik).
 
