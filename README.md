@@ -44,9 +44,7 @@ Training for Siamese Neural Network on images of size 300 x 300.
 
 It appears that the model was able to achieve decent performance. The model acheived a validation accuracy of 98% during training, and it correctly classified each pair of fingerprints above as the same or different (at least in most cases). One limitation of this model though could be the data that it was trained on. This project assumes that the fingerprints in the dataset are representative of real fingerprints (at least for good impression fingerprints). If there is some problem with the software that was used to generate the fingerprints in this dataset, then the model may not preform will when used on enhanced images of real (good quality) fingerprints.
 
-### <ins>2/12/2023</ins>  
-
-[Fingerprint GAN 1.0](https://denkovarik.github.io/Fingerprint/Experiments/Fingerprint%20GAN_20230212.html)  
+### [Fingerprint GAN 1.0](https://denkovarik.github.io/Fingerprint/Experiments/Fingerprint%20GAN_20230212.html) (2/12/2023)
 
 Training for a normal GAN (no Siamese Neural Network Used) GAN on images of size 256 x 256.   
 
