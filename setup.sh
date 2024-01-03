@@ -2,7 +2,7 @@
 
 apt update
 apt install python3-pip
-pip install progress
+pip3 install progress
 
 # Run the install script
 ./Graph/install.sh
