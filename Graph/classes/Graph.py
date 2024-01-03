@@ -1,6 +1,7 @@
 from graphviz import Digraph
 from IPython.display import display, Image
 import copy
+from classes.Nodes import *
 
 
 class Graph:
