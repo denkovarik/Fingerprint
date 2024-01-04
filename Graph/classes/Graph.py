@@ -2,6 +2,7 @@ from graphviz import Digraph
 from IPython.display import display, Image
 import copy
 from classes.Nodes import *
+from utils import *
 
 
 class Graph:
@@ -123,7 +124,7 @@ class Graph:
               
     def render(self):
         # Initialize the graph
-        g = Digraph('G', filename='enas_network_search_space')
+        g = Digraph('G', filename='Graphs/enas_network_search_space')
 
         # Define graph attributes
         g.attr(rankdir='TB')  # 'TB' for top-to-bottom graph, 'LR' for left-to-right
@@ -143,7 +144,7 @@ class Graph:
                 
         # Specify the output format and render the graph
         g.format = 'png'
-        g.render('enas_network_search_space_visualization')
+        filePath = 'Graphs/enas_network_search_space_visualization'
+        g.render(filePath)
 
-        # Display the graph inline in Jupyter notebook
-        display(Image(filename='enas_network_search_space_visualization.png'))
+        return filePath + '.png'
