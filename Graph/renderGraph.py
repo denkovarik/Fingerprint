@@ -1,21 +1,19 @@
 from classes.Nodes import *
 from classes.Graph import Graph
-from PIL import Image
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+import os
+from IPython import get_ipython
+from IPython.display import display, Image
+from utils import *
 
 
 graph = Graph()
 graph.construct()
 #print(graph.graph)
-#graph.render()
+image_path = graph.render()
 
 
-image_path = 'enas_network_search_space_visualization.png'
+if is_running_in_jupyter_notebook():
+    display(Image(filename='Graphs/enas_network_search_space_visualization.png'))
+else:
+    os.system(f'feh {image_path}')
 
-#image = Image.open(image_path)
-#image.show()
-
-img = mpimg.imread(image_path)
-imgplot = plt.imshow(img)
-plt.show()
