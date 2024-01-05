@@ -1,0 +1,168 @@
+digraph G {
+	rankdir=TB
+	node [color=lightgrey shape=box style=filled]
+	ranksep=2.0
+	input [label="Input(numChannels=3)"]
+	L0_noNorm [label="No Normalization"]
+	L0_batchNorm [label="Batch Normalization"]
+	"L1_3x3_Conv(oc=4)" [label="3x3 Conv(oc=4)"]
+	"L1_3x3_Conv(oc=8)" [label="3x3 Conv(oc=8)"]
+	"L1_3x3_Conv(oc=16)" [label="3x3 Conv(oc=16)"]
+	"L1_3x3_Conv(oc=32)" [label="3x3 Conv(oc=32)"]
+	"L1_5x5_Conv(oc=4)" [label="5x5 Conv(oc=4)"]
+	"L1_5x5_Conv(oc=8)" [label="5x5 Conv(oc=8)"]
+	"L1_5x5_Conv(oc=16)" [label="5x5 Conv(oc=16)"]
+	"L1_5x5_Conv(oc=32)" [label="5x5 Conv(oc=32)"]
+	L1_noNorm [label="No Normalization"]
+	L1_batchNorm [label="Batch Normalization"]
+	L1_none [label="No Pooling"]
+	L1_maxPooling [label="Max Pooling"]
+	"L2_3x3_Conv(oc=4)" [label="3x3 Conv(oc=4)"]
+	"L2_3x3_Conv(oc=8)" [label="3x3 Conv(oc=8)"]
+	"L2_3x3_Conv(oc=16)" [label="3x3 Conv(oc=16)"]
+	"L2_3x3_Conv(oc=32)" [label="3x3 Conv(oc=32)"]
+	"L2_5x5_Conv(oc=4)" [label="5x5 Conv(oc=4)"]
+	"L2_5x5_Conv(oc=8)" [label="5x5 Conv(oc=8)"]
+	"L2_5x5_Conv(oc=16)" [label="5x5 Conv(oc=16)"]
+	"L2_5x5_Conv(oc=32)" [label="5x5 Conv(oc=32)"]
+	L2_noNorm [label="No Normalization"]
+	L2_batchNorm [label="Batch Normalization"]
+	L2_none [label="No Pooling"]
+	L2_maxPooling [label="Max Pooling"]
+	L2_flatten [label=Flatten]
+	"L3_Linear(of=16)" [label="Linear(of=16)"]
+	"L3_Linear(of=32)" [label="Linear(of=32)"]
+	"L3_Linear(of=64)" [label="Linear(of=64)"]
+	"L3_Linear(of=128)" [label="Linear(of=128)"]
+	"L3_Linear(of=256)" [label="Linear(of=256)"]
+	L3_linearActivation [label="Linear Activation"]
+	L3_reluActivation [label="Relu Activation"]
+	"L4_Linear(of=16)" [label="Linear(of=16)"]
+	"L4_Linear(of=32)" [label="Linear(of=32)"]
+	"L4_Linear(of=64)" [label="Linear(of=64)"]
+	"L4_Linear(of=128)" [label="Linear(of=128)"]
+	"L4_Linear(of=256)" [label="Linear(of=256)"]
+	L4_linearActivation [label="Linear Activation"]
+	L4_reluActivation [label="Relu Activation"]
+	"L5_Linear(of=10)" [label="Linear(of=10)"]
+	L5_linearActivation [label="Linear Activation"]
+	L5_reluActivation [label="Relu Activation"]
+	output [label=Output]
+	input -> L0_noNorm
+	input -> L0_batchNorm
+	L0_noNorm -> "L1_3x3_Conv(oc=4)"
+	L0_noNorm -> "L1_3x3_Conv(oc=8)"
+	L0_noNorm -> "L1_3x3_Conv(oc=16)"
+	L0_noNorm -> "L1_3x3_Conv(oc=32)"
+	L0_noNorm -> "L1_5x5_Conv(oc=4)"
+	L0_noNorm -> "L1_5x5_Conv(oc=8)"
+	L0_noNorm -> "L1_5x5_Conv(oc=16)"
+	L0_noNorm -> "L1_5x5_Conv(oc=32)"
+	L0_batchNorm -> "L1_3x3_Conv(oc=4)"
+	L0_batchNorm -> "L1_3x3_Conv(oc=8)"
+	L0_batchNorm -> "L1_3x3_Conv(oc=16)"
+	L0_batchNorm -> "L1_3x3_Conv(oc=32)"
+	L0_batchNorm -> "L1_5x5_Conv(oc=4)"
+	L0_batchNorm -> "L1_5x5_Conv(oc=8)"
+	L0_batchNorm -> "L1_5x5_Conv(oc=16)"
+	L0_batchNorm -> "L1_5x5_Conv(oc=32)"
+	"L1_3x3_Conv(oc=4)" -> L1_noNorm
+	"L1_3x3_Conv(oc=4)" -> L1_batchNorm
+	"L1_3x3_Conv(oc=8)" -> L1_noNorm
+	"L1_3x3_Conv(oc=8)" -> L1_batchNorm
+	"L1_3x3_Conv(oc=16)" -> L1_noNorm
+	"L1_3x3_Conv(oc=16)" -> L1_batchNorm
+	"L1_3x3_Conv(oc=32)" -> L1_noNorm
+	"L1_3x3_Conv(oc=32)" -> L1_batchNorm
+	"L1_5x5_Conv(oc=4)" -> L1_noNorm
+	"L1_5x5_Conv(oc=4)" -> L1_batchNorm
+	"L1_5x5_Conv(oc=8)" -> L1_noNorm
+	"L1_5x5_Conv(oc=8)" -> L1_batchNorm
+	"L1_5x5_Conv(oc=16)" -> L1_noNorm
+	"L1_5x5_Conv(oc=16)" -> L1_batchNorm
+	"L1_5x5_Conv(oc=32)" -> L1_noNorm
+	"L1_5x5_Conv(oc=32)" -> L1_batchNorm
+	L1_noNorm -> L1_none
+	L1_noNorm -> L1_maxPooling
+	L1_batchNorm -> L1_none
+	L1_batchNorm -> L1_maxPooling
+	L1_none -> "L2_3x3_Conv(oc=4)"
+	L1_none -> "L2_3x3_Conv(oc=8)"
+	L1_none -> "L2_3x3_Conv(oc=16)"
+	L1_none -> "L2_3x3_Conv(oc=32)"
+	L1_none -> "L2_5x5_Conv(oc=4)"
+	L1_none -> "L2_5x5_Conv(oc=8)"
+	L1_none -> "L2_5x5_Conv(oc=16)"
+	L1_none -> "L2_5x5_Conv(oc=32)"
+	L1_maxPooling -> "L2_3x3_Conv(oc=4)"
+	L1_maxPooling -> "L2_3x3_Conv(oc=8)"
+	L1_maxPooling -> "L2_3x3_Conv(oc=16)"
+	L1_maxPooling -> "L2_3x3_Conv(oc=32)"
+	L1_maxPooling -> "L2_5x5_Conv(oc=4)"
+	L1_maxPooling -> "L2_5x5_Conv(oc=8)"
+	L1_maxPooling -> "L2_5x5_Conv(oc=16)"
+	L1_maxPooling -> "L2_5x5_Conv(oc=32)"
+	"L2_3x3_Conv(oc=4)" -> L2_noNorm
+	"L2_3x3_Conv(oc=4)" -> L2_batchNorm
+	"L2_3x3_Conv(oc=8)" -> L2_noNorm
+	"L2_3x3_Conv(oc=8)" -> L2_batchNorm
+	"L2_3x3_Conv(oc=16)" -> L2_noNorm
+	"L2_3x3_Conv(oc=16)" -> L2_batchNorm
+	"L2_3x3_Conv(oc=32)" -> L2_noNorm
+	"L2_3x3_Conv(oc=32)" -> L2_batchNorm
+	"L2_5x5_Conv(oc=4)" -> L2_noNorm
+	"L2_5x5_Conv(oc=4)" -> L2_batchNorm
+	"L2_5x5_Conv(oc=8)" -> L2_noNorm
+	"L2_5x5_Conv(oc=8)" -> L2_batchNorm
+	"L2_5x5_Conv(oc=16)" -> L2_noNorm
+	"L2_5x5_Conv(oc=16)" -> L2_batchNorm
+	"L2_5x5_Conv(oc=32)" -> L2_noNorm
+	"L2_5x5_Conv(oc=32)" -> L2_batchNorm
+	L2_noNorm -> L2_none
+	L2_noNorm -> L2_maxPooling
+	L2_batchNorm -> L2_none
+	L2_batchNorm -> L2_maxPooling
+	L2_none -> L2_flatten
+	L2_maxPooling -> L2_flatten
+	L2_flatten -> "L3_Linear(of=16)"
+	L2_flatten -> "L3_Linear(of=32)"
+	L2_flatten -> "L3_Linear(of=64)"
+	L2_flatten -> "L3_Linear(of=128)"
+	L2_flatten -> "L3_Linear(of=256)"
+	"L3_Linear(of=16)" -> L3_linearActivation
+	"L3_Linear(of=16)" -> L3_reluActivation
+	"L3_Linear(of=32)" -> L3_linearActivation
+	"L3_Linear(of=32)" -> L3_reluActivation
+	"L3_Linear(of=64)" -> L3_linearActivation
+	"L3_Linear(of=64)" -> L3_reluActivation
+	"L3_Linear(of=128)" -> L3_linearActivation
+	"L3_Linear(of=128)" -> L3_reluActivation
+	"L3_Linear(of=256)" -> L3_linearActivation
+	"L3_Linear(of=256)" -> L3_reluActivation
+	L3_linearActivation -> "L4_Linear(of=16)"
+	L3_linearActivation -> "L4_Linear(of=32)"
+	L3_linearActivation -> "L4_Linear(of=64)"
+	L3_linearActivation -> "L4_Linear(of=128)"
+	L3_linearActivation -> "L4_Linear(of=256)"
+	L3_reluActivation -> "L4_Linear(of=16)"
+	L3_reluActivation -> "L4_Linear(of=32)"
+	L3_reluActivation -> "L4_Linear(of=64)"
+	L3_reluActivation -> "L4_Linear(of=128)"
+	L3_reluActivation -> "L4_Linear(of=256)"
+	"L4_Linear(of=16)" -> L4_linearActivation
+	"L4_Linear(of=16)" -> L4_reluActivation
+	"L4_Linear(of=32)" -> L4_linearActivation
+	"L4_Linear(of=32)" -> L4_reluActivation
+	"L4_Linear(of=64)" -> L4_linearActivation
+	"L4_Linear(of=64)" -> L4_reluActivation
+	"L4_Linear(of=128)" -> L4_linearActivation
+	"L4_Linear(of=128)" -> L4_reluActivation
+	"L4_Linear(of=256)" -> L4_linearActivation
+	"L4_Linear(of=256)" -> L4_reluActivation
+	L4_linearActivation -> "L5_Linear(of=10)"
+	L4_reluActivation -> "L5_Linear(of=10)"
+	"L5_Linear(of=10)" -> L5_linearActivation
+	"L5_Linear(of=10)" -> L5_reluActivation
+	L5_linearActivation -> output
+	L5_reluActivation -> output
+}
