@@ -1,3 +1,7 @@
+import os, io, sys, inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
 from graphviz import Digraph
 from IPython.display import display, Image
 import copy
@@ -122,9 +126,9 @@ class Graph:
         self.curNodes = []
 
               
-    def render(self):
+    def render(self, dirPath=os.path.join(parentdir, "Graphs/GraphVisualizations/")):
         # Initialize the graph
-        g = Digraph('G', filename='Graphs/enas_network_search_space')
+        g = Digraph('G', filename = dirPath + 'enas_network_search_space')
 
         # Define graph attributes
         g.attr(rankdir='TB')  # 'TB' for top-to-bottom graph, 'LR' for left-to-right
@@ -144,7 +148,7 @@ class Graph:
                 
         # Specify the output format and render the graph
         g.format = 'png'
-        filePath = 'Graphs/enas_network_search_space_visualization'
+        filePath = dirPath + 'enas_network_search_space_visualization'
         g.render(filePath)
 
         return filePath + '.png'
