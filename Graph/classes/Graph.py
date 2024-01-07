@@ -12,8 +12,8 @@ from utils import *
 class Graph:
     def __init__(self):
         self.ALLOWED_KERNEL_SIZES = {(3, 3), (5, 5)}
-        self.ALLOWED_CONVOLUTION_CHANNELS = [4, 8, 16, 32]
-        self.ALLOWED_LINEAR_FEATURES = [16, 32, 64, 128, 256]
+        self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS = [4, 8, 16, 32]
+        self.ALLOWED_NUMBER_OF_LINEAR_FEATURES = [16, 32, 64, 128, 256]
         self.graph = {}
         self.normalizationOptions = [NormalizationType.NO_NORM, NormalizationType.BATCH_NORM]    
         self.poolingOptions = [PoolingType.NO_POOLING, PoolingType.MAX_POOLING]    
@@ -47,10 +47,15 @@ class Graph:
 
           
     def addConvolutionalLayer(self):
+        maxNumInputChannels = max(self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS)
         for kernel in self.ALLOWED_KERNEL_SIZES:
-            for oc in self.ALLOWED_CONVOLUTION_CHANNELS:
+            for oc in self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS:
                 nodeName = 'L' + str(self.layer) + '_' + str(kernel[0]) + 'x' + str(kernel[1]) + '_Conv(oc=' + str(oc) + ')'
-                self.addNode(nodeType=NodeType.CONVOLUTION, name=nodeName, kernelSize=kernel, outputChannels=oc)
+                self.addNode(nodeType=NodeType.CONVOLUTION, 
+                             name=nodeName, 
+                             kernelSize=kernel, 
+                             maxNumInputChannels=maxNumInputChannels, 
+                             numOutputChannels=oc)
         self.prevNodes = self.curNodes
         self.curNodes = []
 
@@ -80,10 +85,14 @@ class Graph:
         self.addNode(nodeType=NodeType.OUTPUT)
 
     
-    def addLinearLayer(self):
-        for of in self.ALLOWED_LINEAR_FEATURES:
+    def addLinearLayer(self): 
+        maxNumInputFeatures = max(self.ALLOWED_NUMBER_OF_LINEAR_FEATURES)
+        for of in self.ALLOWED_NUMBER_OF_LINEAR_FEATURES:
             nodeName = 'L' + str(self.layer) + '_Linear(of=' + str(of) + ')' 
-            self.addNode(nodeType=NodeType.LINEAR, name=nodeName, outFeatures=of)
+            self.addNode(nodeType=NodeType.LINEAR, 
+                         name=nodeName, 
+                         maxNumInFeatures=maxNumInputFeatures, 
+                         numOutFeatures=of)
         self.prevNodes = self.curNodes
         self.curNodes = []
 
@@ -95,7 +104,10 @@ class Graph:
             self.addActivationLayer()                                                  
         self.layer += 1
         nodeName = 'L' + str(self.layer) + '_Linear(of=' + str(10) + ')' 
-        self.addNode(nodeType=NodeType.LINEAR, name = nodeName, outFeatures=self.numClasses)    
+        self.addNode(nodeType=NodeType.LINEAR, 
+                     name=nodeName, 
+                     maxNumInFeatures=max(self.ALLOWED_NUMBER_OF_LINEAR_FEATURES), 
+                     numOutFeatures=self.numClasses)    
         self.prevNodes = self.curNodes
         self.curNodes = []
         self.addActivationLayer()
@@ -113,7 +125,7 @@ class Graph:
     def addNormalizationLayer(self):
         for opt in self.normalizationOptions:
             nodeName = 'L' + str(self.layer) + '_' + opt.value
-            self.addNode(nodeType=NodeType.NORMALIZATION, name=nodeName)
+            self.addNode(nodeType=NodeType.NORMALIZATION, name=nodeName, normalizationType=opt)
         self.prevNodes = self.curNodes
         self.curNodes = []         
 
@@ -121,7 +133,7 @@ class Graph:
     def addPoolingLayer(self):
         for opt in self.poolingOptions:
             nodeName = 'L' + str(self.layer) + '_' + opt.value
-            self.addNode(nodeType=NodeType.POOLING, name=nodeName)
+            self.addNode(nodeType=NodeType.POOLING, name=nodeName, poolingType=opt)
         self.prevNodes = self.curNodes
         self.curNodes = []
 
