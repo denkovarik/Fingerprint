@@ -17,7 +17,7 @@ class NormalizationType(Enum):
 
 
 class PoolingType(Enum):
-    NO_POOLING = 'none'
+    NO_POOLING = 'noPooling'
     MAX_POOLING = 'maxPooling'
 
 
@@ -52,27 +52,46 @@ class OutputNode(Node):
 
 
 class NormalizationNode(Node):
-    def __init__(self, name):
-        self.displayName = 'No Normalization'
-        if 'batchNorm' in name:
-            self.displayName = 'Batch Normalization'
+    def __init__(self, name, normalizationType):
         self.name = name
+        self.displayName = 'No Normalization'
+        self.normalizationType = normalizationType
+        if normalizationType == NormalizationType.BATCH_NORM:
+            self.displayName = 'Batch Normalization'
 
 
 class PoolingNode(Node):
-    def __init__(self, name):
-        self.displayName = 'No Pooling'
-        if 'maxPooling' in name:
-            self.displayName = 'Max Pooling'
+    def __init__(self, name, poolingType):
         self.name = name 
+        self.displayName = 'No Pooling'
+        self.poolingType = poolingType
+        if poolingType == PoolingType.MAX_POOLING:
+            self.displayName = 'Max Pooling'
 
 
 class ConvolutionalNode(Node):
-    def __init__(self, name, kernelSize, outputChannels):
+    def __init__(self, name, kernelSize, maxNumInputChannels, numOutputChannels):
+        typeErrMsg = "Kernel Size must be either an integer, a tuple of "
+        typeErrMsg += "integers, or a list 2 integers"
+
+        if isinstance(kernelSize, int):
+            # Kernel size as just an int indicates a kernel size of 
+            # kernelSize x kernelSize
+            self.kernelSize = (kernelSize, kernelSize)
+        elif isinstance(kernelSize, list) or isinstance(kernelSize, tuple):
+            if (len(kernelSize) == 2 and isinstance(kernelSize[0], int)  
+            and isinstance(kernelSize[1], int)):
+                self.kernelSize = (kernelSize[0], kernelSize[1])
+            else:
+                raise TypeError(typeErrMsg)
+        else:
+            raise TypeError(typeErrMsg) 
+        
         self.name = name
-        self.displayName = str(kernelSize[0]) + 'x' + str(kernelSize[1]) + ' Conv(oc=' + str(outputChannels) + ')'
-        self.kernelSize = kernelSize
-        self.outputChannels = outputChannels
+        self.displayName = str(self.kernelSize[0]) + 'x' + str(self.kernelSize[1]) 
+        self.displayName += ' Conv(oc=' + str(numOutputChannels) + ')'
+        self.maxNumInputChannels = maxNumInputChannels
+        self.numOutputChannels = numOutputChannels
 
 
 class FlattenNode(Node):
@@ -82,10 +101,11 @@ class FlattenNode(Node):
 
 
 class LinearNode(Node):
-    def __init__(self, name, outFeatures):
+    def __init__(self, name, maxNumInFeatures, numOutFeatures):
         self.name = name
-        self.outFeatures = outFeatures
-        self.displayName = 'Linear(of=' + str(outFeatures) + ')'
+        self.maxNumInFeatures = maxNumInFeatures
+        self.numOutFeatures = numOutFeatures
+        self.displayName = 'Linear(of=' + str(numOutFeatures) + ')'
 
 
 class ActivationNode(Node):
