@@ -7,7 +7,7 @@ from classes.Nodes import *
 from classes.Graph import *
 
 
-class allTests(unittest.TestCase):
+class nodeTests(unittest.TestCase):
     """
     Runs all tests.
     """ 
@@ -27,10 +27,46 @@ class allTests(unittest.TestCase):
         
         :param self: An instance of the allTests class.
         """
-        # NodeType
+        # INPUT
         nodeType = NodeType.INPUT
         self.assertTrue(nodeType == NodeType.INPUT)
         self.assertTrue(nodeType.value == 'input')
+
+        # OUTPUT
+        nodeType = NodeType.OUTPUT
+        self.assertTrue(nodeType == NodeType.OUTPUT)
+        self.assertTrue(nodeType.value == 'output')
+
+        # CONVOLUTION
+        nodeType = NodeType.CONVOLUTION
+        self.assertTrue(nodeType == NodeType.CONVOLUTION)
+        self.assertTrue(nodeType.value == 'convolution')
+
+        # NORMALIZATION
+        nodeType = NodeType.NORMALIZATION
+        self.assertTrue(nodeType == NodeType.NORMALIZATION)
+        self.assertTrue(nodeType.value == 'normalization')
+
+        # POOLING
+        nodeType = NodeType.POOLING
+        self.assertTrue(nodeType == NodeType.POOLING)
+        self.assertTrue(nodeType.value == 'pooling')
+
+        # FLATTEN
+        nodeType = NodeType.FLATTEN
+        self.assertTrue(nodeType == NodeType.FLATTEN)
+        self.assertTrue(nodeType.value == 'flatten')
+
+        # LINEAR
+        nodeType = NodeType.LINEAR
+        self.assertTrue(nodeType == NodeType.LINEAR)
+        self.assertTrue(nodeType.value == 'linear')
+
+        # ACTIVATION
+        nodeType = NodeType.ACTIVATION
+        self.assertTrue(nodeType == NodeType.ACTIVATION)
+        self.assertTrue(nodeType.value == 'activation')
+
 
 
     def testNormalizationTypes(self):
@@ -39,10 +75,15 @@ class allTests(unittest.TestCase):
         
         :param self: An instance of the allTests class.
         """
-        # NormalizationType
+        # NO_NORM
         normType = NormalizationType.NO_NORM
         self.assertTrue(normType == NormalizationType.NO_NORM)
         self.assertTrue(normType.value == 'noNorm')
+
+        # BATCH_NORM
+        normType = NormalizationType.BATCH_NORM
+        self.assertTrue(normType == NormalizationType.BATCH_NORM)
+        self.assertTrue(normType.value == 'batchNorm')
 
 
     def testPoolingTypes(self):
@@ -51,7 +92,12 @@ class allTests(unittest.TestCase):
         
         :param self: An instance of the allTests class.
         """
-        # PoolingType
+        # NO_POOLING
+        poolType = PoolingType.NO_POOLING
+        self.assertTrue(poolType == PoolingType.NO_POOLING)
+        self.assertTrue(poolType.value == 'noPooling')
+
+        # MAX_POOLING
         poolType = PoolingType.MAX_POOLING
         self.assertTrue(poolType == PoolingType.MAX_POOLING)
         self.assertTrue(poolType.value == 'maxPooling')
@@ -63,7 +109,12 @@ class allTests(unittest.TestCase):
         
         :param self: An instance of the allTests class.
         """
-        # ActivationType
+        # RELU
+        actType = ActivationType.RELU
+        self.assertTrue(actType == ActivationType.RELU)
+        self.assertTrue(actType.value == 'reluActivation')
+        
+        # LINEAR
         actType = ActivationType.LINEAR
         self.assertTrue(actType == ActivationType.LINEAR)
         self.assertTrue(actType.value == 'linearActivation')
@@ -79,6 +130,8 @@ class allTests(unittest.TestCase):
         node = Node("name", "displayName")
         self.assertTrue(node.name == "name")
         self.assertTrue(node.displayName == "displayName")
+        self.assertTrue(str(node) == "displayName")
+        self.assertTrue(node.__repr__() == "displayName")
     
 
     def testInputNode(self):
@@ -87,10 +140,220 @@ class allTests(unittest.TestCase):
         
         :param self: An instance of the allTests class.
         """
-        # Input Node
         node = InputNode(numChannels=3)
         self.assertTrue(node.numChannels == 3)
-     
+        self.assertTrue(node.name == 'input')
+        self.assertTrue(node.displayName == 'Input(numChannels=3)')
+    
 
+    def testOutputNode(self):
+        """
+        Tests the ability to construct and use the OutputNode class
+        
+        :param self: An instance of the allTests class.
+        """
+        node = OutputNode()
+        self.assertTrue(node.name == 'output')
+        self.assertTrue(node.displayName == 'Output')
+    
+
+    def testNormalizationNode(self):
+        """
+        Tests the ability to construct and use a node of the NormalizationNode 
+        class
+        
+        :param self: An instance of the nodeTests class.
+        """
+        node = NormalizationNode(name="name", normalizationType=NormalizationType.BATCH_NORM)
+        self.assertTrue(node.name == 'name')
+        self.assertTrue(node.displayName == 'Batch Normalization')
+        self.assertTrue(node.normalizationType == NormalizationType.BATCH_NORM)
+    
+
+    def testPoolingNode(self):
+        """
+        Tests the ability to construct and use a node of the PoolingNode 
+        class
+        
+        :param self: An instance of the nodeTests class.
+        """
+        node = PoolingNode(name='name', poolingType=PoolingType.MAX_POOLING)
+        self.assertTrue(node.name == 'name')
+        self.assertTrue(node.displayName == 'Max Pooling')
+        self.assertTrue(node.poolingType == PoolingType.MAX_POOLING)
+    
+
+    def testCovolutionalNode(self):
+        """
+        Tests the ability to construct and use a node of the PoolingNode 
+        class
+        
+        :param self: An instance of the nodeTests class.
+        """
+        # Valid Construction with a tuple of 2 ints for kernel size
+        node = ConvolutionalNode(name='name', kernelSize=(3,3), 
+                                 maxNumInputChannels=128, numOutputChannels=32)
+        self.assertTrue(node.name == 'name')
+        self.assertTrue(node.displayName == '3x3 Conv(oc=32)')
+        self.assertTrue(node.kernelSize == (3,3))
+        self.assertTrue(node.maxNumInputChannels == 128)
+        self.assertTrue(node.numOutputChannels == 32)
+
+        # Valid Construction with a list of 2 ints for kernel size
+        node = ConvolutionalNode(name='name', kernelSize=[3,3], 
+                                 maxNumInputChannels=128, numOutputChannels=32)
+        self.assertTrue(node.name == 'name')
+        self.assertTrue(node.displayName == '3x3 Conv(oc=32)')
+        self.assertTrue(node.kernelSize == (3,3))
+        self.assertTrue(node.maxNumInputChannels == 128)
+        self.assertTrue(node.numOutputChannels == 32)
+
+        # Valid Construction with int for kernel size
+        node = ConvolutionalNode(name='name', kernelSize=3, 
+                                 maxNumInputChannels=128, numOutputChannels=32)
+        self.assertTrue(node.kernelSize == (3,3))
+        
+        # Invalid Construction with list of 3 ints for kernel size
+        errMsg = 'Node of type ConvolutionNode constructed with invalid '
+        errMsg += 'kernel size as a list of strings'
+        testPassed = False
+        try:
+            node = ConvolutionalNode(name='name', kernelSize=[3,3,3], 
+                                 maxNumInputChannels=128, numOutputChannels=32)
+        except:
+            testPassed = True
+
+        self.assertTrue(testPassed, errMsg)
+        
+        # Invalid Construction with list of strings for kernel size
+        errMsg = 'Node of type ConvolutionNode constructed with invalid '
+        errMsg += 'kernel size as a list of strings'
+        testPassed = False
+        try:
+            node = ConvolutionalNode(name='name', kernelSize=['3','3'], 
+                                 maxNumInputChannels=128, numOutputChannels=32)
+        except:
+            testPassed = True
+
+        self.assertTrue(testPassed, errMsg)
+        
+        # Invalid Construction with a string for kernel size
+        testPassed = False
+        try:
+            node = ConvolutionalNode(name='name', kernelSize='3', 
+                                 maxNumInputChannels=128, numOutputChannels=32)
+        except:
+            testPassed = True
+
+        self.assertTrue(testPassed, errMsg)
+    
+
+    def testFlattenNode(self):
+        """
+        Tests the ability to construct and use a node of the FlattenNode 
+        class
+        
+        :param self: An instance of the nodeTests class.
+        """
+        node = FlattenNode(name='name')
+        self.assertTrue(node.name == 'name')
+        self.assertTrue(node.displayName == 'Flatten')
+    
+
+    def testLinearNode(self):
+        """
+        Tests the ability to construct and use a node of the LinearNode 
+        class
+        
+        :param self: An instance of the nodeTests class.
+        """
+        node = LinearNode(name='name', maxNumInFeatures=512, numOutFeatures=32)
+        self.assertTrue(node.name == 'name')
+        self.assertTrue(node.maxNumInFeatures == 512)
+        self.assertTrue(node.numOutFeatures == 32)
+        self.assertTrue(node.displayName == 'Linear(of=32)')
+
+
+    def testActivationNode(self):
+        """
+        Tests the ability to construct and use a node of the ActivationNode 
+        class
+        
+        :param self: An instance of the nodeTests class.
+        """
+        node = ActivationNode(name='name', activationType=ActivationType.RELU)
+        self.assertTrue(node.name == 'name')
+        self.assertTrue(node.displayName == 'Relu Activation')
+        self.assertTrue(node.activationType == ActivationType.RELU)
+
+
+    def testNodeFactory(self):
+        """
+        Tests the NodeFactory class
+        
+        :param self: An instance of the nodeTests class.
+        """
+        nodeFactory = NodeFactory()
+        self.assertTrue(isinstance(nodeFactory, NodeFactory)) 
+
+        # Input Node
+        node = nodeFactory.createNode(NodeType.INPUT, numChannels=1)
+        self.assertTrue(isinstance(node, InputNode))
+        self.assertTrue(node.name == 'input')
+        self.assertTrue(node.numChannels == 1)       
+ 
+        # Output Node
+        node = nodeFactory.createNode(NodeType.OUTPUT)
+        self.assertTrue(isinstance(node, OutputNode))
+        self.assertTrue(node.name == 'output')
+        self.assertTrue(node.displayName == 'Output')
+       
+        # Normalization Node
+        node = nodeFactory.createNode(NodeType.NORMALIZATION, name='name', normalizationType=NormalizationType.BATCH_NORM)
+        self.assertTrue(isinstance(node, NormalizationNode))
+        self.assertTrue(node.name == 'name')
+        self.assertTrue(node.displayName == 'Batch Normalization')
+        self.assertTrue(node.normalizationType == NormalizationType.BATCH_NORM)
+       
+        # Pooling Node
+        node = nodeFactory.createNode(NodeType.POOLING, name='name', poolingType=PoolingType.MAX_POOLING)
+        self.assertTrue(isinstance(node, PoolingNode))
+        self.assertTrue(node.name == 'name')
+        self.assertTrue(node.displayName == 'Max Pooling')
+        self.assertTrue(node.poolingType == PoolingType.MAX_POOLING)
+       
+        # Convolution Node
+        node = nodeFactory.createNode(NodeType.CONVOLUTION, name='name', 
+                                      kernelSize=5, maxNumInputChannels=128, 
+                                      numOutputChannels=32)
+        self.assertTrue(isinstance(node, ConvolutionalNode))
+        self.assertTrue(node.name == 'name')
+        self.assertTrue(node.displayName == '5x5 Conv(oc=32)')
+        self.assertTrue(node.kernelSize == (5,5))
+        self.assertTrue(node.maxNumInputChannels == 128)
+        self.assertTrue(node.numOutputChannels == 32)
+       
+        # Flatten Node
+        node = nodeFactory.createNode(NodeType.FLATTEN, name='name')
+        self.assertTrue(isinstance(node, FlattenNode))
+        self.assertTrue(node.name == 'name')
+        self.assertTrue(node.displayName == 'Flatten')
+       
+        # Linear Node
+        node = nodeFactory.createNode(NodeType.LINEAR, name='name', maxNumInFeatures=128, numOutFeatures=64)
+        self.assertTrue(isinstance(node, LinearNode))
+        self.assertTrue(node.name == 'name')
+        self.assertTrue(node.displayName == 'Linear(of=64)')
+        self.assertTrue(node.maxNumInFeatures == 128)
+        self.assertTrue(node.numOutFeatures == 64)
+       
+        # Activation Node
+        node = nodeFactory.createNode(NodeType.ACTIVATION, name='name', activationType=ActivationType.RELU)
+        self.assertTrue(isinstance(node, ActivationNode))
+        self.assertTrue(node.name == 'name')
+        self.assertTrue(node.displayName == 'Relu Activation')
+        self.assertTrue(node.activationType == ActivationType.RELU)
+    
+        
 if __name__ == '__main__':
     unittest.main()
