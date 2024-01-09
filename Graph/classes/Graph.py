@@ -6,6 +6,7 @@ from IPython.display import display, Image
 import copy
 from classes.Nodes import *
 from utils import *
+import pickle
 
 
 class Graph:
@@ -166,8 +167,6 @@ class Graph:
 
 
     def writeGraph2File(self, filepath):
-        import pickle
-
         # Assuming your_dict is the dictionary you want to save
         with open(filepath, 'wb') as file:
             pickle.dump(self.graph, file)
