@@ -1,7 +1,6 @@
 import os, io, sys, inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir)
 from graphviz import Digraph
 from IPython.display import display, Image
 import copy
@@ -164,3 +163,12 @@ class Graph:
         g.render(filePath)
 
         return filePath + '.png'
+
+
+    def writeGraph2File(self, filepath):
+        import pickle
+
+        # Assuming your_dict is the dictionary you want to save
+        with open(filepath, 'wb') as file:
+            pickle.dump(self.graph, file)
+
