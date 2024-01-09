@@ -125,5 +125,5 @@ cython_debug/
 .ipynb_checkpoints
 
 # Custom additions
-/GraphVisualizations/*
+Graph/Graphs/GraphVisualizations/*
 
