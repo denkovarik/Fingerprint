@@ -137,6 +137,14 @@ class Graph:
         self.prevNodes = self.curNodes
         self.curNodes = []
 
+
+    def readGraph(self, filepath):
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"File not found: {filepath}")
+
+        with open(filepath, 'rb') as file:
+            self.graph = pickle.load(file)
+
               
     def render(self, dirPath=os.path.join(parentdir, "Graphs/GraphVisualizations/")):
         # Initialize the graph
