@@ -89,11 +89,16 @@ class graphTests(unittest.TestCase):
 
         self.assertTrue(not graph.graph == {})
 
-        graphFilepath = currentdir + 'Temp/graphTest.txt'
-        graphFilepath = os.path.join(currentdir, 'Temp', 'graphTest.txt')
-        graph.writeGraph2File(graphFilepath) 
-
         # Test reading the graph from 'testing/TestFiles/graphTest.txt' 
+        testGraph = Graph()
+        self.assertTrue(isinstance(testGraph, Graph))
+        self.assertTrue(testGraph.graph == {})
+
+        graph2read = os.path.join(currentdir, 'TestFiles', 'graphTest.txt')
+        self.assertTrue(os.path.exists(graph2read))
+        testGraph.readGraph(graph2read)
+        self.assertTrue(str(testGraph.graph) == str(graph.graph))
+        
  
         
 if __name__ == '__main__':
