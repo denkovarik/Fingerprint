@@ -2,7 +2,8 @@ import unittest
 import os, io, sys, inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir)
+graphdir = os.path.dirname(parentdir)
+sys.path.insert(0, graphdir)
 from classes.Nodes import *
 from classes.Graph import Graph
 
