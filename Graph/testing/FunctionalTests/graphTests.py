@@ -99,7 +99,9 @@ class graphTests(unittest.TestCase):
         self.assertTrue(os.path.exists(graph2read))
         testGraph.readGraph(graph2read)
         self.assertTrue(str(testGraph.graph) == str(graph.graph))
-        
+
+
+         
  
         
 if __name__ == '__main__':
