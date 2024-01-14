@@ -69,7 +69,7 @@ class graphTests(unittest.TestCase):
             self.assertTrue(False, 'Graph file ' + graphFilepath + ' does not exist')
 
     
-    def testReadGraph2(self):
+    def testReadGraph(self):
         """
         Tests the ability of the Graph class to read a graph from file.
         
