@@ -7,6 +7,7 @@ import copy
 from classes.Nodes import *
 from utils import *
 import pickle
+import shutil
 
 
 class Graph:
@@ -25,6 +26,7 @@ class Graph:
         self.prevNodes = []
         self.curNodes = []
         self.layer = 0
+        self.sample = []
        
  
     def construct(self):
@@ -172,6 +174,62 @@ class Graph:
         g.render(filePath)
 
         return filePath + '.png'
+
+
+    def printSampleArchitecture(self, sample):
+        # Get the terminal size
+        columns, rows = shutil.get_terminal_size()
+
+        for i in range(len(sample)):
+            curNode = self.graph[sample[i]]
+
+            # Center the node display name
+            centered_name = curNode['node'].displayName.center(columns)
+            print(centered_name)
+
+            if i + 1 < len(sample):
+                # Center the '|' character
+                print('|'.center(columns))
+                # Center the 'V' character
+                print('V'.center(columns))
+    
+        print("")
+
+
+    def sampleArchitectureHuman(self):
+        if self.graph == {}:
+            print('Please construct graph first')
+            return
+       
+        curNode = self.graph['input']
+        self.sample = [curNode['node'].name]
+ 
+        while curNode["node"].name != 'output':
+            clearScreen()
+            self.printSampleArchitecture(self.sample)
+            print("Select the next node from the following options:\n")
+            num = 1
+            if len(curNode["edges"]) > 1: 
+                for edge in curNode["edges"]:
+                    print(str(num) + ': ' + edge)
+                    num += 1
+                validSelection = False
+                while not validSelection:
+                    try:
+                        selected = input("\nSelect Node: ")
+                        selectedInt = int(selected)
+                        if selectedInt < 1 or selectedInt > len(curNode["edges"]):
+                            raise ValueError
+                        validSelection = True
+                        selectedInt -= 1
+                    except ValueError:
+                        print("Please enter a value from 1 to " + str(len(curNode["edges"])))
+            else:
+                selectedInt = 0
+            curNode = self.graph[curNode["edges"][selectedInt]]
+            self.sample.append(curNode['node'].name)
+        print("")
+        self.printSampleArchitecture(self.sample)
 
 
     def writeGraph2File(self, filepath):
