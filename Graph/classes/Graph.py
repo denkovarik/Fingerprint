@@ -149,6 +149,16 @@ class Graph:
 
               
     def render(self, dirPath=os.path.join(parentdir, "Graphs/GraphVisualizations/")):
+        nodes = []
+        edges = [] 
+        if len(self.sample) > 0:
+            curNode = self.graph['input']
+            nodes.append(curNode['node'].name)
+            for edge in self.sample:
+                edges.append(self.graph[curNode['node'].name]['edges'][edge])
+                curNode = self.graph[self.graph[curNode['node'].name]['edges'][edge]]
+                nodes.append(curNode['node'].name)
+
         # Initialize the graph
         g = Digraph('G', filename = dirPath + 'enas_network_search_space')
 
@@ -160,13 +170,19 @@ class Graph:
         # Add Nodes
         for val in self.graph.values():
             node = val['node']
-            g.node(node.name, node.displayName)
+            if node.name in nodes:
+                g.node(node.name, node.displayName, color='green', style='bold')
+            else:
+                g.node(node.name, node.displayName)
             
         # Add Edges
         for val in self.graph.values():
             node = val['node']
             for edge in val['edges']:
-                g.edge(node.name, edge)
+                if node.name in nodes and edge in edges:
+                    g.edge(node.name, edge, color='green', style='bold')
+                else:
+                    g.edge(node.name, edge)
                 
         # Specify the output format and render the graph
         g.format = 'png'
@@ -223,7 +239,7 @@ class Graph:
                         raise ValueError
                     validSelection = True
                 except ValueError:
-                    print("Please enter a value from 1 to " + str(len(curNode["edges"])))
+                    print("Please enter a value from 0 to " + str(len(curNode["edges"])-1))
             
             curNode = self.graph[curNode["edges"][selectedInt]]
             self.sample.append(selectedInt)
