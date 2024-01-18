@@ -10,3 +10,11 @@ graph = Graph()
 graph.construct()
 graph.sampleArchitectureHuman()
 
+image_path = graph.render()
+
+if is_running_in_jupyter_notebook():
+    display(Image(filename='Graphs/enas_network_search_space_visualization.png'))
+else:
+    os.system(f'feh {image_path}')
+
+
