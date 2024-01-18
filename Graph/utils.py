@@ -19,3 +19,24 @@ def isRunningInJupyterNotebook():
         return False
 
     return True
+
+
+def renderGraph(graph, renderFP):
+    """
+    Helper function for rendering and displaying the graph
+
+    :param graph: Instance of the Graph class to render
+    :param renderFP: Filepath to temp dir
+    """
+    imagePath = graph.render(renderFP)        
+    if isRunningInJupyterNotebook():
+        display(Image(filename=imagePath))
+    else:
+        os.system(f'feh {imagePath}')
+
+    # Remove files used to render graph
+    fp = imagePath[:imagePath.rfind('.')]
+    if os.path.exists(fp):
+        os.remove(fp)
+    if os.path.exists(imagePath):
+        os.remove(imagePath)
