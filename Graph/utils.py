@@ -11,7 +11,7 @@ def clearScreen():
         _ = os.system('clear')
 
 
-def is_running_in_jupyter_notebook():
+def isRunningInJupyterNotebook():
     try:
         if 'IPKernelApp' not in get_ipython().config:  # Check if IPython kernel is running
             return False
