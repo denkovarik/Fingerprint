@@ -141,6 +141,28 @@ class Graph:
         self.curNodes = []
 
 
+    def printSampleArchitecture(self, sample):
+        # Get the terminal size
+        columns, rows = shutil.get_terminal_size()
+        curNode = self.graph['input']
+        # Print Input Node
+        centeredName = curNode['node'].displayName.center(columns)
+        print(centeredName)
+        print('|'.center(columns))
+        print('V'.center(columns))
+        for i in range(len(sample)):
+            curNode = self.graph[self.graph[curNode['node'].name]['edges'][sample[i]]]
+            # Center the node display name
+            centeredName = curNode['node'].displayName.center(columns)
+            print(centeredName)
+            if i + 1 < len(sample):
+                # Center the '|' character
+                print('|'.center(columns))
+                # Center the 'V' character
+                print('V'.center(columns))
+        print("")
+
+
     def readGraph(self, filepath):
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"File not found: {filepath}")
@@ -161,7 +183,7 @@ class Graph:
                 nodes.append(curNode['node'].name)
 
         # Initialize the graph
-        g = Digraph('G', filename = dirPath + 'enas_network_search_space')
+        g = Digraph('G', filename = os.path.join(dirPath + 'enas_network_search_space'))
 
         # Define graph attributes
         g.attr(rankdir='TB')  # 'TB' for top-to-bottom graph, 'LR' for left-to-right
@@ -187,35 +209,13 @@ class Graph:
                 
         # Specify the output format and render the graph
         g.format = 'png'
-        filePath = dirPath + 'enas_network_search_space_visualization'
+        filePath = os.path.join(dirPath, 'enas_network_search_space_visualization')
         g.render(filePath)
 
         return filePath + '.png'
 
 
-    def printSampleArchitecture(self, sample):
-        # Get the terminal size
-        columns, rows = shutil.get_terminal_size()
-        curNode = self.graph['input']
-        # Print Input Node
-        centeredName = curNode['node'].displayName.center(columns)
-        print(centeredName)
-        print('|'.center(columns))
-        print('V'.center(columns))
-        for i in range(len(sample)):
-            curNode = self.graph[self.graph[curNode['node'].name]['edges'][sample[i]]]
-            # Center the node display name
-            centeredName = curNode['node'].displayName.center(columns)
-            print(centeredName)
-            if i + 1 < len(sample):
-                # Center the '|' character
-                print('|'.center(columns))
-                # Center the 'V' character
-                print('V'.center(columns))
-        print("")
-
-
-    def sampleArchitectureHuman(self):
+    def sampleArchitectureHuman(self, clearTerminal=True):
         if self.graph == {}:
             print('Please construct graph first')
             return
@@ -224,7 +224,8 @@ class Graph:
         self.sample = []
  
         while curNode["node"].name != 'output':
-            clearScreen()
+            if clearTerminal:
+                clearScreen()
             self.printSampleArchitecture(self.sample)
             print("Select the next node from the following options:\n")
             num = 0
