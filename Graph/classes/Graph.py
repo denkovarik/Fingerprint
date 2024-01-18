@@ -52,7 +52,8 @@ class Graph:
         maxNumInputChannels = max(self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS)
         for kernel in self.ALLOWED_KERNEL_SIZES:
             for oc in self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS:
-                nodeName = 'L' + str(self.layer) + '_' + str(kernel[0]) + 'x' + str(kernel[1]) + '_Conv(oc=' + str(oc) + ')'
+                nodeName = 'L' + str(self.layer) + '_' + str(kernel[0]) + 'x' \
+                         + str(kernel[1]) + '_Conv(oc=' + str(oc) + ')'
                 self.addNode(nodeType=NodeType.CONVOLUTION, 
                              name=nodeName, 
                              kernelSize=kernel, 
