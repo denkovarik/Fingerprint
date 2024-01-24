@@ -127,3 +127,4 @@ cython_debug/
 # Custom additions
 Graph/Graphs/GraphVisualizations/*
 Graph/testing/FunctionalTests/Temp/*
+Graph/testing/VisualValidationTests/Temp/*
