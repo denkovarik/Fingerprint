@@ -112,7 +112,7 @@ class graphTests(unittest.TestCase):
         
         :param self: An instance of the graphTests class.
         """
-        sampleGraphPath = 'testing/FunctionalTests/TestFiles/sampleTestGraph.txt'
+        sampleGraphPath = os.path.join(currentdir, 'TestFiles/sampleTestGraph.txt')
         graph = Graph()
         self.assertTrue(isinstance(graph, Graph))
         self.assertTrue(graph.graph == {})
@@ -120,7 +120,8 @@ class graphTests(unittest.TestCase):
 
         # Sample Architecture by siming user input
         originalOutput = sys.stdout
-        with open('testing/FunctionalTests/Temp/output.txt', 'w') as f:
+        outputPath = os.path.join(currentdir, 'Temp/output.txt')
+        with open(outputPath, 'w') as f:
             sys.stdout = f
             graph.sampleArchitectureHuman(clearTerminal=False)
         sys.stdout = originalOutput
