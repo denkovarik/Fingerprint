@@ -70,7 +70,7 @@ class PoolingNode(Node):
 
 
 class ConvolutionalNode(Node):
-    def __init__(self, name, kernelSize, maxNumInputChannels, numOutputChannels):
+    def __init__(self, name, kernelSize, maxNumInputChannels, numOutputChannels, layer):
         typeErrMsg = "Kernel Size must be either an integer, a tuple of "
         typeErrMsg += "integers, or a list 2 integers"
 
@@ -88,6 +88,7 @@ class ConvolutionalNode(Node):
             raise TypeError(typeErrMsg) 
         
         self.name = name
+        self.layer = layer
         self.displayName = str(self.kernelSize[0]) + 'x' + str(self.kernelSize[1]) 
         self.displayName += ' Conv(oc=' + str(numOutputChannels) + ')'
         self.maxNumInputChannels = maxNumInputChannels
@@ -101,8 +102,9 @@ class FlattenNode(Node):
 
 
 class LinearNode(Node):
-    def __init__(self, name, maxNumInFeatures, numOutFeatures):
+    def __init__(self, name, maxNumInFeatures, numOutFeatures, layer):
         self.name = name
+        self.layer = layer
         self.maxNumInFeatures = maxNumInFeatures
         self.numOutFeatures = numOutFeatures
         self.displayName = 'Linear(of=' + str(numOutFeatures) + ')'
