@@ -48,7 +48,7 @@ class Graph:
         self.curNodes = []
 
           
-    def addConvolutionalLayer(self):
+    def addConvolutionalLayer(self, layer):
         maxNumInputChannels = max(self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS)
         for kernel in self.ALLOWED_KERNEL_SIZES:
             for oc in self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS:
@@ -58,15 +58,15 @@ class Graph:
                              name=nodeName, 
                              kernelSize=kernel, 
                              maxNumInputChannels=maxNumInputChannels, 
-                             numOutputChannels=oc)
+                             numOutputChannels=oc, layer=layer)
         self.prevNodes = self.curNodes
         self.curNodes = []
 
                          
     def addConvolutionalLayers(self):
-        for i in range(self.numConvLayers):        
+        for i in range(self.numConvLayers):       
             self.layer += 1
-            self.addConvolutionalLayer()                                        
+            self.addConvolutionalLayer(self.layer)                                        
             self.addNormalizationLayer()                
             self.addPoolingLayer()
 
@@ -88,14 +88,14 @@ class Graph:
         self.addNode(nodeType=NodeType.OUTPUT)
 
     
-    def addLinearLayer(self): 
+    def addLinearLayer(self, layer): 
         maxNumInputFeatures = max(self.ALLOWED_NUMBER_OF_LINEAR_FEATURES)
         for of in self.ALLOWED_NUMBER_OF_LINEAR_FEATURES:
             nodeName = 'L' + str(self.layer) + '_Linear(of=' + str(of) + ')' 
             self.addNode(nodeType=NodeType.LINEAR, 
                          name=nodeName, 
                          maxNumInFeatures=maxNumInputFeatures, 
-                         numOutFeatures=of)
+                         numOutFeatures=of, layer=layer)
         self.prevNodes = self.curNodes
         self.curNodes = []
 
@@ -103,14 +103,14 @@ class Graph:
     def addLinearLayers(self):
         for i in range(self.numLinearLayers - 1):
             self.layer += 1            
-            self.addLinearLayer()
+            self.addLinearLayer(self.layer)
             self.addActivationLayer()                                                  
-        self.layer += 1
+        self.layer += 1            
         nodeName = 'L' + str(self.layer) + '_Linear(of=' + str(10) + ')' 
         self.addNode(nodeType=NodeType.LINEAR, 
                      name=nodeName, 
                      maxNumInFeatures=max(self.ALLOWED_NUMBER_OF_LINEAR_FEATURES), 
-                     numOutFeatures=self.numClasses)    
+                     numOutFeatures=self.numClasses, layer=self.layer)    
         self.prevNodes = self.curNodes
         self.curNodes = []
         self.addActivationLayer()
@@ -243,6 +243,8 @@ class Graph:
                 except ValueError:
                     print("Please enter a value from 0 to " + str(len(curNode["edges"])-1))
             
+            print("selectedInt: ", end="")
+            print(selectedInt)
             curNode = self.graph[curNode["edges"][selectedInt]]
             self.sample.append(selectedInt)
         print("")
