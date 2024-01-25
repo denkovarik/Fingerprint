@@ -51,7 +51,9 @@ class graphTests(unittest.TestCase):
         # Construct a simple graph example
         inputNode = InputNode(numChannels=3)
         normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM)
-        convNode = ConvolutionalNode(name='convNode1', kernelSize=3, maxNumInputChannels=16, numOutputChannels=4)
+        convNode = ConvolutionalNode(name='convNode1', kernelSize=3, 
+                                     maxNumInputChannels=16, 
+                                     numOutputChannels=4, layer=0)
         
         graph.graph[inputNode.name] = {'node': inputNode, 'edges': [normNode.name]}
         graph.graph[normNode.name] = {'node': normNode, 'edges': [convNode.name]}
@@ -59,7 +61,6 @@ class graphTests(unittest.TestCase):
 
         self.assertTrue(not graph.graph == {})
 
-        graphFilepath = currentdir + 'Temp/graphTest.txt'
         graphFilepath = os.path.join(currentdir, 'Temp', 'graphTest.txt')
         graph.writeGraph2File(graphFilepath)
 
@@ -84,7 +85,9 @@ class graphTests(unittest.TestCase):
         # Construct a simple graph example to test the read
         inputNode = InputNode(numChannels=3)
         normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM)
-        convNode = ConvolutionalNode(name='convNode1', kernelSize=3, maxNumInputChannels=16, numOutputChannels=4)
+        convNode = ConvolutionalNode(name='convNode1', kernelSize=3, 
+                                     maxNumInputChannels=16, 
+                                     numOutputChannels=4, layer=0)
         
         graph.graph[inputNode.name] = {'node': inputNode, 'edges': [normNode.name]}
         graph.graph[normNode.name] = {'node': normNode, 'edges': [convNode.name]}
