@@ -8,6 +8,7 @@ from classes.Nodes import *
 from utils import *
 import pickle
 import shutil
+import uuid
 
 
 class Graph:
@@ -48,7 +49,7 @@ class Graph:
         self.curNodes = []
 
           
-    def addConvolutionalLayer(self, layer):
+    def addConvolutionalLayer(self, layer, conv2dId):
         maxNumInputChannels = max(self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS)
         for kernel in self.ALLOWED_KERNEL_SIZES:
             for oc in self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS:
@@ -58,7 +59,8 @@ class Graph:
                              name=nodeName, 
                              kernelSize=kernel, 
                              maxNumInputChannels=maxNumInputChannels, 
-                             numOutputChannels=oc, layer=layer)
+                             numOutputChannels=oc, layer=layer, 
+                             conv2dId=conv2dId)
         self.prevNodes = self.curNodes
         self.curNodes = []
 
@@ -66,7 +68,7 @@ class Graph:
     def addConvolutionalLayers(self):
         for i in range(self.numConvLayers):       
             self.layer += 1
-            self.addConvolutionalLayer(self.layer)                                        
+            self.addConvolutionalLayer(self.layer, uuid.uuid4())                                        
             self.addNormalizationLayer()                
             self.addPoolingLayer()
 
@@ -88,14 +90,14 @@ class Graph:
         self.addNode(nodeType=NodeType.OUTPUT)
 
     
-    def addLinearLayer(self, layer): 
+    def addLinearLayer(self, layer, linearId): 
         maxNumInputFeatures = max(self.ALLOWED_NUMBER_OF_LINEAR_FEATURES)
         for of in self.ALLOWED_NUMBER_OF_LINEAR_FEATURES:
             nodeName = 'L' + str(self.layer) + '_Linear(of=' + str(of) + ')' 
             self.addNode(nodeType=NodeType.LINEAR, 
                          name=nodeName, 
                          maxNumInFeatures=maxNumInputFeatures, 
-                         numOutFeatures=of, layer=layer)
+                         numOutFeatures=of, layer=layer, linearId=linearId)
         self.prevNodes = self.curNodes
         self.curNodes = []
 
@@ -103,14 +105,14 @@ class Graph:
     def addLinearLayers(self):
         for i in range(self.numLinearLayers - 1):
             self.layer += 1            
-            self.addLinearLayer(self.layer)
+            self.addLinearLayer(self.layer, uuid.uuid4())
             self.addActivationLayer()                                                  
         self.layer += 1            
         nodeName = 'L' + str(self.layer) + '_Linear(of=' + str(10) + ')' 
         self.addNode(nodeType=NodeType.LINEAR, 
                      name=nodeName, 
                      maxNumInFeatures=max(self.ALLOWED_NUMBER_OF_LINEAR_FEATURES), 
-                     numOutFeatures=self.numClasses, layer=self.layer)    
+                     numOutFeatures=self.numClasses, layer=self.layer, linearId=uuid.uuid4())    
         self.prevNodes = self.curNodes
         self.curNodes = []
         self.addActivationLayer()
