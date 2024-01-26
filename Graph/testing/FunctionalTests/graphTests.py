@@ -8,6 +8,7 @@ sys.path.insert(0, graphdir)
 from classes.Nodes import *
 from classes.Graph import Graph
 from utils import *
+import uuid
     
 
 class graphTests(unittest.TestCase):
@@ -53,7 +54,8 @@ class graphTests(unittest.TestCase):
         normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM)
         convNode = ConvolutionalNode(name='convNode1', kernelSize=3, 
                                      maxNumInputChannels=16, 
-                                     numOutputChannels=4, layer=0)
+                                     numOutputChannels=4, layer=0,
+                                     conv2dId=uuid.uuid4())
         
         graph.graph[inputNode.name] = {'node': inputNode, 'edges': [normNode.name]}
         graph.graph[normNode.name] = {'node': normNode, 'edges': [convNode.name]}
@@ -87,7 +89,8 @@ class graphTests(unittest.TestCase):
         normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM)
         convNode = ConvolutionalNode(name='convNode1', kernelSize=3, 
                                      maxNumInputChannels=16, 
-                                     numOutputChannels=4, layer=0)
+                                     numOutputChannels=4, layer=0, 
+                                     conv2dId=uuid.uuid4())
         
         graph.graph[inputNode.name] = {'node': inputNode, 'edges': [normNode.name]}
         graph.graph[normNode.name] = {'node': normNode, 'edges': [convNode.name]}
