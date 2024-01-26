@@ -6,6 +6,7 @@ graphdir = os.path.dirname(parentdir)
 sys.path.insert(0, graphdir)
 from classes.Nodes import *
 from classes.Graph import *
+import uuid
 
 
 class nodeTests(unittest.TestCase):
@@ -67,7 +68,6 @@ class nodeTests(unittest.TestCase):
         nodeType = NodeType.ACTIVATION
         self.assertTrue(nodeType == NodeType.ACTIVATION)
         self.assertTrue(nodeType.value == 'activation')
-
 
 
     def testNormalizationTypes(self):
@@ -192,11 +192,13 @@ class nodeTests(unittest.TestCase):
         :param self: An instance of the nodeTests class.
         """
         # Valid Construction with a tuple of 2 ints for kernel size
+        conv2dId = uuid.uuid4()
         node = ConvolutionalNode(name='name', kernelSize=(3,3), 
                                  maxNumInputChannels=128, numOutputChannels=32,
-                                 layer=0)
+                                 layer=0, conv2dId=conv2dId)
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.layer == 0)
+        self.assertTrue(node.conv2dId == conv2dId)
         self.assertTrue(node.displayName == '3x3 Conv(oc=32)')
         self.assertTrue(node.kernelSize == (3,3))
         self.assertTrue(node.maxNumInputChannels == 128)
@@ -205,7 +207,7 @@ class nodeTests(unittest.TestCase):
         # Valid Construction with a list of 2 ints for kernel size
         node = ConvolutionalNode(name='name', kernelSize=[3,3], 
                                  maxNumInputChannels=128, numOutputChannels=32,
-                                 layer=0)
+                                 layer=0, conv2dId=conv2dId)
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.layer == 0)
         self.assertTrue(node.displayName == '3x3 Conv(oc=32)')
@@ -216,7 +218,7 @@ class nodeTests(unittest.TestCase):
         # Valid Construction with int for kernel size
         node = ConvolutionalNode(name='name', kernelSize=3, 
                                  maxNumInputChannels=128, numOutputChannels=32,
-                                 layer=0)
+                                 layer=0, conv2dId=conv2dId)
         self.assertTrue(node.kernelSize == (3,3))
         
         # Invalid Construction with list of 3 ints for kernel size
@@ -273,9 +275,12 @@ class nodeTests(unittest.TestCase):
         
         :param self: An instance of the nodeTests class.
         """
-        node = LinearNode(name='name', maxNumInFeatures=512, numOutFeatures=32, layer=1)
+        linearId = uuid.uuid4()
+        node = LinearNode(name='name', maxNumInFeatures=512, numOutFeatures=32, 
+                          layer=1, linearId=linearId)
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.layer == 1)
+        self.assertTrue(node.linearId == linearId)
         self.assertTrue(node.maxNumInFeatures == 512)
         self.assertTrue(node.numOutFeatures == 32)
         self.assertTrue(node.displayName == 'Linear(of=32)')
@@ -330,11 +335,13 @@ class nodeTests(unittest.TestCase):
         self.assertTrue(node.poolingType == PoolingType.MAX_POOLING)
        
         # Convolution Node
+        conv2dId = uuid.uuid4()
         node = nodeFactory.createNode(NodeType.CONVOLUTION, name='name', 
                                       kernelSize=5, maxNumInputChannels=128, 
-                                      numOutputChannels=32, layer=2)
+                                      numOutputChannels=32, layer=2, conv2dId=conv2dId)
         self.assertTrue(isinstance(node, ConvolutionalNode))
         self.assertTrue(node.layer == 2)
+        self.assertTrue(node.conv2dId == conv2dId)
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.displayName == '5x5 Conv(oc=32)')
         self.assertTrue(node.kernelSize == (5,5))
@@ -350,7 +357,7 @@ class nodeTests(unittest.TestCase):
         # Linear Node
         node = nodeFactory.createNode(NodeType.LINEAR, name='name', 
                                       maxNumInFeatures=128, numOutFeatures=64,\
-                                      layer=0)
+                                      layer=0, linearId=uuid.uuid4())
         self.assertTrue(isinstance(node, LinearNode))
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.displayName == 'Linear(of=64)')
