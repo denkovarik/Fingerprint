@@ -14,3 +14,7 @@ apt-get -y install graphviz
 apt-get -y install xdg-utils
 
 pip3 install ipython
+
+# Install PyTorch
+pip install torch torchvision torchaudio
+
