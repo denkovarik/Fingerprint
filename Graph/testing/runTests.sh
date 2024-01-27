@@ -9,14 +9,15 @@ cd "$SCRIPT_DIR"
 # Run Python scripts
 echo -e "Running All Tests:\n"
 
-echo "Running Node Tests"
+echo "Running Node Unit Tests"
 python3 ./UnitTests/nodeTests.py
 
-echo -e "\nRunning Graph Tests"
+echo "running Graph Unit Tests"
+python3 ./UnitTests/graphTests.py
+
+echo -e "\nRunning Graph Functional Tests"
 python3 ./FunctionalTests/graphTests.py
 
-# Optionally, return to the original directory
-# cd -
 
 echo -e "\nAll Tests Completed"
 
