@@ -138,6 +138,20 @@ class graphTests(unittest.TestCase):
         # Test that sample architecture is as expected by mock input
         expected = [0, 1, 1, 1, 7, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
         self.assertTrue(graph.sample == expected)
+    
+
+    def testReadGraphMapping(self):
+        """
+        Tests the ability of the Graph class to read a graph from file.
+        
+        :param self: An instance of the graphTests class.
+        """
+        graph = Graph()
+        self.assertTrue(isinstance(graph, Graph))
+        self.assertTrue(graph.graph == {})
+        graph.construct()
+        self.assertTrue(not graph.graph == {})
+        self.assertTrue(graph.pytorchLayers != {})
  
         
 if __name__ == '__main__':
