@@ -9,6 +9,9 @@ from utils import *
 import pickle
 import shutil
 import uuid
+import queue
+import torch
+import torch.nn as nn
 
 
 class Graph:
@@ -28,6 +31,7 @@ class Graph:
         self.curNodes = []
         self.layer = 0
         self.sample = []
+        self.pytorchLayers = {}
        
  
     def construct(self):
@@ -38,7 +42,8 @@ class Graph:
         self.addConvolutionalLayers()       
         self.addFlattenLayer()
         self.addLinearLayers()            
-        self.addOutputLayer() 
+        self.addOutputLayer()
+        self.mapPytorchLayers()
 
         
     def addActivationLayer(self):
@@ -49,9 +54,10 @@ class Graph:
         self.curNodes = []
 
           
-    def addConvolutionalLayer(self, layer, conv2dId):
+    def addConvolutionalLayer(self, layer):
         maxNumInputChannels = max(self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS)
         for kernel in self.ALLOWED_KERNEL_SIZES:
+            conv2dId = uuid.uuid4()
             for oc in self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS:
                 nodeName = 'L' + str(self.layer) + '_' + str(kernel[0]) + 'x' \
                          + str(kernel[1]) + '_Conv(oc=' + str(oc) + ')'
@@ -68,7 +74,7 @@ class Graph:
     def addConvolutionalLayers(self):
         for i in range(self.numConvLayers):       
             self.layer += 1
-            self.addConvolutionalLayer(self.layer, uuid.uuid4())                                        
+            self.addConvolutionalLayer(self.layer)                                        
             self.addNormalizationLayer()                
             self.addPoolingLayer()
 
@@ -169,8 +175,60 @@ class Graph:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"File not found: {filepath}")
 
+        # Read the Graph file
         with open(filepath, 'rb') as file:
             self.graph = pickle.load(file)
+
+
+    def mapPytorchLayers(self):
+        # Map nodes to Pytorch layers
+        # BFS
+        nextNodes = queue.Queue()
+        nextNodes.put(self.graph['input'])
+        visited = set()
+        visited.add(self.graph['input']['node'])
+
+        c = 0
+        while nextNodes.qsize() > 0:
+            curNode = nextNodes.get()
+            if isinstance(curNode['node'], ConvolutionalNode): 
+                conv2dId = curNode['node'].conv2dId 
+                if conv2dId not in self.pytorchLayers.keys():
+                    self.pytorchLayers[conv2dId] = {'Type': 'Conv2d',
+                                                    'id': conv2dId, 
+                                                    'KernelSize': curNode['node'].kernelSize,
+                                                    'InputChannels': curNode['node'].maxNumInputChannels,
+                                                    'OutputChannels': curNode['node'].numOutputChannels}
+                else:
+                    oc = max(self.pytorchLayers[conv2dId]['OutputChannels'], curNode['node'].numOutputChannels)
+                    self.pytorchLayers[conv2dId]['OutputChannels'] = oc
+            elif isinstance(curNode['node'], LinearNode):
+                linearId = curNode['node'].linearId
+                if linearId not in self.pytorchLayers.keys():
+                    self.pytorchLayers[linearId] = {'Type': 'Linear',
+                                                    'id': linearId, 
+                                                    'InputChannels': curNode['node'].maxNumInFeatures,
+                                                    'OutputChannels': curNode['node'].numOutFeatures}
+                else:
+                    oc = max(self.pytorchLayers[linearId]['OutputChannels'], curNode['node'].numOutFeatures)
+                    self.pytorchLayers[conv2dId]['OutputChannels'] = oc
+        
+            for edj in curNode['edges']:
+                if self.graph[edj]['node'] not in visited:
+                    nextNodes.put(self.graph[edj])
+                    visited.add(self.graph[edj]['node'])
+
+        for key in self.pytorchLayers.keys():
+            if self.pytorchLayers[key]['Type'] == 'Conv2d':
+                ic = self.pytorchLayers[key]['OutputChannels']
+                oc = self.pytorchLayers[key]['InputChannels']
+                ks = self.pytorchLayers[key]['KernelSize']
+                self.pytorchLayers[key]['Layer'] = nn.Conv2d(ic, oc, kernel_size=ks)
+            elif self.pytorchLayers[key]['Type'] == 'Linear':
+                ic = self.pytorchLayers[key]['OutputChannels']
+                oc = self.pytorchLayers[key]['InputChannels']
+                self.pytorchLayers[key]['Layer'] = nn.Linear(ic, oc)
+                
 
               
     def render(self, dirPath=os.path.join(parentdir, "Graphs/GraphVisualizations/")):
