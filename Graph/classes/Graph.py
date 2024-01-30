@@ -179,6 +179,9 @@ class Graph:
         with open(filepath, 'rb') as file:
             self.graph = pickle.load(file)
 
+        # Map Pytorch Layers
+        #self.mapPytorchLayers()
+
 
     def bfs(self, startNode):
         """
@@ -204,46 +207,31 @@ class Graph:
 
 
     def mapPytorchLayers(self):
-        for node in self.bfs(startNode=self.graph['input']['node']):
-            print(node)
-        """
-        # Map nodes to Pytorch layers
-        # BFS
-        nextNodes = queue.Queue()
-        nextNodes.put(self.graph['input'])
-        visited = set()
-        visited.add(self.graph['input']['node'])
-
-        c = 0
-        while nextNodes.qsize() > 0:
-            curNode = nextNodes.get()
-            if isinstance(curNode['node'], ConvolutionalNode): 
-                conv2dId = curNode['node'].conv2dId 
+        for curNode in self.bfs(startNode=self.graph['input']['node']):
+            if isinstance(curNode, ConvolutionalNode): 
+                conv2dId = curNode.conv2dId 
                 if conv2dId not in self.pytorchLayers.keys():
                     self.pytorchLayers[conv2dId] = {'Type': 'Conv2d',
-                                                    'id': conv2dId, 
-                                                    'KernelSize': curNode['node'].kernelSize,
-                                                    'InputChannels': curNode['node'].maxNumInputChannels,
-                                                    'OutputChannels': curNode['node'].numOutputChannels}
+                                                    'id': conv2dId,
+                                                    'layerNum': curNode.layer, 
+                                                    'KernelSize': curNode.kernelSize,
+                                                    'InputChannels': curNode.maxNumInputChannels,
+                                                    'OutputChannels': curNode.numOutputChannels}
                 else:
-                    oc = max(self.pytorchLayers[conv2dId]['OutputChannels'], curNode['node'].numOutputChannels)
+                    oc = max(self.pytorchLayers[conv2dId]['OutputChannels'], curNode.numOutputChannels)
                     self.pytorchLayers[conv2dId]['OutputChannels'] = oc
-            elif isinstance(curNode['node'], LinearNode):
-                linearId = curNode['node'].linearId
+            elif isinstance(curNode, LinearNode):
+                linearId = curNode.linearId
                 if linearId not in self.pytorchLayers.keys():
                     self.pytorchLayers[linearId] = {'Type': 'Linear',
-                                                    'id': linearId, 
-                                                    'InputChannels': curNode['node'].maxNumInFeatures,
-                                                    'OutputChannels': curNode['node'].numOutFeatures}
+                                                    'id': linearId,
+                                                    'layerNum': curNode.layer, 
+                                                    'InputChannels': curNode.maxNumInFeatures,
+                                                    'OutputChannels': curNode.numOutFeatures}
                 else:
-                    oc = max(self.pytorchLayers[linearId]['OutputChannels'], curNode['node'].numOutFeatures)
+                    oc = max(self.pytorchLayers[linearId]['OutputChannels'], curNode.numOutFeatures)
                     self.pytorchLayers[conv2dId]['OutputChannels'] = oc
         
-            for edj in curNode['edges']:
-                if self.graph[edj]['node'] not in visited:
-                    nextNodes.put(self.graph[edj])
-                    visited.add(self.graph[edj]['node'])
-
         for key in self.pytorchLayers.keys():
             if self.pytorchLayers[key]['Type'] == 'Conv2d':
                 ic = self.pytorchLayers[key]['OutputChannels']
@@ -254,7 +242,7 @@ class Graph:
                 ic = self.pytorchLayers[key]['OutputChannels']
                 oc = self.pytorchLayers[key]['InputChannels']
                 self.pytorchLayers[key]['Layer'] = nn.Linear(ic, oc)
-        """    
+            
 
               
     def render(self, dirPath=os.path.join(parentdir, "Graphs/GraphVisualizations/")):
