@@ -9,6 +9,9 @@ cd "$SCRIPT_DIR"
 # Run Python scripts
 echo -e "Running All Tests:\n"
 
+echo "Running General Unit Tests"
+python3 ./UnitTests/generalTests.py
+
 echo "Running Node Unit Tests"
 python3 ./UnitTests/nodeTests.py
 
