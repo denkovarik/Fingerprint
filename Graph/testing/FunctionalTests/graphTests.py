@@ -9,6 +9,8 @@ from classes.Nodes import *
 from classes.Graph import Graph
 from utils import *
 import uuid
+import torch
+import torch.nn as nn
     
 
 class graphTests(unittest.TestCase):
@@ -150,9 +152,48 @@ class graphTests(unittest.TestCase):
         self.assertTrue(isinstance(graph, Graph))
         self.assertTrue(graph.graph == {})
         graph.construct()
+        #graph2read = os.path.join(currentdir, 'TestFiles', 'graphTest.txt')
+        #self.assertTrue(os.path.exists(graph2read))
+        #graph.readGraph(graph2read)
         self.assertTrue(not graph.graph == {})
         self.assertTrue(graph.pytorchLayers != {})
- 
+
+        numConvLayers = 0
+        expNumConvLayers = 4
+        numLinearLayers = 0
+        expNumLinearLayers = 3
+        conv2dLayer1KernelSize3x3 = 0
+        conv2dLayer1KernelSize5x5 = 0
+        conv2dLayer2KernelSize3x3 = 0
+        conv2dLayer2KernelSize5x5 = 0
+        expConv2dLayer1KernelSize3x3 = 1
+        expConv2dLayer1KernelSize5x5 = 1
+        expConv2dLayer2KernelSize3x3 = 1
+        expConv2dLayer2KernelSize5x5 = 1
+
+        for key in graph.pytorchLayers.keys():
+            if isinstance(graph.pytorchLayers[key]['Layer'], nn.Conv2d):
+                numConvLayers += 1
+                if graph.pytorchLayers[key]['layerNum'] == 1:
+                    if graph.pytorchLayers[key]['Layer'].kernel_size  == (3,3):
+                        conv2dLayer1KernelSize3x3 += 1
+                    elif graph.pytorchLayers[key]['Layer'].kernel_size  == (5,5):
+                        conv2dLayer1KernelSize5x5 += 1
+                elif graph.pytorchLayers[key]['layerNum'] == 2:
+                    if graph.pytorchLayers[key]['Layer'].kernel_size  == (3,3):
+                        conv2dLayer2KernelSize3x3 += 1
+                    elif graph.pytorchLayers[key]['Layer'].kernel_size  == (5,5):
+                        conv2dLayer2KernelSize5x5 += 1
+            if isinstance(graph.pytorchLayers[key]['Layer'], nn.Linear):
+                numLinearLayers += 1
+
+        self.assertTrue(numConvLayers == expNumConvLayers)
+        self.assertTrue(numLinearLayers == expNumLinearLayers)
+        self.assertTrue(conv2dLayer1KernelSize3x3 == expConv2dLayer1KernelSize3x3)
+        self.assertTrue(conv2dLayer1KernelSize5x5 == expConv2dLayer1KernelSize5x5)
+        self.assertTrue(conv2dLayer2KernelSize3x3 == expConv2dLayer2KernelSize3x3)
+        self.assertTrue(conv2dLayer2KernelSize5x5 == expConv2dLayer2KernelSize5x5)
+
         
 if __name__ == '__main__':
     unittest.main()
