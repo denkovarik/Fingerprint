@@ -180,7 +180,33 @@ class Graph:
             self.graph = pickle.load(file)
 
 
+    def bfs(self, startNode):
+        """
+        Generator function to performa bfs on the graph
+
+        :param self: An instance of the Graph class
+        :param startNode: Start node for the bfs
+        """
+        nextNodes = queue.Queue()
+        visited = set()
+        nextNodes.put(startNode)
+        visited.add(startNode)
+
+        while not nextNodes.empty():
+            cur = nextNodes.get()
+            yield cur
+
+            for edge in self.graph[cur.name]['edges']:
+                edjNode = self.graph[edge]['node']
+                if edjNode not in visited:
+                    nextNodes.put(edjNode)
+                    visited.add(edjNode)
+
+
     def mapPytorchLayers(self):
+        for node in self.bfs(startNode=self.graph['input']['node']):
+            print(node)
+        """
         # Map nodes to Pytorch layers
         # BFS
         nextNodes = queue.Queue()
@@ -228,7 +254,7 @@ class Graph:
                 ic = self.pytorchLayers[key]['OutputChannels']
                 oc = self.pytorchLayers[key]['InputChannels']
                 self.pytorchLayers[key]['Layer'] = nn.Linear(ic, oc)
-                
+        """    
 
               
     def render(self, dirPath=os.path.join(parentdir, "Graphs/GraphVisualizations/")):
