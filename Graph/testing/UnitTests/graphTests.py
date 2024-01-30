@@ -26,27 +26,36 @@ class graphTests(unittest.TestCase):
         self.assertTrue(True)
 
     
-    def testPytorchInstalled(self):
+    def testBfs(self):
         """
-        Simple test for ensuring that Pytorch is installed.
+        Tests the Graph class' bfs method..
 
         :param self: an instance of the graphTests class.
         """
-        # Setup Linear Layer
-        linearLayer = nn.Linear(in_features=5, out_features=2)
-        weights = torch.tensor([[0.1788,  0.3492, -0.2402, -0.2631,  0.2751],
-                                [0.0930,  0.0822,  0.3475,  0.1840,  0.1201]], requires_grad=True)
-        linearLayer.weight = nn.Parameter(weights)
-        # Make sure to also set the bias to zeros to match expected output
-        linearLayer.bias.data.zero_()
+        graph = Graph()
+        graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
+        self.assertTrue(os.path.exists(graph2read))
+        graph.readGraph(graph2read)
 
-        # Setup input and expected output
-        inputTensor = torch.tensor([[-2.0942, -0.8275,  0.2748,  0.6571,  2.0056]])
-        expOut = torch.tensor([[-0.3506,  0.1945]])
+        exp = ['Input(numChannels=3)','No Normalization','Batch Normalization',
+               '3x3 Conv(oc=4)','3x3 Conv(oc=8)','3x3 Conv(oc=16)',
+               '3x3 Conv(oc=32)','5x5 Conv(oc=4)','5x5 Conv(oc=8)',
+               '5x5 Conv(oc=16)','5x5 Conv(oc=32)','No Normalization',
+               'Batch Normalization','No Pooling','Max Pooling',
+               '3x3 Conv(oc=4)','3x3 Conv(oc=8)','3x3 Conv(oc=16)',
+               '3x3 Conv(oc=32)','5x5 Conv(oc=4)','5x5 Conv(oc=8)',
+               '5x5 Conv(oc=16)','5x5 Conv(oc=32)','No Normalization',
+               'Batch Normalization','No Pooling','Max Pooling','Flatten',
+               'Linear(of=16)','Linear(of=32)','Linear(of=64)','Linear(of=128)',
+               'Linear(of=256)','Linear Activation','Relu Activation',
+               'Linear(of=16)','Linear(of=32)','Linear(of=64)','Linear(of=128)',
+               'Linear(of=256)','Linear Activation','Relu Activation',
+               'Linear(of=10)','Linear Activation','Relu Activation','Output']
+        test = []
+        for node in graph.bfs(graph.graph['input']['node']):
+            test.append(str(node))
 
-        # Run Test
-        out = linearLayer(inputTensor)
-        self.assertTrue(torch.allclose(out, expOut, atol=1e-3), "Output is not as expected")
+        self.assertTrue(test == exp)
  
         
 if __name__ == '__main__':
