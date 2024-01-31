@@ -180,7 +180,7 @@ class Graph:
             self.graph = pickle.load(file)
 
         # Map Pytorch Layers
-        #self.mapPytorchLayers()
+        self.mapPytorchLayers()
 
 
     def bfs(self, startNode):
