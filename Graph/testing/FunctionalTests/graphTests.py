@@ -151,10 +151,9 @@ class graphTests(unittest.TestCase):
         graph = Graph()
         self.assertTrue(isinstance(graph, Graph))
         self.assertTrue(graph.graph == {})
-        graph.construct()
-        #graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
-        #self.assertTrue(os.path.exists(graph2read))
-        #graph.readGraph(graph2read)
+        graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
+        self.assertTrue(os.path.exists(graph2read))
+        graph.readGraph(graph2read)
         self.assertTrue(not graph.graph == {})
         self.assertTrue(graph.pytorchLayers != {})
 
