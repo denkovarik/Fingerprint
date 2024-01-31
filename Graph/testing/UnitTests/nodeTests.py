@@ -194,7 +194,9 @@ class nodeTests(unittest.TestCase):
         # Valid Construction with a tuple of 2 ints for kernel size
         conv2dId = uuid.uuid4()
         node = ConvolutionalNode(name='name', kernelSize=(3,3), 
-                                 maxNumInputChannels=128, numOutputChannels=32,
+                                 maxNumInputChannels=128, 
+                                 maxNumOutputChannels=128, 
+                                 numOutputChannels=32,
                                  layer=0, conv2dId=conv2dId)
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.layer == 0)
@@ -206,7 +208,9 @@ class nodeTests(unittest.TestCase):
 
         # Valid Construction with a list of 2 ints for kernel size
         node = ConvolutionalNode(name='name', kernelSize=[3,3], 
-                                 maxNumInputChannels=128, numOutputChannels=32,
+                                 maxNumInputChannels=128,
+                                 maxNumOutputChannels=128,
+                                 numOutputChannels=32,
                                  layer=0, conv2dId=conv2dId)
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.layer == 0)
@@ -217,7 +221,9 @@ class nodeTests(unittest.TestCase):
 
         # Valid Construction with int for kernel size
         node = ConvolutionalNode(name='name', kernelSize=3, 
-                                 maxNumInputChannels=128, numOutputChannels=32,
+                                 maxNumInputChannels=128, 
+                                 maxNumOutputChannels=128,
+                                 numOutputChannels=32,
                                  layer=0, conv2dId=conv2dId)
         self.assertTrue(node.kernelSize == (3,3))
         
@@ -276,7 +282,10 @@ class nodeTests(unittest.TestCase):
         :param self: An instance of the nodeTests class.
         """
         linearId = uuid.uuid4()
-        node = LinearNode(name='name', maxNumInFeatures=512, numOutFeatures=32, 
+        node = LinearNode(name='name', 
+                          maxNumInFeatures=512, 
+                          maxNumOutFeatures=512,
+                          numOutFeatures=32, 
                           layer=1, linearId=linearId)
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.layer == 1)
@@ -337,8 +346,11 @@ class nodeTests(unittest.TestCase):
         # Convolution Node
         conv2dId = uuid.uuid4()
         node = nodeFactory.createNode(NodeType.CONVOLUTION, name='name', 
-                                      kernelSize=5, maxNumInputChannels=128, 
-                                      numOutputChannels=32, layer=2, conv2dId=conv2dId)
+                                      kernelSize=5, 
+                                      maxNumInputChannels=128, 
+                                      maxNumOutputChannels=128,
+                                      numOutputChannels=32, 
+                                      layer=2, conv2dId=conv2dId)
         self.assertTrue(isinstance(node, ConvolutionalNode))
         self.assertTrue(node.layer == 2)
         self.assertTrue(node.conv2dId == conv2dId)
@@ -356,7 +368,9 @@ class nodeTests(unittest.TestCase):
        
         # Linear Node
         node = nodeFactory.createNode(NodeType.LINEAR, name='name', 
-                                      maxNumInFeatures=128, numOutFeatures=64,\
+                                      maxNumInFeatures=128,
+                                      maxNumOutFeatures=128, 
+                                      numOutFeatures=64,
                                       layer=0, linearId=uuid.uuid4())
         self.assertTrue(isinstance(node, LinearNode))
         self.assertTrue(node.name == 'name')
