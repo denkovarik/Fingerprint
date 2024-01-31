@@ -55,7 +55,7 @@ class Graph:
 
           
     def addConvolutionalLayer(self, layer):
-        maxNumInputChannels = max(self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS)
+        maxNumChannels = max(self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS)
         for kernel in self.ALLOWED_KERNEL_SIZES:
             conv2dId = uuid.uuid4()
             for oc in self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS:
@@ -64,7 +64,8 @@ class Graph:
                 self.addNode(nodeType=NodeType.CONVOLUTION, 
                              name=nodeName, 
                              kernelSize=kernel, 
-                             maxNumInputChannels=maxNumInputChannels, 
+                             maxNumInputChannels=maxNumChannels, 
+                             maxNumOutputChannels=maxNumChannels, 
                              numOutputChannels=oc, layer=layer, 
                              conv2dId=conv2dId)
         self.prevNodes = self.curNodes
@@ -97,12 +98,13 @@ class Graph:
 
     
     def addLinearLayer(self, layer, linearId): 
-        maxNumInputFeatures = max(self.ALLOWED_NUMBER_OF_LINEAR_FEATURES)
+        maxNumFeatures = max(self.ALLOWED_NUMBER_OF_LINEAR_FEATURES)
         for of in self.ALLOWED_NUMBER_OF_LINEAR_FEATURES:
             nodeName = 'L' + str(self.layer) + '_Linear(of=' + str(of) + ')' 
             self.addNode(nodeType=NodeType.LINEAR, 
                          name=nodeName, 
-                         maxNumInFeatures=maxNumInputFeatures, 
+                         maxNumInFeatures=maxNumFeatures, 
+                         maxNumOutFeatures=maxNumFeatures, 
                          numOutFeatures=of, layer=layer, linearId=linearId)
         self.prevNodes = self.curNodes
         self.curNodes = []
@@ -118,6 +120,7 @@ class Graph:
         self.addNode(nodeType=NodeType.LINEAR, 
                      name=nodeName, 
                      maxNumInFeatures=max(self.ALLOWED_NUMBER_OF_LINEAR_FEATURES), 
+                     maxNumOutFeatures=self.numClasses, 
                      numOutFeatures=self.numClasses, layer=self.layer, linearId=uuid.uuid4())    
         self.prevNodes = self.curNodes
         self.curNodes = []
