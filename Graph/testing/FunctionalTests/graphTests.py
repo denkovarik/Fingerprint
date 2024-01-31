@@ -36,7 +36,7 @@ class graphTests(unittest.TestCase):
         graph = Graph()
         self.assertTrue(isinstance(graph, Graph))
         self.assertTrue(graph.graph == {})
-        graph.construct()
+        graph.construct() 
         self.assertTrue(not graph.graph == {})
 
     
@@ -56,6 +56,7 @@ class graphTests(unittest.TestCase):
         normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM)
         convNode = ConvolutionalNode(name='convNode1', kernelSize=3, 
                                      maxNumInputChannels=16, 
+                                     maxNumOutputChannels=16, 
                                      numOutputChannels=4, layer=0,
                                      conv2dId=uuid.uuid4())
         
@@ -91,6 +92,7 @@ class graphTests(unittest.TestCase):
         normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM)
         convNode = ConvolutionalNode(name='convNode1', kernelSize=3, 
                                      maxNumInputChannels=16, 
+                                     maxNumOutputChannels=16, 
                                      numOutputChannels=4, layer=0, 
                                      conv2dId=uuid.uuid4())
         
