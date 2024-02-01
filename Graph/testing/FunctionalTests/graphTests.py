@@ -58,7 +58,7 @@ class graphTests(unittest.TestCase):
                                      maxNumInputChannels=16, 
                                      maxNumOutputChannels=16, 
                                      numOutputChannels=4, layer=0,
-                                     conv2dId=uuid.uuid4())
+                                     pytorchLayerId=uuid.uuid4())
         
         graph.graph[inputNode.name] = {'node': inputNode, 'edges': [normNode.name]}
         graph.graph[normNode.name] = {'node': normNode, 'edges': [convNode.name]}
@@ -94,7 +94,7 @@ class graphTests(unittest.TestCase):
                                      maxNumInputChannels=16, 
                                      maxNumOutputChannels=16, 
                                      numOutputChannels=4, layer=0, 
-                                     conv2dId=uuid.uuid4())
+                                     pytorchLayerId=uuid.uuid4())
         
         graph.graph[inputNode.name] = {'node': inputNode, 'edges': [normNode.name]}
         graph.graph[normNode.name] = {'node': normNode, 'edges': [convNode.name]}
