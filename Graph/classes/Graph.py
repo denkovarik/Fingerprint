@@ -57,7 +57,7 @@ class Graph:
     def addConvolutionalLayer(self, layer):
         maxNumChannels = max(self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS)
         for kernel in self.ALLOWED_KERNEL_SIZES:
-            conv2dId = uuid.uuid4()
+            pytorchLayerId = uuid.uuid4()
             for oc in self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS:
                 nodeName = 'L' + str(self.layer) + '_' + str(kernel[0]) + 'x' \
                          + str(kernel[1]) + '_Conv(oc=' + str(oc) + ')'
@@ -67,7 +67,7 @@ class Graph:
                              maxNumInputChannels=maxNumChannels, 
                              maxNumOutputChannels=maxNumChannels, 
                              numOutputChannels=oc, layer=layer, 
-                             conv2dId=conv2dId)
+                             pytorchLayerId=pytorchLayerId)
         self.prevNodes = self.curNodes
         self.curNodes = []
 
@@ -97,7 +97,7 @@ class Graph:
         self.addNode(nodeType=NodeType.OUTPUT)
 
     
-    def addLinearLayer(self, layer, linearId): 
+    def addLinearLayer(self, layer, pytorchLayerId): 
         maxNumFeatures = max(self.ALLOWED_NUMBER_OF_LINEAR_FEATURES)
         for of in self.ALLOWED_NUMBER_OF_LINEAR_FEATURES:
             nodeName = 'L' + str(self.layer) + '_Linear(of=' + str(of) + ')' 
@@ -105,7 +105,8 @@ class Graph:
                          name=nodeName, 
                          maxNumInFeatures=maxNumFeatures, 
                          maxNumOutFeatures=maxNumFeatures, 
-                         numOutFeatures=of, layer=layer, linearId=linearId)
+                         numOutFeatures=of, layer=layer, 
+                         pytorchLayerId=pytorchLayerId)
         self.prevNodes = self.curNodes
         self.curNodes = []
 
@@ -121,7 +122,7 @@ class Graph:
                      name=nodeName, 
                      maxNumInFeatures=max(self.ALLOWED_NUMBER_OF_LINEAR_FEATURES), 
                      maxNumOutFeatures=self.numClasses, 
-                     numOutFeatures=self.numClasses, layer=self.layer, linearId=uuid.uuid4())    
+                     numOutFeatures=self.numClasses, layer=self.layer, pytorchLayerId=uuid.uuid4())    
         self.prevNodes = self.curNodes
         self.curNodes = []
         self.addActivationLayer()
@@ -212,28 +213,28 @@ class Graph:
     def mapPytorchLayers(self):
         for curNode in self.bfs(startNode=self.graph['input']['node']):
             if isinstance(curNode, ConvolutionalNode): 
-                conv2dId = curNode.conv2dId 
-                if conv2dId not in self.pytorchLayers.keys():
-                    self.pytorchLayers[conv2dId] = {'Type': 'Conv2d',
-                                                    'id': conv2dId,
+                pytorchLayerId = curNode.pytorchLayerId 
+                if pytorchLayerId not in self.pytorchLayers.keys():
+                    self.pytorchLayers[pytorchLayerId] = {'Type': 'Conv2d',
+                                                    'id': pytorchLayerId,
                                                     'layerNum': curNode.layer, 
                                                     'KernelSize': curNode.kernelSize,
                                                     'InputChannels': curNode.maxNumInputChannels,
                                                     'OutputChannels': curNode.numOutputChannels}
                 else:
-                    oc = max(self.pytorchLayers[conv2dId]['OutputChannels'], curNode.numOutputChannels)
-                    self.pytorchLayers[conv2dId]['OutputChannels'] = oc
+                    oc = max(self.pytorchLayers[pytorchLayerId]['OutputChannels'], curNode.numOutputChannels)
+                    self.pytorchLayers[pytorchLayerId]['OutputChannels'] = oc
             elif isinstance(curNode, LinearNode):
-                linearId = curNode.linearId
-                if linearId not in self.pytorchLayers.keys():
-                    self.pytorchLayers[linearId] = {'Type': 'Linear',
-                                                    'id': linearId,
+                pytorchLayerId = curNode.pytorchLayerId
+                if pytorchLayerId not in self.pytorchLayers.keys():
+                    self.pytorchLayers[pytorchLayerId] = {'Type': 'Linear',
+                                                    'id': pytorchLayerId,
                                                     'layerNum': curNode.layer, 
                                                     'InputChannels': curNode.maxNumInFeatures,
                                                     'OutputChannels': curNode.numOutFeatures}
                 else:
-                    oc = max(self.pytorchLayers[linearId]['OutputChannels'], curNode.numOutFeatures)
-                    self.pytorchLayers[conv2dId]['OutputChannels'] = oc
+                    oc = max(self.pytorchLayers[pytorchLayerId]['OutputChannels'], curNode.numOutFeatures)
+                    self.pytorchLayers[pytorchLayerId]['OutputChannels'] = oc
         
         for key in self.pytorchLayers.keys():
             if self.pytorchLayers[key]['Type'] == 'Conv2d':

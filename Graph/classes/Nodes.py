@@ -30,12 +30,24 @@ class Node:
     def __init__(self, name, displayName):
         self.name = name
         self.displayName = displayName
+        self.pytorchLayerId = None
                                     
     def __str__(self):
         return self.displayName
                                                     
     def __repr__(self):
         return self.displayName
+
+    @staticmethod
+    def makePytorchLayer(node):
+        if not isinstance(node, Node):
+            raise Exception("Param node must be of type Node")
+
+        if isinstance(node, ConvolutionalNode):
+            pass
+        elif isinstance(node, LinearNode):
+            pass
+        return None
 
 
 class InputNode(Node):
@@ -70,13 +82,13 @@ class PoolingNode(Node):
 
 
 class ConvolutionalNode(Node):
-    def __init__(self, name, kernelSize, maxNumInputChannels, maxNumOutputChannels, numOutputChannels, layer, conv2dId):
+    def __init__(self, name, kernelSize, maxNumInputChannels, 
+                 maxNumOutputChannels, numOutputChannels, layer, pytorchLayerId):
         typeErrMsg = "Kernel Size must be either an integer, a tuple of "
         typeErrMsg += "integers, or a list 2 integers"
 
         if isinstance(kernelSize, int):
-            # Kernel size as just an int indicates a kernel size of 
-            # kernelSize x kernelSize
+            # Kernel size as int => kernelSize x kernelSize
             self.kernelSize = (kernelSize, kernelSize)
         elif isinstance(kernelSize, list) or isinstance(kernelSize, tuple):
             if (len(kernelSize) == 2 and isinstance(kernelSize[0], int)  
@@ -89,7 +101,7 @@ class ConvolutionalNode(Node):
         
         self.name = name
         self.layer = layer
-        self.conv2dId = conv2dId
+        self.pytorchLayerId = pytorchLayerId
         self.displayName = str(self.kernelSize[0]) + 'x' + str(self.kernelSize[1]) 
         self.displayName += ' Conv(oc=' + str(numOutputChannels) + ')'
         self.maxNumInputChannels = maxNumInputChannels
@@ -104,10 +116,11 @@ class FlattenNode(Node):
 
 
 class LinearNode(Node):
-    def __init__(self, name, maxNumInFeatures, maxNumOutFeatures, numOutFeatures, layer, linearId):
+    def __init__(self, name, maxNumInFeatures, maxNumOutFeatures, 
+                 numOutFeatures, layer, pytorchLayerId):
         self.name = name
         self.layer = layer
-        self.linearId = linearId
+        self.pytorchLayerId = pytorchLayerId
         self.maxNumInFeatures = maxNumInFeatures
         self.maxNumOutFeatures = numOutFeatures
         self.numOutFeatures = numOutFeatures
