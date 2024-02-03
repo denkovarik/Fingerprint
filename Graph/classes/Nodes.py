@@ -1,4 +1,7 @@
 from enum import Enum
+import torch
+import torch.nn as nn
+
 
 class NodeType(Enum):
     INPUT = 'input'
@@ -27,19 +30,20 @@ class ActivationType(Enum):
 
 
 class Node:
-    def __init__(self, name, displayName):
+    def __init__(self, name="node", displayName="Node"):
         self.name = name
         self.displayName = displayName
         self.pytorchLayerId = None
-                                    
+
+
     def __str__(self):
         return self.displayName
-                                                    
+
     def __repr__(self):
         return self.displayName
 
-    @staticmethod
-    def makePytorchLayer(node):
+
+    def getPytochLayer(node):
         if not isinstance(node, Node):
             raise Exception("Param node must be of type Node")
 
@@ -52,19 +56,23 @@ class Node:
 
 class InputNode(Node):
     def __init__(self, numChannels):
+        super().__init__() 
         self.name = 'input'
+        self.displayName = 'Input(numChannels=' + str(numChannels) + ')'
         self.displayName = 'Input(numChannels=' + str(numChannels) + ')'
         self.numChannels = numChannels
 
 
 class OutputNode(Node):
     def __init__(self):
+        super().__init__() 
         self.name = 'output'
         self.displayName = 'Output'
 
 
 class NormalizationNode(Node):
     def __init__(self, name, normalizationType):
+        super().__init__() 
         self.name = name
         self.displayName = 'No Normalization'
         self.normalizationType = normalizationType
@@ -74,6 +82,7 @@ class NormalizationNode(Node):
 
 class PoolingNode(Node):
     def __init__(self, name, poolingType):
+        super().__init__() 
         self.name = name 
         self.displayName = 'No Pooling'
         self.poolingType = poolingType
@@ -84,6 +93,7 @@ class PoolingNode(Node):
 class ConvolutionalNode(Node):
     def __init__(self, name, kernelSize, maxNumInputChannels, 
                  maxNumOutputChannels, numOutputChannels, layer, pytorchLayerId):
+        super().__init__() 
         typeErrMsg = "Kernel Size must be either an integer, a tuple of "
         typeErrMsg += "integers, or a list 2 integers"
 
@@ -100,17 +110,25 @@ class ConvolutionalNode(Node):
             raise TypeError(typeErrMsg) 
         
         self.name = name
-        self.layer = layer
-        self.pytorchLayerId = pytorchLayerId
         self.displayName = str(self.kernelSize[0]) + 'x' + str(self.kernelSize[1]) 
         self.displayName += ' Conv(oc=' + str(numOutputChannels) + ')'
+        self.layer = layer
+        self.pytorchLayerId = pytorchLayerId
         self.maxNumInputChannels = maxNumInputChannels
         self.maxNumOutputChannels = numOutputChannels
         self.numOutputChannels = numOutputChannels
 
 
+    def getPytorchLayer(self):
+        convLayer = nn.Conv2d(in_channels=self.maxNumInputChannels,
+                             out_channels=self.maxNumOutputChannels,
+                             kernel_size=self.kernelSize)
+        return convLayer
+
+
 class FlattenNode(Node):
     def __init__(self, name):
+        super().__init__() 
         self.name = name
         self.displayName = 'Flatten'
 
@@ -118,17 +136,25 @@ class FlattenNode(Node):
 class LinearNode(Node):
     def __init__(self, name, maxNumInFeatures, maxNumOutFeatures, 
                  numOutFeatures, layer, pytorchLayerId):
+        super().__init__() 
         self.name = name
+        self.displayName = 'Linear(of=' + str(numOutFeatures) + ')'
         self.layer = layer
         self.pytorchLayerId = pytorchLayerId
         self.maxNumInFeatures = maxNumInFeatures
         self.maxNumOutFeatures = numOutFeatures
         self.numOutFeatures = numOutFeatures
-        self.displayName = 'Linear(of=' + str(numOutFeatures) + ')'
+
+
+    def getPytorchLayer(self):
+        linearLayer = nn.Linear(in_features=self.maxNumInFeatures,
+                            out_features=self.maxNumOutFeatures)
+        return linearLayer
 
 
 class ActivationNode(Node):
     def __init__(self, name, activationType):
+        super().__init__() 
         self.activationType = activationType
         self.name = name
         if self.activationType == activationType.LINEAR:
@@ -157,5 +183,4 @@ class NodeFactory:
             return LinearNode(*args, **kwargs)
         if nodeType == NodeType.ACTIVATION:
             return ActivationNode(*args, **kwargs)
-
         raise ValueError(f"Unknown node type: {nodeType}")
