@@ -11,6 +11,16 @@ def clearScreen():
         _ = os.system('clear')
 
 
+def ensureDirpathExists(dirpath):
+    if dirpath and not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+
+
+def ensureFilepathExists(filepath):
+    dirpath = os.path.dirname(filepath)
+    ensureDirpathExists(dirpath)
+
+
 def isRunningInJupyterNotebook():
     try:
         if 'IPKernelApp' not in get_ipython().config:  # Check if IPython kernel is running
