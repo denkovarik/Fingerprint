@@ -12,6 +12,7 @@ import uuid
 import queue
 import torch
 import torch.nn as nn
+from utils import ensureFilepathExists
 
 
 class Graph:
@@ -330,7 +331,11 @@ class Graph:
 
 
     def writeGraph2File(self, filepath):
-        # Assuming your_dict is the dictionary you want to save
+        # Ensure dir path exists
+        dirpath = os.path.dirname(filepath)
+        if dirpath and not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+
         with open(filepath, 'wb') as file:
             pickle.dump(self.graph, file)
 
