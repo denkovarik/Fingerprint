@@ -213,43 +213,11 @@ class Graph:
 
     def mapPytorchLayers(self):
         for curNode in self.bfs(startNode=self.graph['input']['node']):
-            if isinstance(curNode, ConvolutionalNode): 
+            if curNode.pytorchLayerId is not None:
                 pytorchLayerId = curNode.pytorchLayerId 
-                if pytorchLayerId not in self.pytorchLayers.keys():
-                    self.pytorchLayers[pytorchLayerId] = {'Type': 'Conv2d',
-                                                    'id': pytorchLayerId,
-                                                    'layerNum': curNode.layer, 
-                                                    'KernelSize': curNode.kernelSize,
-                                                    'InputChannels': curNode.maxNumInputChannels,
-                                                    'OutputChannels': curNode.numOutputChannels}
-                else:
-                    oc = max(self.pytorchLayers[pytorchLayerId]['OutputChannels'], curNode.numOutputChannels)
-                    self.pytorchLayers[pytorchLayerId]['OutputChannels'] = oc
-            elif isinstance(curNode, LinearNode):
-                pytorchLayerId = curNode.pytorchLayerId
-                if pytorchLayerId not in self.pytorchLayers.keys():
-                    self.pytorchLayers[pytorchLayerId] = {'Type': 'Linear',
-                                                    'id': pytorchLayerId,
-                                                    'layerNum': curNode.layer, 
-                                                    'InputChannels': curNode.maxNumInFeatures,
-                                                    'OutputChannels': curNode.numOutFeatures}
-                else:
-                    oc = max(self.pytorchLayers[pytorchLayerId]['OutputChannels'], curNode.numOutFeatures)
-                    self.pytorchLayers[pytorchLayerId]['OutputChannels'] = oc
-        
-        for key in self.pytorchLayers.keys():
-            if self.pytorchLayers[key]['Type'] == 'Conv2d':
-                ic = self.pytorchLayers[key]['OutputChannels']
-                oc = self.pytorchLayers[key]['InputChannels']
-                ks = self.pytorchLayers[key]['KernelSize']
-                self.pytorchLayers[key]['Layer'] = nn.Conv2d(ic, oc, kernel_size=ks)
-            elif self.pytorchLayers[key]['Type'] == 'Linear':
-                ic = self.pytorchLayers[key]['OutputChannels']
-                oc = self.pytorchLayers[key]['InputChannels']
-                self.pytorchLayers[key]['Layer'] = nn.Linear(ic, oc)
+                self.pytorchLayers[pytorchLayerId] = curNode.getPytorchLayer()
             
-
-              
+   
     def render(self, dirPath=os.path.join(parentdir, "Graphs/GraphVisualizations/")):
         nodes = []
         edges = [] 
