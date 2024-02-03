@@ -4,11 +4,10 @@
 apt-get update
 apt-get -y upgrade
 
-# Install Python package 'graphviz'
+# Install packages to create and render graphs
 pip3 install graphviz
-
-# Install the graphviz package
 apt-get -y install graphviz
+apt-get install feh
 
 # Install the xdg-utils package
 apt-get -y install xdg-utils
