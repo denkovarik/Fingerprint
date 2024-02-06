@@ -183,6 +183,28 @@ class graphTests(unittest.TestCase):
         self.assertTrue(conv2dKernelSize3x3 == expConv2dKernelSize3x3)
         self.assertTrue(conv2dKernelSize5x5 == expConv2dKernelSize5x5)
 
+
+    def testMappingOnImages(self):
+        """
+        Tests the mapping of the pytorch layers on test images from the cifar-10 
+        dataset.
+        
+        :param self: An instance of the graphTests class.
+        """
+        graph = Graph()
+        self.assertTrue(isinstance(graph, Graph))
+        self.assertTrue(graph.graph == {})
+        graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
+        self.assertTrue(os.path.exists(graph2read))
+        graph.readGraph(graph2read)
+        self.assertTrue(not graph.graph == {})
+        self.assertTrue(graph.pytorchLayers != {})
+        testBatchPath = os.path.join(currentdir, 'TestFiles/cifar10_test_batch_pickle')
+        self.assertTrue(testBatchPath)
+        testBatch = unpickle(testBatchPath)
+
+        # Test pytorch layers on images from test batch
+
         
 if __name__ == '__main__':
     unittest.main()
