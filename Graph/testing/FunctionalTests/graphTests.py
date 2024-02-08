@@ -11,7 +11,9 @@ from utils import *
 import uuid
 import torch
 import torch.nn as nn
-    
+from PIL import Image
+import numpy as np
+
 
 class graphTests(unittest.TestCase):
     """
@@ -204,6 +206,29 @@ class graphTests(unittest.TestCase):
         testBatch = unpickle(testBatchPath)
 
         # Test pytorch layers on images from test batch
+        imgData = testBatch[b'data'][:4]
+        batch = imgData.reshape(4, 3, 32, 32)
+        tensorData = torch.tensor(batch, dtype=torch.float32)
+
+        tensorData = torch.tensor(testBatch[b'data'][:4], dtype=torch.float32).reshape(4, 3, 32, 32)
+
+        conv5x5 = []
+        conv3x3 = []
+        linear = []
+
+        for layer in graph.pytorchLayers.values():
+            if isinstance(layer, nn.Conv2d):
+                if layer.kernel_size == (3,3):
+                    conv3x3.append(layer)
+                elif layer.kernel_size == (5,5):
+                    conv5x5.append(layer)
+            elif isinstance(layer, nn.Linear):
+                linear.append(layer)
+
+        test3x3Conv = nn.Conv2d(3, 8, 3)
+        conv1 = test3x3Conv(tensorData)
+        #conv1 = conv3x3[0](tensorData)
+
 
         
 if __name__ == '__main__':
