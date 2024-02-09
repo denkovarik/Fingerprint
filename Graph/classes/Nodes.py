@@ -1,6 +1,8 @@
 from enum import Enum
 import torch
 import torch.nn as nn
+from classes.SharedConv2D import SharedConv2D
+from classes.SharedLinear import SharedLinear
 
 
 class NodeType(Enum):
@@ -120,10 +122,9 @@ class ConvolutionalNode(Node):
 
 
     def getPytorchLayer(self):
-        convLayer = nn.Conv2d(in_channels=self.maxNumInputChannels,
-                             out_channels=self.maxNumOutputChannels,
-                             kernel_size=self.kernelSize)
-        return convLayer
+        return SharedConv2D(kernelSize=self.kernelSize, 
+                            maxInChannels=self.maxNumInputChannels, 
+                            maxOutChannels=self.maxNumOutputChannels)
 
 
 class FlattenNode(Node):
@@ -147,9 +148,8 @@ class LinearNode(Node):
 
 
     def getPytorchLayer(self):
-        linearLayer = nn.Linear(in_features=self.maxNumInFeatures,
-                            out_features=self.maxNumOutFeatures)
-        return linearLayer
+        return SharedLinear(maxInFeatures=self.maxNumInFeatures, 
+                            maxOutFeatures=self.maxNumOutFeatures)
 
 
 class ActivationNode(Node):

@@ -13,6 +13,8 @@ import queue
 import torch
 import torch.nn as nn
 from utils import ensureFilepathExists
+from classes.SharedConv2D import SharedConv2D
+from classes.SharedLinear import SharedLinear
 
 
 class Graph:
