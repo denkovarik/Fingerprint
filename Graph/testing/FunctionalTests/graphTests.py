@@ -13,6 +13,8 @@ import torch
 import torch.nn as nn
 from PIL import Image
 import numpy as np
+from classes.SharedConv2D import SharedConv2D
+from classes.SharedLinear import SharedLinear
 
 
 class graphTests(unittest.TestCase):
@@ -171,13 +173,13 @@ class graphTests(unittest.TestCase):
         expConv2dKernelSize5x5 = 2
 
         for key in graph.pytorchLayers.keys():
-            if(isinstance(graph.pytorchLayers[key], nn.Conv2d)):
+            if(isinstance(graph.pytorchLayers[key], SharedConv2D)):
                 numConvLayers += 1
-                if graph.pytorchLayers[key].kernel_size == (3,3):
+                if graph.pytorchLayers[key].kernelSize == (3,3):
                     conv2dKernelSize3x3 += 1
-                elif graph.pytorchLayers[key].kernel_size == (5,5):
+                elif graph.pytorchLayers[key].kernelSize == (5,5):
                     conv2dKernelSize5x5 += 1
-            elif(isinstance(graph.pytorchLayers[key], nn.Linear)):
+            elif(isinstance(graph.pytorchLayers[key], SharedLinear)):
                 numLinearLayers += 1
 
         self.assertTrue(numConvLayers == expNumConvLayers)
@@ -217,17 +219,17 @@ class graphTests(unittest.TestCase):
         linear = []
 
         for layer in graph.pytorchLayers.values():
-            if isinstance(layer, nn.Conv2d):
-                if layer.kernel_size == (3,3):
+            if isinstance(layer, SharedConv2D):
+                if layer.kernelSize == (3,3):
                     conv3x3.append(layer)
-                elif layer.kernel_size == (5,5):
+                elif layer.kernelSize == (5,5):
                     conv5x5.append(layer)
-            elif isinstance(layer, nn.Linear):
+            elif isinstance(layer, SharedLinear):
                 linear.append(layer)
 
         test3x3Conv = nn.Conv2d(3, 8, 3)
         conv1 = test3x3Conv(tensorData)
-        #conv1 = conv3x3[0](tensorData)
+        conv1 = conv3x3[0](tensorData, 3, 8)
 
 
         
