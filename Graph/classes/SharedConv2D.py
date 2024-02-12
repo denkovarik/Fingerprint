@@ -24,6 +24,9 @@ class SharedConv2D(nn.Module):
         self.maxInChannels = maxInChannels
         self.maxOutChannels = maxOutChannels
         self.useMaxPool = useMaxPool
+        self.stride = (1, 1)
+        self.padding = (0, 0)
+        self.dilation = (1, 1)
 
         # Initialize the weights and biases
         self.weight = nn.Parameter(torch.Tensor(maxOutChannels, maxInChannels, 
@@ -49,3 +52,24 @@ class SharedConv2D(nn.Module):
         if self.useMaxPool:
             x = self.pool(x)
         return x
+
+
+    def calcOutSize(self, inputHeight, inputWidth):
+        """
+        Calculate the output height and width of a Conv2d layer.
+        
+        Parameters:
+        - input_height: Height of the input tensor.
+        - input_width: Width of the input tensor.
+        
+        Returns:
+        - A tuple containing the output height and width.
+        """
+        # Calculate output height and width
+        outputHeight = ((inputHeight + 2 * self.padding[0] - self.dilation[0] 
+            * (self.kernelSize[0] - 1) - 1) // self.stride[0]) + 1
+        outputWidth = ((inputWidth + 2 * self.padding[1] - self.dilation[1] 
+            * (self.kernelSize[1] - 1) - 1) // self.stride[1]) + 1
+
+        return (outputHeight, outputWidth)
+
