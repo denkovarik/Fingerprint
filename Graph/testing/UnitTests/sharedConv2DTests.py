@@ -33,7 +33,7 @@ class sharedConv2DTests(unittest.TestCase):
 
         :param self: An instance of the sharedConv2DTests class.
         """
-        sharedConv = SharedConv2D(kernelSize=3, maxInChannels=32, maxOutChannels=32)
+        sharedConv = SharedConv2D(kernel_size=3, in_channels=32, out_channels=32)
         self.assertTrue(isinstance(sharedConv, SharedConv2D))
 
 
@@ -43,8 +43,6 @@ class sharedConv2DTests(unittest.TestCase):
 
         :param self: An instance of the sharedConv2DTests class.
         """
-        conv2d = nn.Conv2d(3, 8, 3)
-        sharedConv2d = SharedConv2D(3, 3, 8)
         # Get test batch
         testBatchPath = os.path.join(currentdir, 'TestFiles/cifar10_test_batch_pickle')
         self.assertTrue(testBatchPath)
@@ -53,6 +51,9 @@ class sharedConv2DTests(unittest.TestCase):
         batch = imgData.reshape(4, 3, 32, 32)
         tensorData = torch.tensor(batch, dtype=torch.float32)
         tensorData = torch.tensor(testBatch[b'data'][:4], dtype=torch.float32).reshape(4, 3, 32, 32)
+        # Kernel Size 3x3
+        conv2d = nn.Conv2d(3, 8, 3)
+        sharedConv2d = SharedConv2D(3, 8, 3)
         # Forward prop
         calcOutputSize = sharedConv2d.calcOutSize(inputHeight=tensorData.shape[2],
                                                   inputWidth=tensorData.shape[3])
@@ -83,7 +84,7 @@ class sharedConv2DTests(unittest.TestCase):
         conv2d.weight.data = weightsSub
         conv2d.bias.data.zero_()
         # Construct shared conv2d layer
-        sharedConv2d = SharedConv2D(3, 3, 8)
+        sharedConv2d = SharedConv2D(3, 8, 3)
         sharedConv2d.weight = nn.Parameter(weights)
         sharedConv2d.bias.data.zero_()
         # Make sure initialization was done correctly

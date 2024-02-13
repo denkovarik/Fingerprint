@@ -122,9 +122,9 @@ class ConvolutionalNode(Node):
 
 
     def getPytorchLayer(self):
-        return SharedConv2D(kernelSize=self.kernelSize, 
-                            maxInChannels=self.maxNumInputChannels, 
-                            maxOutChannels=self.maxNumOutputChannels)
+        return SharedConv2D(kernel_size=self.kernelSize, 
+                            in_channels=self.maxNumInputChannels, 
+                            out_channels=self.maxNumOutputChannels)
 
 
 class FlattenNode(Node):
