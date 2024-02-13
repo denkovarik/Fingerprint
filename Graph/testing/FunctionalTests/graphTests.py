@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 from PIL import Image
 import numpy as np
-from classes.SharedConv2D import SharedConv2D
+from classes.SharedConv2d import SharedConv2d
 from classes.SharedLinear import SharedLinear
 
 
@@ -173,7 +173,7 @@ class graphTests(unittest.TestCase):
         expConv2dKernelSize5x5 = 2
 
         for key in graph.pytorchLayers.keys():
-            if(isinstance(graph.pytorchLayers[key], SharedConv2D)):
+            if(isinstance(graph.pytorchLayers[key], SharedConv2d)):
                 numConvLayers += 1
                 if graph.pytorchLayers[key].kernelSize == (3,3):
                     conv2dKernelSize3x3 += 1
@@ -219,7 +219,7 @@ class graphTests(unittest.TestCase):
         linear = []
 
         for layer in graph.pytorchLayers.values():
-            if isinstance(layer, SharedConv2D):
+            if isinstance(layer, SharedConv2d):
                 if layer.kernelSize == (3,3):
                     conv3x3.append(layer)
                 elif layer.kernelSize == (5,5):

@@ -15,8 +15,8 @@ python3 ./UnitTests/generalTests.py
 echo "Running Node Unit Tests"
 python3 ./UnitTests/nodeTests.py
 
-echo "Running SharedConv2D Unit Tests"
-python3 ./UnitTests/sharedConv2DTests.py
+echo "Running SharedConv2d Unit Tests"
+python3 ./UnitTests/sharedConv2dTests.py
 
 echo "Running SharedLinear Unit Tests"
 python3 ./UnitTests/sharedLinearTests.py
