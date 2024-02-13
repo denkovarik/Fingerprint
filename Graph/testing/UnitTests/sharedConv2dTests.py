@@ -5,7 +5,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 graphdir = os.path.dirname(parentdir)
 sys.path.insert(0, graphdir)
-from classes.SharedConv2D import SharedConv2D
+from classes.SharedConv2d import SharedConv2d
 from utils import *
 import torch
 import torch.nn as nn
@@ -33,8 +33,8 @@ class sharedConv2DTests(unittest.TestCase):
 
         :param self: An instance of the sharedConv2DTests class.
         """
-        sharedConv = SharedConv2D(kernel_size=3, in_channels=32, out_channels=32)
-        self.assertTrue(isinstance(sharedConv, SharedConv2D))
+        sharedConv = SharedConv2d(kernel_size=3, in_channels=32, out_channels=32)
+        self.assertTrue(isinstance(sharedConv, SharedConv2d))
 
 
     def testCalcOutputSize(self):
@@ -53,7 +53,7 @@ class sharedConv2DTests(unittest.TestCase):
         tensorData = torch.tensor(testBatch[b'data'][:4], dtype=torch.float32).reshape(4, 3, 32, 32)
         # Kernel Size 3x3
         conv2d = nn.Conv2d(3, 8, 3)
-        sharedConv2d = SharedConv2D(3, 8, 3)
+        sharedConv2d = SharedConv2d(3, 8, 3)
         # Forward prop
         calcOutputSize = sharedConv2d.calcOutSize(inputHeight=tensorData.shape[2],
                                                   inputWidth=tensorData.shape[3])
@@ -63,7 +63,6 @@ class sharedConv2DTests(unittest.TestCase):
         self.assertTrue(calcOutputSize[1] == outConv2d.shape[3])
         self.assertTrue(calcOutputSize[0] == outSharedConv2d.shape[2])
         self.assertTrue(calcOutputSize[1] == outSharedConv2d.shape[3])
-
 
 
     def testForwardPass(self):
@@ -84,7 +83,7 @@ class sharedConv2DTests(unittest.TestCase):
         conv2d.weight.data = weightsSub
         conv2d.bias.data.zero_()
         # Construct shared conv2d layer
-        sharedConv2d = SharedConv2D(3, 8, 3)
+        sharedConv2d = SharedConv2d(3, 8, 3)
         sharedConv2d.weight = nn.Parameter(weights)
         sharedConv2d.bias.data.zero_()
         # Make sure initialization was done correctly
