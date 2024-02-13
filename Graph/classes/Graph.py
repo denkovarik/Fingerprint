@@ -13,7 +13,7 @@ import queue
 import torch
 import torch.nn as nn
 from utils import ensureFilepathExists
-from classes.SharedConv2D import SharedConv2D
+from classes.SharedConv2d import SharedConv2d
 from classes.SharedLinear import SharedLinear
 
 
