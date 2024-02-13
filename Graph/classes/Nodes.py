@@ -1,7 +1,7 @@
 from enum import Enum
 import torch
 import torch.nn as nn
-from classes.SharedConv2D import SharedConv2D
+from classes.SharedConv2d import SharedConv2d
 from classes.SharedLinear import SharedLinear
 
 
@@ -122,7 +122,7 @@ class ConvolutionalNode(Node):
 
 
     def getPytorchLayer(self):
-        return SharedConv2D(kernel_size=self.kernelSize, 
+        return SharedConv2d(kernel_size=self.kernelSize, 
                             in_channels=self.maxNumInputChannels, 
                             out_channels=self.maxNumOutputChannels)
 
