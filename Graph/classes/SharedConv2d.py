@@ -40,23 +40,33 @@ class SharedConv2d(nn.Module):
         return x
 
 
-    def calcOutSize(self, inputHeight, inputWidth):
+    def calcOutSize(self, tensorShape, outChannels=None):
         """
         Calculate the output height and width of a Conv2d layer.
         
-        :param inputHeight: Height of the input tensor.
+        :param tensorShape: Shape of tensor as torch.Size
         :param inputWidth: Width of the input tensor.
         
         Returns:
-        - A tuple containing the output height and width.
+        - A torch.Size object containing the shape of the output tensor
         """
+        # Error Checking
+        if not isinstance(tensorShape, (tuple, torch.Size)) or len(tensorShape) != 4:
+            raise ValueError("Tensor Shape must be in form of (batch_size, in_channels, height, width)")
+
         # Calculate output height and width
+        _, _, inputHeight, inputWidth = tensorShape
+        if outChannels is None:
+            outChannels = self.maxOutChannels
+
         outputHeight = ((inputHeight + 2 * self.padding[0] - self.dilation[0] 
             * (self.kernelSize[0] - 1) - 1) // self.stride[0]) + 1
         outputWidth = ((inputWidth + 2 * self.padding[1] - self.dilation[1] 
             * (self.kernelSize[1] - 1) - 1) // self.stride[1]) + 1
 
-        return (outputHeight, outputWidth)
+        outputShape = torch.Size([tensorShape[0], outChannels, outputHeight, outputWidth])
+
+        return outputShape
 
 
     def initDilation(self, dilation):
