@@ -77,8 +77,8 @@ class Graph:
         self.curNodes = []
 
         
-    def addInputLayer(self):
-        self.addNode(nodeType=NodeType.INPUT, numChannels=3)
+    def addInputLayer(self, inputShape):
+        self.addNode(nodeType=NodeType.INPUT, inputShape=inputShape)
         self.prevNodes = self.curNodes
         self.curNodes = []
         self.addNormalizationLayer()
@@ -167,11 +167,11 @@ class Graph:
                     visited.add(edjNode)
        
  
-    def construct(self):
+    def construct(self, inputShape):
         self.layer = 0
         self.prevNodes = []
         self.curNodes = []   
-        self.addInputLayer()    
+        self.addInputLayer(inputShape)    
         self.addConvolutionalLayers()       
         self.addFlattenLayer()
         self.addLinearLayers()            
@@ -180,6 +180,7 @@ class Graph:
 
 
     def mapPytorchLayers(self):
+        maxLinearSize = 0
         for curNode in self.bfs(startNode=self.graph['input']['node']):
             if curNode.pytorchLayerId is not None:
                 pytorchLayerId = curNode.pytorchLayerId 
@@ -201,9 +202,7 @@ class Graph:
             centeredName = curNode['node'].displayName.center(columns)
             print(centeredName)
             if i + 1 < len(sample):
-                # Center the '|' character
                 print('|'.center(columns))
-                # Center the 'V' character
                 print('V'.center(columns))
         print("")
 
