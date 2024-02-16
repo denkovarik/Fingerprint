@@ -40,7 +40,7 @@ class graphTests(unittest.TestCase):
         graph = Graph()
         self.assertTrue(isinstance(graph, Graph))
         self.assertTrue(graph.graph == {})
-        graph.construct() 
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
         self.assertTrue(not graph.graph == {})
 
     
@@ -56,7 +56,7 @@ class graphTests(unittest.TestCase):
         self.assertTrue(graph.graph == {})
 
         # Construct a simple graph example
-        inputNode = InputNode(numChannels=3)
+        inputNode = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
         normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM)
         convNode = ConvolutionalNode(name='convNode1', kernelSize=3, 
                                      maxNumInputChannels=16, 
@@ -92,7 +92,7 @@ class graphTests(unittest.TestCase):
         self.assertTrue(graph.graph == {})
 
         # Construct a simple graph example to test the read
-        inputNode = InputNode(numChannels=3)
+        inputNode = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
         normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM)
         convNode = ConvolutionalNode(name='convNode1', kernelSize=3, 
                                      maxNumInputChannels=16, 

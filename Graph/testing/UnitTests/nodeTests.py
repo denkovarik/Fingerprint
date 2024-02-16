@@ -7,6 +7,9 @@ sys.path.insert(0, graphdir)
 from classes.Nodes import *
 from classes.Graph import *
 import uuid
+import torch
+import torch.nn as nn
+import numpy as np
 
 
 class nodeTests(unittest.TestCase):
@@ -141,7 +144,7 @@ class nodeTests(unittest.TestCase):
         
         :param self: An instance of the allTests class.
         """
-        node = InputNode(numChannels=3)
+        node = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
         self.assertTrue(node.numChannels == 3)
         self.assertTrue(node.name == 'input')
         self.assertTrue(node.displayName == 'Input(numChannels=3)')
@@ -318,7 +321,8 @@ class nodeTests(unittest.TestCase):
         self.assertTrue(isinstance(nodeFactory, NodeFactory)) 
 
         # Input Node
-        node = nodeFactory.createNode(NodeType.INPUT, numChannels=1)
+        node = nodeFactory.createNode(NodeType.INPUT, 
+                                      inputShape=torch.Size([4, 1, 32, 32]))
         self.assertTrue(isinstance(node, InputNode))
         self.assertTrue(node.name == 'input')
         self.assertTrue(node.numChannels == 1)       
@@ -330,14 +334,18 @@ class nodeTests(unittest.TestCase):
         self.assertTrue(node.displayName == 'Output')
        
         # Normalization Node
-        node = nodeFactory.createNode(NodeType.NORMALIZATION, name='name', normalizationType=NormalizationType.BATCH_NORM)
+        node = nodeFactory.createNode(NodeType.NORMALIZATION, 
+                                      name='name', 
+                                      normalizationType=NormalizationType.BATCH_NORM)
         self.assertTrue(isinstance(node, NormalizationNode))
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.displayName == 'Batch Normalization')
         self.assertTrue(node.normalizationType == NormalizationType.BATCH_NORM)
        
         # Pooling Node
-        node = nodeFactory.createNode(NodeType.POOLING, name='name', poolingType=PoolingType.MAX_POOLING)
+        node = nodeFactory.createNode(NodeType.POOLING, 
+                                      name='name', 
+                                      poolingType=PoolingType.MAX_POOLING)
         self.assertTrue(isinstance(node, PoolingNode))
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.displayName == 'Max Pooling')
