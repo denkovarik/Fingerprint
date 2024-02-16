@@ -57,12 +57,15 @@ class Node:
 
 
 class InputNode(Node):
-    def __init__(self, numChannels):
-        super().__init__() 
+    def __init__(self, inputShape):
+        super().__init__()
+        if not isinstance(inputShape, torch.Size) or len(inputShape) != 4:
+            raise ValueError("inputShape must be a torch.Size of length 4")
         self.name = 'input'
-        self.displayName = 'Input(numChannels=' + str(numChannels) + ')'
-        self.displayName = 'Input(numChannels=' + str(numChannels) + ')'
-        self.numChannels = numChannels
+        self.numChannels = inputShape[1]
+        self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
+        self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
+        self.inputShape = inputShape
 
 
 class OutputNode(Node):
