@@ -35,18 +35,6 @@ class Graph:
         self.layer = 0
         self.sample = []
         self.pytorchLayers = {}
-       
- 
-    def construct(self):
-        self.layer = 0
-        self.prevNodes = []
-        self.curNodes = []   
-        self.addInputLayer()    
-        self.addConvolutionalLayers()       
-        self.addFlattenLayer()
-        self.addLinearLayers()            
-        self.addOutputLayer()
-        self.mapPytorchLayers()
 
         
     def addActivationLayer(self):
@@ -94,10 +82,6 @@ class Graph:
         self.prevNodes = self.curNodes
         self.curNodes = []
         self.addNormalizationLayer()
-
-        
-    def addOutputLayer(self):
-        self.addNode(nodeType=NodeType.OUTPUT)
 
     
     def addLinearLayer(self, layer, pytorchLayerId): 
@@ -147,6 +131,10 @@ class Graph:
         self.prevNodes = self.curNodes
         self.curNodes = []         
 
+        
+    def addOutputLayer(self):
+        self.addNode(nodeType=NodeType.OUTPUT)
+
                 
     def addPoolingLayer(self):
         for opt in self.poolingOptions:
@@ -154,6 +142,48 @@ class Graph:
             self.addNode(nodeType=NodeType.POOLING, name=nodeName, poolingType=opt)
         self.prevNodes = self.curNodes
         self.curNodes = []
+
+
+    def bfs(self, startNode):
+        """
+        Generator function to performa bfs on the graph
+
+        :param self: An instance of the Graph class
+        :param startNode: Start node for the bfs
+        """
+        nextNodes = queue.Queue()
+        visited = set()
+        nextNodes.put(startNode)
+        visited.add(startNode)
+
+        while not nextNodes.empty():
+            cur = nextNodes.get()
+            yield cur
+
+            for edge in self.graph[cur.name]['edges']:
+                edjNode = self.graph[edge]['node']
+                if edjNode not in visited:
+                    nextNodes.put(edjNode)
+                    visited.add(edjNode)
+       
+ 
+    def construct(self):
+        self.layer = 0
+        self.prevNodes = []
+        self.curNodes = []   
+        self.addInputLayer()    
+        self.addConvolutionalLayers()       
+        self.addFlattenLayer()
+        self.addLinearLayers()            
+        self.addOutputLayer()
+        self.mapPytorchLayers()
+
+
+    def mapPytorchLayers(self):
+        for curNode in self.bfs(startNode=self.graph['input']['node']):
+            if curNode.pytorchLayerId is not None:
+                pytorchLayerId = curNode.pytorchLayerId 
+                self.pytorchLayers[pytorchLayerId] = curNode.getPytorchLayer()
 
 
     def printSampleArchitecture(self, sample):
@@ -188,36 +218,6 @@ class Graph:
 
         # Map Pytorch Layers
         self.mapPytorchLayers()
-
-
-    def bfs(self, startNode):
-        """
-        Generator function to performa bfs on the graph
-
-        :param self: An instance of the Graph class
-        :param startNode: Start node for the bfs
-        """
-        nextNodes = queue.Queue()
-        visited = set()
-        nextNodes.put(startNode)
-        visited.add(startNode)
-
-        while not nextNodes.empty():
-            cur = nextNodes.get()
-            yield cur
-
-            for edge in self.graph[cur.name]['edges']:
-                edjNode = self.graph[edge]['node']
-                if edjNode not in visited:
-                    nextNodes.put(edjNode)
-                    visited.add(edjNode)
-
-
-    def mapPytorchLayers(self):
-        for curNode in self.bfs(startNode=self.graph['input']['node']):
-            if curNode.pytorchLayerId is not None:
-                pytorchLayerId = curNode.pytorchLayerId 
-                self.pytorchLayers[pytorchLayerId] = curNode.getPytorchLayer()
             
    
     def render(self, dirPath=os.path.join(parentdir, "Graphs/GraphVisualizations/")):
