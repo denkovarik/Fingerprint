@@ -45,7 +45,7 @@ class Graph:
         self.curNodes = []
 
           
-    def addConvolutionalLayer(self, layer):
+    def addConvolutionalLayer(self, layer, inputShape):
         maxNumChannels = max(self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS)
         for kernel in self.ALLOWED_KERNEL_SIZES:
             pytorchLayerId = uuid.uuid4()
@@ -55,7 +55,7 @@ class Graph:
                 self.addNode(nodeType=NodeType.CONVOLUTION, 
                              name=nodeName, 
                              kernelSize=kernel, 
-                             maxNumInputChannels=maxNumChannels, 
+                             maxNumInputChannels=inputShape[1], 
                              maxNumOutputChannels=maxNumChannels, 
                              numOutputChannels=oc, layer=layer, 
                              pytorchLayerId=pytorchLayerId)
@@ -63,12 +63,14 @@ class Graph:
         self.curNodes = []
 
                          
-    def addConvolutionalLayers(self):
+    def addConvolutionalLayers(self, inputShape):
+        outShapes = []
         for i in range(self.numConvLayers):       
             self.layer += 1
-            self.addConvolutionalLayer(self.layer)                                        
+            outShape = self.addConvolutionalLayer(self.layer, inputShape)
             self.addNormalizationLayer()                
             self.addPoolingLayer()
+            outShapes.append(outShape)
 
             
     def addFlattenLayer(self):
@@ -82,6 +84,7 @@ class Graph:
         self.prevNodes = self.curNodes
         self.curNodes = []
         self.addNormalizationLayer()
+        return inputShape
 
     
     def addLinearLayer(self, layer, pytorchLayerId): 
@@ -146,7 +149,7 @@ class Graph:
 
     def bfs(self, startNode):
         """
-        Generator function to performa bfs on the graph
+        Generator function to perform bfs on the graph
 
         :param self: An instance of the Graph class
         :param startNode: Start node for the bfs
@@ -171,8 +174,8 @@ class Graph:
         self.layer = 0
         self.prevNodes = []
         self.curNodes = []   
-        self.addInputLayer(inputShape)    
-        self.addConvolutionalLayers()       
+        outShape = self.addInputLayer(inputShape)    
+        self.addConvolutionalLayers(outShape)       
         self.addFlattenLayer()
         self.addLinearLayers()            
         self.addOutputLayer()
