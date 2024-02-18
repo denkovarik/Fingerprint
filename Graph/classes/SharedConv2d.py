@@ -40,16 +40,17 @@ class SharedConv2d(nn.Module):
         return x
 
 
-    def calcOutSize(self, tensorShape, outChannels=None):
+    def getOutSize(self, tensorShape, out_channels=None):
         """
         Calculate the output height and width of a Conv2d layer.
         
         :param tensorShape: Shape of tensor as torch.Size
-        :param inputWidth: Width of the input tensor.
+        :param out_channels: Default param for the number of Output channels
         
         Returns:
         - A torch.Size object containing the shape of the output tensor
         """
+        outChannels = out_channels
         # Error Checking
         if not isinstance(tensorShape, (tuple, torch.Size)) or len(tensorShape) != 4:
             raise ValueError("Tensor Shape must be in form of (batch_size, in_channels, height, width)")
@@ -58,13 +59,13 @@ class SharedConv2d(nn.Module):
         _, _, inputHeight, inputWidth = tensorShape
         if outChannels is None:
             outChannels = self.maxOutChannels
-
-        outputHeight = ((inputHeight + 2 * self.padding[0] - self.dilation[0] 
-            * (self.kernelSize[0] - 1) - 1) // self.stride[0]) + 1
-        outputWidth = ((inputWidth + 2 * self.padding[1] - self.dilation[1] 
-            * (self.kernelSize[1] - 1) - 1) // self.stride[1]) + 1
-
-        outputShape = torch.Size([tensorShape[0], outChannels, outputHeight, outputWidth])
+        
+        outputShape = SharedConv2d.calcOutSize(tensorShape, 
+                                               outChannels, 
+                                               self.kernelSize,  
+                                               self.stride, 
+                                               self.padding, 
+                                               self.dilation)
 
         return outputShape
 
@@ -76,17 +77,7 @@ class SharedConv2d(nn.Module):
         :param self: Instance of the SharedConv2d class
         :param dilation: The passed in dilation to init
         """
-        typeErrMsg = "Dilation must be either an integer, a tuple of "
-        typeErrMsg += "integers, or a list 2 integers"
-        if isinstance(dilation, int):
-            self.dilation = (dilation, dilation)
-            return
-        elif isinstance(dilation, tuple):
-            if (len(dilation) == 2 and isinstance(dilation[0], int)  
-            and isinstance(dilation[1], int)):
-                self.dilation = (dilation[0], dilation[1])
-                return
-        raise TypeError(typeErrMsg) 
+        self.dilation = SharedConv2d.checkDilation(dilation)
 
 
     def initKernelSize(self, kernelSize):
@@ -96,18 +87,7 @@ class SharedConv2d(nn.Module):
         :param self: Instance of the SharedConv2d class
         :param kernelSize: The passed in kernel size to init
         """
-        typeErrMsg = "Kernel Size must be either an integer, a tuple of "
-        typeErrMsg += "integers, or a list 2 integers"
-        if isinstance(kernelSize, int):
-            # Kernel size as int => kernel_size x kernel_size
-            self.kernelSize = (kernelSize, kernelSize)
-            return
-        elif isinstance(kernelSize, tuple):
-            if (len(kernelSize) == 2 and isinstance(kernelSize[0], int)  
-            and isinstance(kernelSize[1], int)):
-                self.kernelSize = (kernelSize[0], kernelSize[1])
-                return
-        raise TypeError(typeErrMsg)
+        self.kernelSize = SharedConv2d.checkKernelSize(kernelSize)
 
 
     def initPadding(self, padding):
@@ -117,17 +97,7 @@ class SharedConv2d(nn.Module):
         :param self: Instance of the SharedConv2d class
         :param padding: The passed in padding to init
         """
-        typeErrMsg = "Padding must be either an integer, a tuple of "
-        typeErrMsg += "integers, or a list 2 integers"
-        if isinstance(padding, int):
-            self.padding = (padding, padding)
-            return
-        elif isinstance(padding, tuple):
-            if (len(padding) == 2 and isinstance(padding[0], int)  
-            and isinstance(padding[1], int)):
-                self.padding = (padding[0], padding[1])
-                return
-        raise TypeError(typeErrMsg) 
+        self.padding = SharedConv2d.checkPadding(padding)
 
 
     def initStride(self, stride):
@@ -137,17 +107,161 @@ class SharedConv2d(nn.Module):
         :param self: Instance of the SharedConv2d class
         :param stride: The passed in stride to init
         """
+        self.stride = SharedConv2d.checkStride(stride)
+
+    
+    @staticmethod
+    def calcOutSize(tensorShape, out_channels, kernel_size,  stride=1, padding=0, dilation=1):
+        """
+        Calculate the output height and width of a Conv2d layer.
+        
+        :param tensorShape: Shape of tensor as torch.Size
+        :param inputWidth: Width of the input tensor.
+        
+        Returns:
+        - A torch.Size object containing the shape of the output tensor
+        """
+        outChannels = out_channels
+        # Error Checking
+        if not isinstance(tensorShape, (tuple, torch.Size)) or len(tensorShape) != 4:
+            raise ValueError("Tensor Shape must be in form of (batch_size, in_channels, height, width)")
+    
+        # Calculate output height and width
+        _, _, inputHeight, inputWidth = tensorShape
+    
+        # Make sure kernel_size is tuple of ints
+        kernelSize = SharedConv2d.checkKernelSize(kernel_size)
+        # Make sure padding is a tuple of ints
+        padding = SharedConv2d.checkPadding(padding)
+        # Make sure stride is a tuple of ints
+        stride = SharedConv2d.checkStride(stride)
+        # Make sure dilation is a tuple of ints
+        dilation = SharedConv2d.checkDilation(dilation)
+
+        outputHeight = ((inputHeight + 2 * padding[0] - dilation[0] 
+            * (kernelSize[0] - 1) - 1) // stride[0]) + 1
+        outputWidth = ((inputWidth + 2 * padding[1] - dilation[1] 
+            * (kernelSize[1] - 1) - 1) // stride[1]) + 1
+
+        outputShape = torch.Size([tensorShape[0], outChannels, outputHeight, outputWidth])
+
+        return outputShape
+
+
+    @staticmethod
+    def checkDilation(dilation):
+        """
+        Validates that the dilation passed in is either an int or a tuple of 
+        ints. If dilation is just an int, it will be converted to a tuple of 
+        ints. Otherwise this method will raise an exception.
+        
+        :param dilation: Value for the dilation
+        
+        Returns:
+        - The dilation as a tuple of ints
+        """
+        if SharedConv2d.isTupleOfInts(dilation):
+            return dilation
+        elif isinstance(dilation, int):
+            return SharedConv2d.cnvrtInt2Tuple(dilation)
+        typeErrMsg = "Dilation must be either an integer, a tuple of "
+        typeErrMsg += "integers, or a list 2 integers"
+        raise TypeError(typeErrMsg)  
+
+
+    @staticmethod
+    def checkKernelSize(kernelSize):
+        """
+        Validates that the kernel size passed in is either an int or a tuple of 
+        ints. If kernel size is just an int, it will be converted to a tuple of 
+        ints. Otherwise this method will raise an exception.
+        
+        :param kernelSize: Value for the kernel size
+        
+        Returns:
+        - The kernel size as a tuple of ints
+        """
+        if SharedConv2d.isTupleOfInts(kernelSize):
+            return kernelSize
+        elif isinstance(kernelSize, int):
+            return SharedConv2d.cnvrtInt2Tuple(kernelSize)
+        typeErrMsg = "Kernel Size must be either an integer, a tuple of "
+        typeErrMsg += "integers, or a list 2 integers"
+        raise TypeError(typeErrMsg)  
+
+
+    @staticmethod
+    def checkPadding(padding):
+        """
+        Validates that the padding passed in is either an int or a tuple of 
+        ints. If padding is just an int, it will be converted to a tuple of 
+        ints. Otherwise this method will raise an exception.
+        
+        :param padding: Value for the dilation
+        
+        Returns:
+        - The padding as a tuple of ints
+        """
+        if SharedConv2d.isTupleOfInts(padding):
+            return padding
+        elif isinstance(padding, int):
+            return SharedConv2d.cnvrtInt2Tuple(padding)
+        typeErrMsg = "Padding must be either an integer, a tuple of "
+        typeErrMsg += "integers, or a list 2 integers"
+        raise TypeError(typeErrMsg)  
+
+
+    @staticmethod
+    def checkStride(stride):
+        """
+        Validates that the stride passed in is either an int or a tuple of 
+        ints. If stride is just an int, it will be converted to a tuple of 
+        ints. Otherwise this method will raise an exception.
+        
+        :param dilation: Value for the dilation
+        
+        Returns:
+        - The dilation as a tuple of ints
+        """
+        if SharedConv2d.isTupleOfInts(stride):
+            return stride
+        elif isinstance(stride, int):
+            return SharedConv2d.cnvrtInt2Tuple(stride)
         typeErrMsg = "Stride must be either an integer, a tuple of "
         typeErrMsg += "integers, or a list 2 integers"
-        if isinstance(stride, int):
-            # Stride as int => stride x stride
-            self.stride = (stride, stride)
-            return
-        elif isinstance(stride, tuple):
-            if (len(stride) == 2 and isinstance(stride[0], int)  
-            and isinstance(stride[1], int)):
-                self.stride = (stride[0], stride[1])
-                return
-        raise TypeError(typeErrMsg) 
+        raise TypeError(typeErrMsg)  
+        
+
+    @staticmethod
+    def cnvrtInt2Tuple(intVal):
+        """
+        Converts the value passed in 'intVal' into a tuple of ints.
+
+        :param intVal: Int value  to convert to a tuple of ints
+        
+        Returns:
+        - The intVal as a tuple of ints
+        """
+        if not isinstance(intVal, int):
+            raise TypeError("intVal must be an int")
+        return (intVal, intVal)
+
+
+    @staticmethod
+    def isTupleOfInts(val):
+        """
+        Determines if 'val' is a tuple of ints
+
+        :param val: The variable to check the type for
+        
+        Returns:
+        - True if 'val' is a tuple of ints
+        - False otherwise
+        """
+        if (isinstance(val, tuple) and len(val) == 2 
+        and isinstance(val[0], int) and isinstance(val[1], int)):
+            return True
+        return False
+        
    
 
