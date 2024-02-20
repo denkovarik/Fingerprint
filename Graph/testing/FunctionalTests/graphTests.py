@@ -196,11 +196,12 @@ class graphTests(unittest.TestCase):
         :param self: An instance of the graphTests class.
         """
         graph = Graph()
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
         self.assertTrue(isinstance(graph, Graph))
-        self.assertTrue(graph.graph == {})
-        graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
-        self.assertTrue(os.path.exists(graph2read))
-        graph.readGraph(graph2read)
+        #self.assertTrue(graph.graph == {})
+        #graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
+        #self.assertTrue(os.path.exists(graph2read))
+        #graph.readGraph(graph2read)
         self.assertTrue(not graph.graph == {})
         self.assertTrue(graph.pytorchLayers != {})
         testBatchPath = os.path.join(currentdir, 'TestFiles/cifar10_test_batch_pickle')
@@ -214,22 +215,21 @@ class graphTests(unittest.TestCase):
 
         tensorData = torch.tensor(testBatch[b'data'][:4], dtype=torch.float32).reshape(4, 3, 32, 32)
 
-        conv5x5 = []
-        conv3x3 = []
-        linear = []
+        layerId = graph.graph['L1_5x5_Conv(oc=32)']['node'].pytorchLayerId
+        sharedConvL1 = graph.pytorchLayers[layerId]
+        
+        layerId = graph.graph['L2_5x5_Conv(oc=32)']['node'].pytorchLayerId
+        sharedConvL2 = graph.pytorchLayers[layerId]
 
-        for layer in graph.pytorchLayers.values():
-            if isinstance(layer, SharedConv2d):
-                if layer.kernelSize == (3,3):
-                    conv3x3.append(layer)
-                elif layer.kernelSize == (5,5):
-                    conv5x5.append(layer)
-            elif isinstance(layer, SharedLinear):
-                linear.append(layer)
+        layerId = graph.graph['L3_Linear(of=16)']['node'].pytorchLayerId
+        sharedLinearL3 = graph.pytorchLayers[layerId]
 
-        test3x3Conv = nn.Conv2d(3, 8, 3)
-        conv1 = test3x3Conv(tensorData)
-        conv1 = conv3x3[0](tensorData, 3, 8)
+        #conv1 = nn.Conv2d(3, 8, 3)
+        #conv1Out = conv1(tensorData)
+        sharedConvL1Out = sharedConvL1(tensorData, 3, 32)
+        sharedConvL2Out = sharedConvL2(sharedConvL1Out, 32, 32)
+        flatTensor = sharedConvL2Out.flatten(start_dim=1)
+        sharedLinearL3Out = sharedLinearL3(flatTensor, flatTensor.shape[1], 16)
 
 
         
