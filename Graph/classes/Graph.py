@@ -47,6 +47,7 @@ class Graph:
           
     def addConvolutionalLayer(self, layer, inputShape):
         maxNumChannels = max(self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS)
+        outShapes = [inputShape]
         for kernel in self.ALLOWED_KERNEL_SIZES:
             pytorchLayerId = uuid.uuid4()
             for oc in self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS:
@@ -59,11 +60,17 @@ class Graph:
                              maxNumOutputChannels=maxNumChannels, 
                              numOutputChannels=oc, layer=layer, 
                              pytorchLayerId=pytorchLayerId)
+
+                outShape = SharedConv2d.calcOutSize(inputShape, oc, kernel)
+                outShapes.append(outShape)
         self.prevNodes = self.curNodes
-        self.curNodes = []
+        self.curNodes = [] 
+        maxOutShape = max(outShapes, key=lambda x: torch.tensor(x).prod().item())
+        return maxOutShape
 
                          
     def addConvolutionalLayers(self, inputShape):
+        outShape = inputShape
         outShapes = []
         for i in range(self.numConvLayers):       
             self.layer += 1
@@ -71,12 +78,17 @@ class Graph:
             self.addNormalizationLayer()                
             self.addPoolingLayer()
             outShapes.append(outShape)
+            inputShape = outShape
+        return outShape
 
             
-    def addFlattenLayer(self):
+    def addFlattenLayer(self, inputShape):
         self.addNode(nodeType=NodeType.FLATTEN, name='L' + str(self.layer) + '_' + 'flatten')
         self.prevNodes = self.curNodes
         self.curNodes = []
+        flattenedShape = torch.tensor(inputShape[1:]).prod().item()
+        outShape = torch.Size([inputShape[0], flattenedShape])
+        return outShape
 
         
     def addInputLayer(self, inputShape):
@@ -87,32 +99,37 @@ class Graph:
         return inputShape
 
     
-    def addLinearLayer(self, layer, pytorchLayerId): 
+    def addLinearLayer(self, layer, pytorchLayerId, inputShape): 
         maxNumFeatures = max(self.ALLOWED_NUMBER_OF_LINEAR_FEATURES)
         for of in self.ALLOWED_NUMBER_OF_LINEAR_FEATURES:
             nodeName = 'L' + str(self.layer) + '_Linear(of=' + str(of) + ')' 
             self.addNode(nodeType=NodeType.LINEAR, 
                          name=nodeName, 
-                         maxNumInFeatures=maxNumFeatures, 
+                         maxNumInFeatures=inputShape[1], 
                          maxNumOutFeatures=maxNumFeatures, 
                          numOutFeatures=of, layer=layer, 
                          pytorchLayerId=pytorchLayerId)
         self.prevNodes = self.curNodes
         self.curNodes = []
+        return torch.Size([inputShape[0], maxNumFeatures])
 
      
-    def addLinearLayers(self):
+    def addLinearLayers(self, inputShape):
+        outShapes = []
+        outShape = inputShape
         for i in range(self.numLinearLayers - 1):
             self.layer += 1            
-            self.addLinearLayer(self.layer, uuid.uuid4())
+            outShape = self.addLinearLayer(self.layer, uuid.uuid4(), outShape)
             self.addActivationLayer()                                                  
         self.layer += 1            
         nodeName = 'L' + str(self.layer) + '_Linear(of=' + str(10) + ')' 
         self.addNode(nodeType=NodeType.LINEAR, 
                      name=nodeName, 
-                     maxNumInFeatures=max(self.ALLOWED_NUMBER_OF_LINEAR_FEATURES), 
+                     maxNumInFeatures=outShape[1], 
                      maxNumOutFeatures=self.numClasses, 
-                     numOutFeatures=self.numClasses, layer=self.layer, pytorchLayerId=uuid.uuid4())    
+                     numOutFeatures=self.numClasses, 
+                     layer=self.layer, 
+                     pytorchLayerId=uuid.uuid4())    
         self.prevNodes = self.curNodes
         self.curNodes = []
         self.addActivationLayer()
@@ -175,9 +192,9 @@ class Graph:
         self.prevNodes = []
         self.curNodes = []   
         outShape = self.addInputLayer(inputShape)    
-        self.addConvolutionalLayers(outShape)       
-        self.addFlattenLayer()
-        self.addLinearLayers()            
+        outShape = self.addConvolutionalLayers(outShape)       
+        outShape = self.addFlattenLayer(outShape)
+        outShape = self.addLinearLayers(outShape)            
         self.addOutputLayer()
         self.mapPytorchLayers()
 
