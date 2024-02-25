@@ -11,10 +11,29 @@ from utils import *
 import uuid
 import torch
 import torch.nn as nn
+import torch.nn.init as init
 from PIL import Image
 import numpy as np
 from classes.SharedConv2d import SharedConv2d
 from classes.SharedLinear import SharedLinear
+import random
+import numpy as np
+import math
+
+
+
+
+def initTestWeights(weight, bias=None):
+    torch.manual_seed(42)
+    np.random.seed(42)
+    random.seed(42)
+    weight.data.zero_()
+    init.kaiming_uniform_(weight, a=math.sqrt(5))
+    if bias is not None:
+        # Initialize bias with a value between -1/sqrt(fan_in) and 1/sqrt(fan_in)
+        fan_in, _ = init._calculate_fan_in_and_fan_out(weight)
+        bound = 1 / math.sqrt(fan_in)
+        init.uniform_(bias, -bound, bound)
 
 
 class graphTests(unittest.TestCase):
@@ -194,14 +213,14 @@ class graphTests(unittest.TestCase):
         dataset.
         
         :param self: An instance of the graphTests class.
-        """
+        """ 
         graph = Graph()
-        graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
+        #graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
         self.assertTrue(isinstance(graph, Graph))
-        #self.assertTrue(graph.graph == {})
-        #graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
-        #self.assertTrue(os.path.exists(graph2read))
-        #graph.readGraph(graph2read)
+        self.assertTrue(graph.graph == {})
+        graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
+        self.assertTrue(os.path.exists(graph2read))
+        graph.readGraph(graph2read)
         self.assertTrue(not graph.graph == {})
         self.assertTrue(graph.pytorchLayers != {})
         testBatchPath = os.path.join(currentdir, 'TestFiles/cifar10_test_batch_pickle')
@@ -211,23 +230,66 @@ class graphTests(unittest.TestCase):
         # Test pytorch layers on images from test batch
         imgData = testBatch[b'data'][:4]
         batch = imgData.reshape(4, 3, 32, 32)
-        tensorData = torch.tensor(batch, dtype=torch.float32)
 
         tensorData = torch.tensor(testBatch[b'data'][:4], dtype=torch.float32).reshape(4, 3, 32, 32)
 
+        # Kernel Size 5x5
+        # Conv 2D Layer 1
         layerId = graph.graph['L1_5x5_Conv(oc=32)']['node'].pytorchLayerId
         sharedConvL1 = graph.pytorchLayers[layerId]
+        initTestWeights(sharedConvL1.weight, sharedConvL1.bias)
+        conv1 = nn.Conv2d(3, 32, 5)
+        initTestWeights(conv1.weight, conv1.bias)
         
+        # Conv 2D Layer 2
         layerId = graph.graph['L2_5x5_Conv(oc=32)']['node'].pytorchLayerId
         sharedConvL2 = graph.pytorchLayers[layerId]
+        initTestWeights(sharedConvL2.weight, sharedConvL2.bias)
+        conv2 = nn.Conv2d(32, 32, 5)
+        initTestWeights(conv2.weight, conv2.bias)
 
         layerId = graph.graph['L3_Linear(of=16)']['node'].pytorchLayerId
         sharedLinearL3 = graph.pytorchLayers[layerId]
 
-        #conv1 = nn.Conv2d(3, 8, 3)
-        #conv1Out = conv1(tensorData)
+        # Forward pass through Conv Layer 1
+        conv1Out = conv1(tensorData)
         sharedConvL1Out = sharedConvL1(tensorData, 3, 32)
+        self.assertTrue(torch.allclose(conv1Out, sharedConvL1Out))
+        # Forward pass through Conv Layer 2 
+        conv2Out = conv2(conv1Out)
         sharedConvL2Out = sharedConvL2(sharedConvL1Out, 32, 32)
+        self.assertTrue(torch.allclose(conv2Out, sharedConvL2Out))
+        # Forward pass through linear layer
+        flatTensor = sharedConvL2Out.flatten(start_dim=1)
+        sharedLinearL3Out = sharedLinearL3(flatTensor, flatTensor.shape[1], 16)
+
+        # Kernel Size 3x3
+        tensorData = torch.tensor(testBatch[b'data'][:4], dtype=torch.float32).reshape(4, 3, 32, 32)
+
+        layerId = graph.graph['L1_3x3_Conv(oc=32)']['node'].pytorchLayerId
+        sharedConvL1 = graph.pytorchLayers[layerId]
+        initTestWeights(sharedConvL1.weight, sharedConvL1.bias)
+        conv1 = nn.Conv2d(3, 32, 3)
+        initTestWeights(conv1.weight, conv1.bias)
+        
+        layerId = graph.graph['L2_3x3_Conv(oc=32)']['node'].pytorchLayerId
+        sharedConvL2 = graph.pytorchLayers[layerId]
+        initTestWeights(sharedConvL2.weight, sharedConvL2.bias)
+        conv2 = nn.Conv2d(32, 32, 3)
+        initTestWeights(conv2.weight, conv2.bias)
+
+        layerId = graph.graph['L3_Linear(of=16)']['node'].pytorchLayerId
+        sharedLinearL3 = graph.pytorchLayers[layerId]
+
+        # Forward pass through Conv Layer 1
+        conv1Out = conv1(tensorData)
+        sharedConvL1Out = sharedConvL1(tensorData, 3, 32)
+        self.assertTrue(torch.allclose(conv1Out, sharedConvL1Out))
+        # Forward pass through Conv Layer 2 
+        conv2Out = conv2(conv1Out)
+        sharedConvL2Out = sharedConvL2(sharedConvL1Out, 32, 32)
+        self.assertTrue(torch.allclose(conv2Out, sharedConvL2Out))
+        # Forward pass through linear layer
         flatTensor = sharedConvL2Out.flatten(start_dim=1)
         sharedLinearL3Out = sharedLinearL3(flatTensor, flatTensor.shape[1], 16)
 
