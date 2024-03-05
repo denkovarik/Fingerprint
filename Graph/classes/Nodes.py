@@ -151,8 +151,7 @@ class LinearNode(Node):
 
 
     def getPytorchLayer(self):
-        return SharedLinear(maxInFeatures=self.maxNumInFeatures, 
-                            maxOutFeatures=self.maxNumOutFeatures)
+        return SharedLinear(self.maxNumInFeatures, self.maxNumOutFeatures)
 
 
 class ActivationNode(Node):
