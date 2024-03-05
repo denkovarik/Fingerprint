@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
     
 
-class graphTests(unittest.TestCase):
+class sharedLinearTests(unittest.TestCase):
     """
     Runs graph tests.
     """ 
@@ -20,7 +20,7 @@ class graphTests(unittest.TestCase):
         """
         Tests the ability of the graphTests class to run a test.
         
-        :param self: An instance of the graphTests class.
+        :param self: An instance of the sharedLinearTests class.
         """
         self.assertTrue(True)
 
@@ -29,9 +29,22 @@ class graphTests(unittest.TestCase):
         """
         Tests construction of the SharedLinear class
 
-        :param self: An instance of the graphTests class.
+        :param self: An instance of the sharedLinearTests class.
         """
-        sharedLinear = SharedLinear(maxInFeatures=32, maxOutFeatures=32)  
+        sharedLinear = SharedLinear(max_in_features=32, max_out_features=32)
+
+
+    def testPrint(self):
+        """
+        Tests the overloaded to string fucntion
+
+        :param self: An instance of the sharedLinearTests class.
+        """
+        linearLayer = nn.Linear(in_features=10, out_features=5)
+        sharedLinear = SharedLinear(max_in_features=32, max_out_features=32)
+        exp = "SharedLinear(max_in_features=32, max_out_features=32)"
+        self.assertTrue(str(sharedLinear) == exp)
+
  
         
 if __name__ == '__main__':
