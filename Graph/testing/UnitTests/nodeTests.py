@@ -196,7 +196,7 @@ class nodeTests(unittest.TestCase):
         """
         # Valid Construction with a tuple of 2 ints for kernel size
         pytorchLayerId = uuid.uuid4()
-        node = ConvolutionalNode(name='name', kernelSize=(3,3), 
+        node = ConvolutionalNode(name='name', kernel_size=(3,3), 
                                  maxNumInputChannels=128, 
                                  maxNumOutputChannels=128, 
                                  numOutputChannels=32,
@@ -205,12 +205,12 @@ class nodeTests(unittest.TestCase):
         self.assertTrue(node.layer == 0)
         self.assertTrue(node.pytorchLayerId == pytorchLayerId)
         self.assertTrue(node.displayName == '3x3 Conv(oc=32)')
-        self.assertTrue(node.kernelSize == (3,3))
+        self.assertTrue(node.kernel_size == (3,3))
         self.assertTrue(node.maxNumInputChannels == 128)
         self.assertTrue(node.numOutputChannels == 32)
 
         # Valid Construction with a list of 2 ints for kernel size
-        node = ConvolutionalNode(name='name', kernelSize=[3,3], 
+        node = ConvolutionalNode(name='name', kernel_size=[3,3], 
                                  maxNumInputChannels=128,
                                  maxNumOutputChannels=128,
                                  numOutputChannels=32,
@@ -218,24 +218,24 @@ class nodeTests(unittest.TestCase):
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.layer == 0)
         self.assertTrue(node.displayName == '3x3 Conv(oc=32)')
-        self.assertTrue(node.kernelSize == (3,3))
+        self.assertTrue(node.kernel_size == (3,3))
         self.assertTrue(node.maxNumInputChannels == 128)
         self.assertTrue(node.numOutputChannels == 32)
 
         # Valid Construction with int for kernel size
-        node = ConvolutionalNode(name='name', kernelSize=3, 
+        node = ConvolutionalNode(name='name', kernel_size=3, 
                                  maxNumInputChannels=128, 
                                  maxNumOutputChannels=128,
                                  numOutputChannels=32,
                                  layer=0, pytorchLayerId=pytorchLayerId)
-        self.assertTrue(node.kernelSize == (3,3))
+        self.assertTrue(node.kernel_size == (3,3))
         
         # Invalid Construction with list of 3 ints for kernel size
         errMsg = 'Node of type ConvolutionNode constructed with invalid '
         errMsg += 'kernel size as a list of strings'
         testPassed = False
         try:
-            node = ConvolutionalNode(name='name', kernelSize=[3,3,3], 
+            node = ConvolutionalNode(name='name', kernel_size=[3,3,3], 
                                  maxNumInputChannels=128, numOutputChannels=32)
         except:
             testPassed = True
@@ -247,7 +247,7 @@ class nodeTests(unittest.TestCase):
         errMsg += 'kernel size as a list of strings'
         testPassed = False
         try:
-            node = ConvolutionalNode(name='name', kernelSize=['3','3'], 
+            node = ConvolutionalNode(name='name', kernel_size=['3','3'], 
                                  maxNumInputChannels=128, numOutputChannels=32)
         except:
             testPassed = True
@@ -257,7 +257,7 @@ class nodeTests(unittest.TestCase):
         # Invalid Construction with a string for kernel size
         testPassed = False
         try:
-            node = ConvolutionalNode(name='name', kernelSize='3', 
+            node = ConvolutionalNode(name='name', kernel_size='3', 
                                  maxNumInputChannels=128, numOutputChannels=32)
         except:
             testPassed = True
@@ -354,7 +354,7 @@ class nodeTests(unittest.TestCase):
         # Convolution Node
         pytorchLayerId = uuid.uuid4()
         node = nodeFactory.createNode(NodeType.CONVOLUTION, name='name', 
-                                      kernelSize=5, 
+                                      kernel_size=5, 
                                       maxNumInputChannels=128, 
                                       maxNumOutputChannels=128,
                                       numOutputChannels=32, 
@@ -364,7 +364,7 @@ class nodeTests(unittest.TestCase):
         self.assertTrue(node.pytorchLayerId == pytorchLayerId)
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.displayName == '5x5 Conv(oc=32)')
-        self.assertTrue(node.kernelSize == (5,5))
+        self.assertTrue(node.kernel_size == (5,5))
         self.assertTrue(node.maxNumInputChannels == 128)
         self.assertTrue(node.numOutputChannels == 32)
        
