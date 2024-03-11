@@ -314,6 +314,18 @@ class sharedConv2DTests(unittest.TestCase):
         self.assertFalse(SharedConv2d.isTupleOfInts(intVal))
         self.assertFalse(SharedConv2d.isTupleOfInts(listOfInts))
 
+
+    def testPrint(self):
+        """
+        Tests the overloaded to string fucntion
+
+        :param self: An instance of the sharedLinearTests class.
+        """
+        conv2dLayer = nn.Conv2d(3, 8, kernel_size=3)
+        sharedConv2d = SharedConv2d(in_channels=3, out_channels=8, kernel_size=3)
+        exp = "SharedConv2d(3, 8, kernel_size=(3, 3))"
+        self.assertTrue(str(sharedConv2d) == exp)
+
         
 if __name__ == '__main__':
     unittest.main()
