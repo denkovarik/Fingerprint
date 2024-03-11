@@ -55,7 +55,7 @@ class Graph:
                          + str(kernel[1]) + '_Conv(oc=' + str(oc) + ')'
                 self.addNode(nodeType=NodeType.CONVOLUTION, 
                              name=nodeName, 
-                             kernelSize=kernel, 
+                             kernel_size=kernel, 
                              maxNumInputChannels=inputShape[1], 
                              maxNumOutputChannels=maxNumChannels, 
                              numOutputChannels=oc, layer=layer, 

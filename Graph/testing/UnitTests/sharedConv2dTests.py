@@ -218,7 +218,7 @@ class sharedConv2DTests(unittest.TestCase):
         sharedConv2d.bias.data.zero_()
         # Make sure initialization was done correctly
         self.assertTrue(conv2d.kernel_size == (3, 3))
-        self.assertTrue(sharedConv2d.kernelSize == (3, 3))
+        self.assertTrue(sharedConv2d.kernel_size == (3, 3))
         self.assertTrue(torch.allclose(conv2d.weight, weightsSub))
         self.assertTrue(torch.allclose(sharedConv2d.weight, weights))
         self.assertTrue(torch.all(conv2d.bias.eq(0)))

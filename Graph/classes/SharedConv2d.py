@@ -19,8 +19,8 @@ class SharedConv2d(nn.Module):
         # Initialize the weights and biases
         self.weight = nn.Parameter(torch.Tensor(self.maxOutChannels, 
                                                 self.maxInChannels, 
-                                                self.kernelSize[0], 
-                                                self.kernelSize[1]))
+                                                self.kernel_size[0], 
+                                                self.kernel_size[1]))
         self.bias = nn.Parameter(torch.Tensor(self.maxOutChannels))
 
         # Initialize weights using Kaiming (He) initialization
@@ -36,7 +36,7 @@ class SharedConv2d(nn.Module):
     def __str__(self):
         strRep = (f"SharedConv2d("
                  f"{self.maxInChannels}, {self.maxOutChannels}, "
-                 f"kernel_size=({self.kernelSize[0]}, {self.kernelSize[1]})"
+                 f"kernel_size=({self.kernel_size[0]}, {self.kernel_size[1]})"
                  f")")
         return strRep
 
@@ -70,7 +70,7 @@ class SharedConv2d(nn.Module):
         
         outputShape = SharedConv2d.calcOutSize(tensorShape, 
                                                outChannels, 
-                                               self.kernelSize,  
+                                               self.kernel_size,  
                                                self.stride, 
                                                self.padding, 
                                                self.dilation)
@@ -88,14 +88,14 @@ class SharedConv2d(nn.Module):
         self.dilation = SharedConv2d.checkDilation(dilation)
 
 
-    def initKernelSize(self, kernelSize):
+    def initKernelSize(self, kernel_size):
         """
         Inits and validates the kernel size for the class
         
         :param self: Instance of the SharedConv2d class
-        :param kernelSize: The passed in kernel size to init
+        :param kernel_size: The passed in kernel size to init
         """
-        self.kernelSize = SharedConv2d.checkKernelSize(kernelSize)
+        self.kernel_size = SharedConv2d.checkKernelSize(kernel_size)
 
 
     def initPadding(self, padding):
@@ -138,7 +138,7 @@ class SharedConv2d(nn.Module):
         _, _, inputHeight, inputWidth = tensorShape
     
         # Make sure kernel_size is tuple of ints
-        kernelSize = SharedConv2d.checkKernelSize(kernel_size)
+        kernel_size = SharedConv2d.checkKernelSize(kernel_size)
         # Make sure padding is a tuple of ints
         padding = SharedConv2d.checkPadding(padding)
         # Make sure stride is a tuple of ints
@@ -147,9 +147,9 @@ class SharedConv2d(nn.Module):
         dilation = SharedConv2d.checkDilation(dilation)
 
         outputHeight = ((inputHeight + 2 * padding[0] - dilation[0] 
-            * (kernelSize[0] - 1) - 1) // stride[0]) + 1
+            * (kernel_size[0] - 1) - 1) // stride[0]) + 1
         outputWidth = ((inputWidth + 2 * padding[1] - dilation[1] 
-            * (kernelSize[1] - 1) - 1) // stride[1]) + 1
+            * (kernel_size[1] - 1) - 1) // stride[1]) + 1
 
         outputShape = torch.Size([tensorShape[0], outChannels, outputHeight, outputWidth])
 
@@ -178,21 +178,21 @@ class SharedConv2d(nn.Module):
 
 
     @staticmethod
-    def checkKernelSize(kernelSize):
+    def checkKernelSize(kernel_size):
         """
         Validates that the kernel size passed in is either an int or a tuple of 
         ints. If kernel size is just an int, it will be converted to a tuple of 
         ints. Otherwise this method will raise an exception.
         
-        :param kernelSize: Value for the kernel size
+        :param kernel_size: Value for the kernel size
         
         Returns:
         - The kernel size as a tuple of ints
         """
-        if SharedConv2d.isTupleOfInts(kernelSize):
-            return kernelSize
-        elif isinstance(kernelSize, int):
-            return SharedConv2d.cnvrtInt2Tuple(kernelSize)
+        if SharedConv2d.isTupleOfInts(kernel_size):
+            return kernel_size
+        elif isinstance(kernel_size, int):
+            return SharedConv2d.cnvrtInt2Tuple(kernel_size)
         typeErrMsg = "Kernel Size must be either an integer, a tuple of "
         typeErrMsg += "integers, or a list 2 integers"
         raise TypeError(typeErrMsg)  

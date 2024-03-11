@@ -96,26 +96,26 @@ class PoolingNode(Node):
 
 
 class ConvolutionalNode(Node):
-    def __init__(self, name, kernelSize, maxNumInputChannels, 
+    def __init__(self, name, kernel_size, maxNumInputChannels, 
                  maxNumOutputChannels, numOutputChannels, layer, pytorchLayerId):
         super().__init__() 
         typeErrMsg = "Kernel Size must be either an integer, a tuple of "
         typeErrMsg += "integers, or a list 2 integers"
 
-        if isinstance(kernelSize, int):
-            # Kernel size as int => kernelSize x kernelSize
-            self.kernelSize = (kernelSize, kernelSize)
-        elif isinstance(kernelSize, list) or isinstance(kernelSize, tuple):
-            if (len(kernelSize) == 2 and isinstance(kernelSize[0], int)  
-            and isinstance(kernelSize[1], int)):
-                self.kernelSize = (kernelSize[0], kernelSize[1])
+        if isinstance(kernel_size, int):
+            # Kernel size as int => kernel_size x kernel_size
+            self.kernel_size = (kernel_size, kernel_size)
+        elif isinstance(kernel_size, list) or isinstance(kernel_size, tuple):
+            if (len(kernel_size) == 2 and isinstance(kernel_size[0], int)  
+            and isinstance(kernel_size[1], int)):
+                self.kernel_size = (kernel_size[0], kernel_size[1])
             else:
                 raise TypeError(typeErrMsg)
         else:
             raise TypeError(typeErrMsg) 
         
         self.name = name
-        self.displayName = str(self.kernelSize[0]) + 'x' + str(self.kernelSize[1]) 
+        self.displayName = str(self.kernel_size[0]) + 'x' + str(self.kernel_size[1]) 
         self.displayName += ' Conv(oc=' + str(numOutputChannels) + ')'
         self.layer = layer
         self.pytorchLayerId = pytorchLayerId
@@ -125,7 +125,7 @@ class ConvolutionalNode(Node):
 
 
     def getPytorchLayer(self):
-        return SharedConv2d(kernel_size=self.kernelSize, 
+        return SharedConv2d(kernel_size=self.kernel_size, 
                             in_channels=self.maxNumInputChannels, 
                             out_channels=self.maxNumOutputChannels)
 

@@ -77,7 +77,7 @@ class graphTests(unittest.TestCase):
         # Construct a simple graph example
         inputNode = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
         normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM)
-        convNode = ConvolutionalNode(name='convNode1', kernelSize=3, 
+        convNode = ConvolutionalNode(name='convNode1', kernel_size=3, 
                                      maxNumInputChannels=16, 
                                      maxNumOutputChannels=16, 
                                      numOutputChannels=4, layer=0,
@@ -113,7 +113,7 @@ class graphTests(unittest.TestCase):
         # Construct a simple graph example to test the read
         inputNode = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
         normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM)
-        convNode = ConvolutionalNode(name='convNode1', kernelSize=3, 
+        convNode = ConvolutionalNode(name='convNode1', kernel_size=3, 
                                      maxNumInputChannels=16, 
                                      maxNumOutputChannels=16, 
                                      numOutputChannels=4, layer=0, 
@@ -194,9 +194,9 @@ class graphTests(unittest.TestCase):
         for key in graph.pytorchLayers.keys():
             if(isinstance(graph.pytorchLayers[key], SharedConv2d)):
                 numConvLayers += 1
-                if graph.pytorchLayers[key].kernelSize == (3,3):
+                if graph.pytorchLayers[key].kernel_size == (3,3):
                     conv2dKernelSize3x3 += 1
-                elif graph.pytorchLayers[key].kernelSize == (5,5):
+                elif graph.pytorchLayers[key].kernel_size == (5,5):
                     conv2dKernelSize5x5 += 1
             elif(isinstance(graph.pytorchLayers[key], SharedLinear)):
                 numLinearLayers += 1
