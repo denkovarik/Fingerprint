@@ -33,6 +33,14 @@ class SharedConv2d(nn.Module):
             init.uniform_(self.bias, -bound, bound)
 
 
+    def __str__(self):
+        strRep = (f"SharedConv2d("
+                 f"{self.maxInChannels}, {self.maxOutChannels}, "
+                 f"kernel_size=({self.kernelSize[0]}, {self.kernelSize[1]})"
+                 f")")
+        return strRep
+
+
     def forward(self, x, inChannels, outChannels):
         weight = self.weight[:outChannels, :inChannels, :, :]
         bias = self.bias[:outChannels]
