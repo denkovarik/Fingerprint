@@ -155,9 +155,7 @@ class graphTests(unittest.TestCase):
         originalOutput = sys.stdout
         outputPath = os.path.join(currentdir, 'Temp/output.txt')
         with open(outputPath, 'w') as f:
-            sys.stdout = f
-            graph.sampleArchitectureHuman(clearTerminal=False)
-        sys.stdout = originalOutput
+            graph.sampleArchitectureHuman(clearTerminal=False, output=f)
 
         # Render the graph
         #renderGraph(graph, os.path.join(currentdir, 'Temp'))
