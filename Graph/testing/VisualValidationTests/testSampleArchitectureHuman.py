@@ -40,7 +40,9 @@ class graphTests(unittest.TestCase):
         graph.readGraph(sampleGraphPath)
 
         # Sample Architecture by siming user input
-        graph.sampleArchitectureHuman()
+        filepath = os.path.join(currentdir,'TestFiles', 'testSampleArchitectureHumanInput.txt')
+        with open(filepath, 'w') as file:
+            graph.sampleArchitectureHuman(clearTerminal=False, output=file)
 
         # Render the graph
         renderGraph(graph, os.path.join(currentdir, 'Temp'))
