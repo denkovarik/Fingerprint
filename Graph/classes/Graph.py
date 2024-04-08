@@ -283,9 +283,12 @@ class Graph:
         return filePath + '.png'
 
 
-    def sampleArchitectureHuman(self, clearTerminal=True):
+    def sampleArchitectureHuman(self, clearTerminal=True, output=sys.stdout):
+        original_stdout = sys.stdout
+        sys.stdout = output
         if self.graph == {}:
             print('Please construct graph first')
+            sys.stdout = original_stdout
             return
        
         curNode = self.graph['input']
@@ -317,6 +320,7 @@ class Graph:
             self.sample.append(selectedInt)
         print("")
         self.printSampleArchitecture(self.sample)
+        sys.stdout = original_stdout
 
 
     def writeGraph2File(self, filepath):
