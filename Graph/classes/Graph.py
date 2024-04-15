@@ -283,6 +283,19 @@ class Graph:
         return filePath + '.png'
 
 
+    def sampleArchitecture(self, sample):
+        curNode = self.graph['input']
+        self.sample = []
+        ind = 0
+ 
+        while curNode["node"].name != 'output':
+            if ind >= len(sample):
+                raise Exception("Output node could not be reached")
+            curNode = self.graph[curNode["edges"][sample[ind]]]
+            self.sample.append(sample[ind])
+            ind += 1
+
+
     def sampleArchitectureHuman(self, clearTerminal=True, output=sys.stdout):
         original_stdout = sys.stdout
         sys.stdout = output
