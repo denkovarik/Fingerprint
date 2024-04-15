@@ -290,6 +290,55 @@ class graphTests(unittest.TestCase):
         # Forward pass through linear layer
         flatTensor = sharedConvL2Out.flatten(start_dim=1)
         sharedLinearL3Out = sharedLinearL3(flatTensor, flatTensor.shape[1], 16)
+    
+
+    def testSampleArchitecture(self):
+        """
+        Tests the ability of the graph class create a sample architecture 
+        from the graph given a list on ints.
+        
+        :param self: An instance of the graphTests class.
+        """ 
+        graph = Graph()
+        #graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
+        self.assertTrue(isinstance(graph, Graph))
+        self.assertTrue(graph.graph == {})
+        graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
+        self.assertTrue(os.path.exists(graph2read))
+        graph.readGraph(graph2read)
+        self.assertTrue(not graph.graph == {})
+        self.assertTrue(graph.pytorchLayers != {})
+        testBatchPath = os.path.join(currentdir, 'TestFiles/cifar10_test_batch_pickle')
+        self.assertTrue(testBatchPath)
+        testBatch = unpickle(testBatchPath)
+        
+        sample = [0, 1, 1, 1, 7, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
+        graph.sampleArchitecture(sample)
+        self.assertTrue(graph.sample == sample)
+    
+
+    def testForwardProp(self):
+        """
+        Tests the ability of the graph class to perform a forward prop.
+        
+        :param self: An instance of the graphTests class.
+        """ 
+        graph = Graph()
+        #graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
+        self.assertTrue(isinstance(graph, Graph))
+        self.assertTrue(graph.graph == {})
+        graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
+        self.assertTrue(os.path.exists(graph2read))
+        graph.readGraph(graph2read)
+        self.assertTrue(not graph.graph == {})
+        self.assertTrue(graph.pytorchLayers != {})
+        testBatchPath = os.path.join(currentdir, 'TestFiles/cifar10_test_batch_pickle')
+        self.assertTrue(testBatchPath)
+        testBatch = unpickle(testBatchPath)
+        
+        sample = [0, 1, 1, 1, 7, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
+        graph.sampleArchitecture(sample)
+        self.assertTrue(graph.sample == sample)
 
 
         
