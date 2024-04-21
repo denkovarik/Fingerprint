@@ -34,7 +34,6 @@ class Graph:
         self.curNodes = []
         self.layer = 0
         self.sample = []
-        self.pytorchLayers = {}
 
         
     def addActivationLayer(self):
@@ -196,15 +195,6 @@ class Graph:
         outShape = self.addFlattenLayer(outShape)
         outShape = self.addLinearLayers(outShape)            
         self.addOutputLayer()
-        self.mapPytorchLayers()
-
-
-    def mapPytorchLayers(self):
-        maxLinearSize = 0
-        for curNode in self.bfs(startNode=self.graph['input']['node']):
-            if curNode.pytorchLayerId is not None:
-                pytorchLayerId = curNode.pytorchLayerId 
-                self.pytorchLayers[pytorchLayerId] = curNode.getPytorchLayer()
 
 
     def printSampleArchitecture(self, sample):
@@ -234,9 +224,6 @@ class Graph:
         # Read the Graph file
         with open(filepath, 'rb') as file:
             self.graph = pickle.load(file)
-
-        # Map Pytorch Layers
-        self.mapPytorchLayers()
             
    
     def render(self, dirPath=os.path.join(parentdir, "Graphs/GraphVisualizations/")):
