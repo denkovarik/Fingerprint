@@ -31,6 +31,9 @@ echo -e "Running Functional Tests\n"
 echo -e "Running Graph Functional Tests"
 python3 ./FunctionalTests/graphTests.py
 
+echo -e "Running ENAS Functional Tests"
+python3 ./FunctionalTests/enasTests.py
+
 echo -e "Running Visual Tests\n"
 
 echo -e "Running test for Sample Architecture Human"
