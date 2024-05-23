@@ -193,6 +193,30 @@ class enasTests(unittest.TestCase):
         sharedLinearL3Out = sharedLinearL3(flatTensor, flatTensor.shape[1], 16)
 
 
+    def test_forward_prop(self):
+        """
+        Tests the forward prop for a sample architecture from the ENAS graph 
+        and compares the out to traditional ML model without any shared 
+        weights.
+        
+        :param self: An instance of the graphTests class.
+        """
+        enas = ENAS(inputShape=torch.Size([4, 3, 32, 32]))
+        self.assertTrue(isinstance(enas, ENAS))
+        self.assertTrue(enas.graph.graph == {})
+        graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
+        self.assertTrue(os.path.exists(graph2read))
+        enas.readGraph(graph2read)
+        self.assertTrue(not enas.graph.graph == {})
+        self.assertTrue(enas.pytorchLayers != {})
+        testBatchPath = os.path.join(currentdir, 'TestFiles/cifar10_test_batch_pickle')
+        self.assertTrue(testBatchPath)
+        testBatch = unpickle(testBatchPath)
+
+        sample = [0, 1, 1, 1, 7, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
+        enas.graph.sampleArchitecture(sample)
+        enas.graph.printSampleArchitecture(enas.graph.sample)
+
         
 if __name__ == '__main__':
     unittest.main()
