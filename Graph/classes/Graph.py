@@ -198,8 +198,11 @@ class Graph:
 
 
     def printSampleArchitecture(self, sample):
+        print("") # Extra newline for formatting
         # Get the terminal size
         columns, rows = shutil.get_terminal_size()
+        print('Sample Architecture'.center(columns))
+        print('-------------------\n'.center(columns))
         curNode = self.graph['input']
         # Print Input Node
         centeredName = curNode['node'].displayName.center(columns)
