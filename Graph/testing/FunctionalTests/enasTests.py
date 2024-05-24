@@ -13,6 +13,7 @@ import uuid
 import torch
 import torch.nn as nn
 import torch.nn.init as init
+import torch.nn.functional as F
 from PIL import Image
 import numpy as np
 from classes.SharedConv2d import SharedConv2d
@@ -216,6 +217,46 @@ class enasTests(unittest.TestCase):
         sample = [0, 1, 1, 1, 7, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
         enas.graph.sampleArchitecture(sample)
         enas.graph.printSampleArchitecture(enas.graph.sample)
+        
+        # Test pytorch layers on images from test batch
+        imgData = testBatch[b'data'][:4]
+        batch = imgData.reshape(4, 3, 32, 32)
+
+        tensorData = torch.tensor(testBatch[b'data'][:4], dtype=torch.float32).reshape(4, 3, 32, 32)
+
+        class TestCNN(nn.Module):
+            def __init__(self):
+                super(TestCNN, self).__init__()
+                self.conv1 = nn.Conv2d(3, 8, kernel_size=3, padding=0)
+                self.bn1 = nn.BatchNorm2d(8)
+                self.pool = nn.MaxPool2d(2, 2)
+                self.conv2 = nn.Conv2d(8, 32, kernel_size=5, padding=0)
+                self.bn2 = nn.BatchNorm2d(32)
+                self.flatten = nn.Flatten()
+                self.fc1 = nn.Linear(800, 128)
+                self.fc2 = nn.Linear(128, 32)
+                self.fc3 = nn.Linear(32, 10)
+
+            def forward(self, x): # March
+                x = self.conv1(x)
+                x = F.relu(self.bn1(x))
+                x = self.pool(x)
+                x = self.conv2(x)
+                x = F.relu(self.bn2(x))
+                x = self.pool(x)
+                x = self.flatten(x)
+                x = F.relu(self.fc1(x))
+                x = F.relu(self.fc2(x))
+                x = self.fc3(x)
+                return x
+
+        testModel = TestCNN()
+
+        print(testModel)
+
+        output = testModel(tensorData)
+
+        print(output)
 
         
 if __name__ == '__main__':
