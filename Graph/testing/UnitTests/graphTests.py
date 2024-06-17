@@ -33,24 +33,20 @@ class graphTests(unittest.TestCase):
         :param self: an instance of the graphTests class.
         """
         graph = Graph()
-        graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
-        self.assertTrue(os.path.exists(graph2read))
-        graph.readGraph(graph2read)
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32]))
 
-        exp = ['Input(numChannels=3)','No Normalization','Batch Normalization',
-               '3x3 Conv(oc=4)','3x3 Conv(oc=8)','3x3 Conv(oc=16)',
-               '3x3 Conv(oc=32)','5x5 Conv(oc=4)','5x5 Conv(oc=8)',
-               '5x5 Conv(oc=16)','5x5 Conv(oc=32)','No Normalization',
-               'Batch Normalization','No Pooling','Max Pooling',
-               '3x3 Conv(oc=4)','3x3 Conv(oc=8)','3x3 Conv(oc=16)',
-               '3x3 Conv(oc=32)','5x5 Conv(oc=4)','5x5 Conv(oc=8)',
-               '5x5 Conv(oc=16)','5x5 Conv(oc=32)','No Normalization',
-               'Batch Normalization','No Pooling','Max Pooling','Flatten',
-               'Linear(of=16)','Linear(of=32)','Linear(of=64)','Linear(of=128)',
-               'Linear(of=256)','Linear Activation','Relu Activation',
-               'Linear(of=16)','Linear(of=32)','Linear(of=64)','Linear(of=128)',
-               'Linear(of=256)','Linear Activation','Relu Activation',
-               'Linear(of=10)','Linear Activation','Relu Activation','Output']
+        exp = ['Input(numChannels=3)', 'No Normalization', 'Batch Normalization', '3x3 Conv(oc=4)', 
+               '3x3 Conv(oc=8)', '3x3 Conv(oc=16)', '3x3 Conv(oc=32)', '5x5 Conv(oc=4)', 
+               '5x5 Conv(oc=8)', '5x5 Conv(oc=16)', '5x5 Conv(oc=32)', 'No Normalization', 
+               'Batch Normalization', 'No Activation', 'Relu Activation', 'No Pooling', 
+               'Max Pooling', '3x3 Conv(oc=4)', '3x3 Conv(oc=8)', '3x3 Conv(oc=16)', 
+               '3x3 Conv(oc=32)', '5x5 Conv(oc=4)', '5x5 Conv(oc=8)', '5x5 Conv(oc=16)', 
+               '5x5 Conv(oc=32)', 'No Normalization', 'Batch Normalization', 'No Activation', 
+               'Relu Activation', 'No Pooling', 'Max Pooling', 'Flatten', 'Linear(of=16)', 
+               'Linear(of=32)', 'Linear(of=64)', 'Linear(of=128)', 'Linear(of=256)', 
+               'No Activation', 'Relu Activation', 'Linear(of=16)', 'Linear(of=32)', 
+               'Linear(of=64)', 'Linear(of=128)', 'Linear(of=256)', 'No Activation', 
+               'Relu Activation', 'Linear(of=10)', 'No Activation', 'Relu Activation', 'Output']
         test = []
         for node in graph.bfs(graph.graph['input']['node']):
             test.append(str(node))
