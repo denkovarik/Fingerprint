@@ -119,9 +119,9 @@ class nodeTests(unittest.TestCase):
         self.assertTrue(actType.value == 'reluActivation')
         
         # LINEAR
-        actType = ActivationType.LINEAR
-        self.assertTrue(actType == ActivationType.LINEAR)
-        self.assertTrue(actType.value == 'linearActivation')
+        actType = ActivationType.NONE
+        self.assertTrue(actType == ActivationType.NONE)
+        self.assertTrue(actType.value == 'noActivation')
 
 
     def testNode(self):
@@ -168,7 +168,9 @@ class nodeTests(unittest.TestCase):
         
         :param self: An instance of the nodeTests class.
         """
-        node = NormalizationNode(name="name", normalizationType=NormalizationType.BATCH_NORM)
+        node = NormalizationNode(name="name", 
+                                 normalizationType=NormalizationType.BATCH_NORM, 
+                                 numFeatures=12)
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.displayName == 'Batch Normalization')
         self.assertTrue(node.normalizationType == NormalizationType.BATCH_NORM)
@@ -336,7 +338,8 @@ class nodeTests(unittest.TestCase):
         # Normalization Node
         node = nodeFactory.createNode(NodeType.NORMALIZATION, 
                                       name='name', 
-                                      normalizationType=NormalizationType.BATCH_NORM)
+                                      normalizationType=NormalizationType.BATCH_NORM,
+                                      numFeatures=8)
         self.assertTrue(isinstance(node, NormalizationNode))
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.displayName == 'Batch Normalization')
