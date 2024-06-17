@@ -61,7 +61,7 @@ class enasTests(unittest.TestCase):
         enas = ENAS(inputShape=torch.Size([4, 3, 32, 32]))
         self.assertTrue(isinstance(enas, ENAS))
         self.assertTrue(enas.graph.graph == {})
-        enas.construct(inputShape=torch.Size([4, 3, 32, 32]))
+        enas.construct()
         self.assertTrue(not enas.graph.graph == {})
     
 
@@ -115,14 +115,14 @@ class enasTests(unittest.TestCase):
         :param self: An instance of the graphTests class.
         """ 
         enas = ENAS(inputShape=torch.Size([4, 3, 32, 32]))
-        #graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
-        self.assertTrue(isinstance(enas, ENAS))
-        self.assertTrue(enas.graph.graph == {})
-        graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
-        self.assertTrue(os.path.exists(graph2read))
-        enas.readGraph(graph2read)
-        self.assertTrue(not enas.graph.graph == {})
-        self.assertTrue(enas.pytorchLayers != {})
+        enas.construct()
+        #self.assertTrue(isinstance(enas, ENAS))
+        #self.assertTrue(enas.graph.graph == {})
+        #graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
+        #self.assertTrue(os.path.exists(graph2read))
+        #enas.readGraph(graph2read)
+        #self.assertTrue(not enas.graph.graph == {})
+        #self.assertTrue(enas.pytorchLayers != {})
         testBatchPath = os.path.join(currentdir, 'TestFiles/cifar10_test_batch_pickle')
         self.assertTrue(testBatchPath)
         testBatch = unpickle(testBatchPath)
@@ -203,20 +203,14 @@ class enasTests(unittest.TestCase):
         :param self: An instance of the graphTests class.
         """
         enas = ENAS(inputShape=torch.Size([4, 3, 32, 32]))
-        self.assertTrue(isinstance(enas, ENAS))
-        self.assertTrue(enas.graph.graph == {})
-        graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
-        self.assertTrue(os.path.exists(graph2read))
-        enas.readGraph(graph2read)
-        self.assertTrue(not enas.graph.graph == {})
-        self.assertTrue(enas.pytorchLayers != {})
+        enas.construct()
+        
         testBatchPath = os.path.join(currentdir, 'TestFiles/cifar10_test_batch_pickle')
         self.assertTrue(testBatchPath)
         testBatch = unpickle(testBatchPath)
 
-        sample = [0, 1, 1, 1, 7, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
-        enas.graph.sampleArchitecture(sample)
-        enas.graph.printSampleArchitecture(enas.graph.sample)
+        sample = [0, 1, 1, 1, 0, 7, 1, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
+        enas.sampleArchitecture(sample)
         
         # Test pytorch layers on images from test batch
         imgData = testBatch[b'data'][:4]
@@ -224,23 +218,38 @@ class enasTests(unittest.TestCase):
 
         tensorData = torch.tensor(testBatch[b'data'][:4], dtype=torch.float32).reshape(4, 3, 32, 32)
 
+        torch.manual_seed(42)
+        np.random.seed(42)
+        random.seed(42)
+            
+        weights1 = torch.nn.init.kaiming_uniform_(torch.empty(32, 3, 3, 3), mode='fan_in', nonlinearity='relu')
+        bias1 = torch.nn.init.uniform_(torch.empty(32), a=-0.1, b=0.1)
+        weights2 = torch.nn.init.kaiming_uniform_(torch.empty(32, 8, 8, 8), mode='fan_in', nonlinearity='relu')
+        bias2 = torch.nn.init.uniform_(torch.empty(32), a=-0.1, b=0.1)
+        weights3 = torch.nn.init.kaiming_uniform_(torch.empty(256, 3872), mode='fan_in', nonlinearity='relu')
+        bias3 = torch.nn.init.uniform_(torch.empty(256), a=-0.1, b=0.1)
+        weights4 = torch.nn.init.kaiming_uniform_(torch.empty(256, 256), mode='fan_in', nonlinearity='relu')
+        bias4 = torch.nn.init.uniform_(torch.empty(256), a=-0.1, b=0.1)
+        weights5 = torch.nn.init.kaiming_uniform_(torch.empty(256, 256), mode='fan_in', nonlinearity='relu')
+        bias5 = torch.nn.init.uniform_(torch.empty(10), a=-0.1, b=0.1)
+
         class TestCNN(nn.Module):
             def __init__(self):
                 super(TestCNN, self).__init__()
-                self.conv1 = nn.Conv2d(3, 8, kernel_size=3, padding=0)
+                self.conv1 = nn.Conv2d(3, 8, kernel_size=3)
                 self.bn1 = nn.BatchNorm2d(8)
                 self.pool = nn.MaxPool2d(2, 2)
-                self.conv2 = nn.Conv2d(8, 32, kernel_size=5, padding=0)
+                self.conv2 = nn.Conv2d(8, 32, kernel_size=5)
                 self.bn2 = nn.BatchNorm2d(32)
                 self.flatten = nn.Flatten()
-                self.fc1 = nn.Linear(800, 128)
+                self.fc1 = nn.Linear(3872, 128)
                 self.fc2 = nn.Linear(128, 32)
                 self.fc3 = nn.Linear(32, 10)
 
             def forward(self, x): # March
                 x = self.conv1(x)
                 x = F.relu(self.bn1(x))
-                x = self.pool(x)
+                #x = self.pool(x)
                 x = self.conv2(x)
                 x = F.relu(self.bn2(x))
                 x = self.pool(x)
@@ -251,12 +260,111 @@ class enasTests(unittest.TestCase):
                 return x
 
         testModel = TestCNN()
+        testModel.conv1.weight.data = weights1[:8].clone()
+        testModel.conv1.bias.data = bias1[:8].clone()
+        enas.sample.layers[1].pytorchLayer.weight = nn.Parameter(weights1)
+        enas.sample.layers[1].pytorchLayer.bias.data = bias1
+        testModel.conv2.weight.data = weights2[:32].clone()
+        testModel.conv2.bias.data = bias2[:32].clone()
+        enas.sample.layers[5].pytorchLayer.weight = nn.Parameter(weights2)
+        enas.sample.layers[5].pytorchLayer.bias.data = bias2
+        testModel.fc1.weight.data = weights3[:128].clone()
+        testModel.fc1.bias.data = bias3[:128].clone()
+        enas.sample.layers[10].pytorchLayer.weight = nn.Parameter(weights3)
+        enas.sample.layers[10].pytorchLayer.bias.data = bias3
+        testModel.fc2.weight.data = weights4[:32, :128].clone()
+        testModel.fc2.bias.data = bias4[:32].clone()
+        enas.sample.layers[12].pytorchLayer.weight = nn.Parameter(weights4)
+        enas.sample.layers[12].pytorchLayer.bias.data = bias4
+        testModel.fc3.weight.data = weights5[:10, :32].clone()
+        testModel.fc3.bias.data = bias5[:10].clone()
+        enas.sample.layers[14].pytorchLayer.weight = nn.Parameter(weights5)
+        enas.sample.layers[14].pytorchLayer.bias.data = bias5
 
-        print(testModel)
 
-        output = testModel(tensorData)
+        #testModel.fc3.weight = enas.sample.layers[14].pytorchLayer.weight
+        enas.sample.layers[14].pytorchLayer.weight = nn.Parameter(weights5)
+        #print(enas.sample.layers[14].pytorchLayer.weight.shape)
+        enas.sample.layers[14].pytorchLayer.bias.data = bias5
 
-        print(output)
+
+        # No Normalization Layer
+        enasNoNormOutput = enas.sample.layers[0](tensorData)
+        self.assertTrue(torch.allclose(enasNoNormOutput, tensorData))
+
+        # First Convolutional Layer
+        enasConv2D1Output = enas.sample.layers[1](enasNoNormOutput)
+        testModelConv1Out = testModel.conv1(tensorData)
+        self.assertTrue(torch.allclose(enasConv2D1Output, testModelConv1Out))
+        
+        # Batch Norm 1 
+        enasBatchNorm1Out = enas.sample.layers[2](enasConv2D1Output)
+        testModelBatchNorm1Out = testModel.bn1(testModelConv1Out)
+        self.assertTrue(torch.allclose(enasBatchNorm1Out, testModelBatchNorm1Out))
+
+        # Activation 1
+        enasOut = enas.sample.layers[3](enasBatchNorm1Out)
+        testOut = F.relu(testModelBatchNorm1Out)
+        self.assertTrue(torch.allclose(enasOut, testOut))
+
+        # Pooling 1
+        enasOut = enas.sample.layers[4](enasOut)
+        self.assertTrue(torch.allclose(enasOut, testOut))
+
+        # Second Convolutional Layer
+        enasOut = enas.sample.layers[5](enasOut)
+        testOut = testModel.conv2(testOut)
+        self.assertTrue(torch.allclose(enasOut, testOut))
+        
+        # Batch Norm 2 
+        enasBatchNorm1Out = enas.sample.layers[6](enasOut)
+        testModelBatchNorm1Out = testModel.bn2(testOut)
+        self.assertTrue(torch.allclose(enasOut, testOut))
+
+        # Activation 2
+        enasOut = enas.sample.layers[7](enasOut)
+        testOut = F.relu(testOut)
+        self.assertTrue(torch.allclose(enasOut, testOut))
+
+        # Pooling 2
+        enasOut = enas.sample.layers[8](enasOut)
+        testOut = testModel.pool(testOut)
+        self.assertTrue(torch.allclose(enasOut, testOut))
+
+        # Flatten
+        enasOut = enas.sample.layers[9](enasOut)
+        testOut = nn.Flatten()(testOut)
+        self.assertTrue(torch.allclose(enasOut, testOut))
+        
+        # Linear
+        enasOut = enas.sample.layers[10](enasOut)
+        testOut = testModel.fc1(testOut)
+        self.assertTrue(torch.allclose(enasOut, testOut))
+        
+        # Activation
+        enasOut = enas.sample.layers[11](enasOut)
+        testOut = F.relu(testOut)
+        self.assertTrue(torch.allclose(enasOut, testOut))
+        
+        # Linear
+        enasOut = enas.sample.layers[12](enasOut)
+        testOut = testModel.fc2(testOut)
+        self.assertTrue(torch.allclose(enasOut, testOut))
+        
+        # Activation
+        enasOut = enas.sample.layers[13](enasOut)
+        testOut = F.relu(testOut)
+        self.assertTrue(torch.allclose(enasOut, testOut))
+        
+        # Linear
+        enasOut = enas.sample.layers[14](enasOut)
+        testOut = testModel.fc3(testOut)
+        self.assertTrue(torch.allclose(enasOut, testOut))
+
+        testOutput = testModel(tensorData)
+        enasOutput = enas.sample(tensorData)
+        self.assertTrue(torch.allclose(enasOut, testOut))
+
 
         
 if __name__ == '__main__':
