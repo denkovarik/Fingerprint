@@ -23,10 +23,11 @@ class ENAS:
         self.graph = Graph()
         self.inputShape = inputShape
         self.pytorchLayers = {}
+        self.sample = None
 
 
-    def construct(self, inputShape):
-        self.graph.construct(inputShape=inputShape)
+    def construct(self):
+        self.graph.construct(inputShape=self.inputShape)
         self.mapPytorchLayers()
     
 
@@ -34,8 +35,11 @@ class ENAS:
         maxLinearSize = 0
         for curNode in self.graph.bfs(startNode=self.graph.graph['input']['node']):
             if curNode.pytorchLayerId is not None:
-                pytorchLayerId = curNode.pytorchLayerId 
-                self.pytorchLayers[pytorchLayerId] = curNode.getPytorchLayer()
+                pytorchLayerId = curNode.pytorchLayerId
+                if curNode.pytorchLayerId not in self.pytorchLayers:
+                    self.pytorchLayers[pytorchLayerId] = curNode.constructLayer()
+                # Now set the shared layer in the node
+                curNode.setSharedLayer(self.pytorchLayers[pytorchLayerId])
 
     
     def readGraph(self, filepath):
@@ -48,3 +52,35 @@ class ENAS:
         # Map Pytorch Layers
         self.mapPytorchLayers()
 
+
+    def sampleArchitecture(self, sample):
+        # Get the nodes from the graph based on the sample architecture
+        nodes = self.graph.sampleArchitecture(sample)
+        # Temp workaround because I'm tired
+        out = torch.rand(self.inputShape)
+
+        # I ain't heard no Fat Lady!
+        layers = []
+
+        for i in range(len(nodes)-1):
+            layers.append(nodes[i].getLayer(out.shape))
+            out = layers[-1](out)
+ 
+        
+        # Construct the CustomCNN instance with the nodes
+        model = CustomCNN(layers, self.inputShape)
+        self.sample = model
+
+
+
+
+class CustomCNN(nn.Module):
+    def __init__(self, layers, inputShape):
+        super(CustomCNN, self).__init__()
+        self.layers = layers
+
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
