@@ -43,7 +43,7 @@ class SharedLinear(nn.Module):
         # Dynamically select the subset of weights and biases
         weight = self.weight[:outChannels, :inChannels]
         bias = self.bias[:outChannels]
-        
+
         # Flatten input if not already flat
         if x.dim() > 2:
             x = torch.flatten(x, 1)

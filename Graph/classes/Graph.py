@@ -25,7 +25,7 @@ class Graph:
         self.graph = {}
         self.normalizationOptions = [NormalizationType.NO_NORM, NormalizationType.BATCH_NORM]    
         self.poolingOptions = [PoolingType.NO_POOLING, PoolingType.MAX_POOLING]    
-        self.activationOptions = [ActivationType.LINEAR, ActivationType.RELU]
+        self.activationOptions = [ActivationType.NONE, ActivationType.RELU]
         self.nodeFactory = NodeFactory()
         self.numConvLayers = 2
         self.numLinearLayers = 3
@@ -74,7 +74,8 @@ class Graph:
         for i in range(self.numConvLayers):       
             self.layer += 1
             outShape = self.addConvolutionalLayer(self.layer, inputShape)
-            self.addNormalizationLayer()                
+            self.addNormalizationLayer(outShape[1])                
+            self.addActivationLayer()
             self.addPoolingLayer()
             outShapes.append(outShape)
             inputShape = outShape
@@ -94,7 +95,7 @@ class Graph:
         self.addNode(nodeType=NodeType.INPUT, inputShape=inputShape)
         self.prevNodes = self.curNodes
         self.curNodes = []
-        self.addNormalizationLayer()
+        self.addNormalizationLayer(inputShape[1])
         return inputShape
 
     
@@ -143,10 +144,13 @@ class Graph:
         self.curNodes.append(node.name)  
 
         
-    def addNormalizationLayer(self):
+    def addNormalizationLayer(self, numFeatures):
         for opt in self.normalizationOptions:
             nodeName = 'L' + str(self.layer) + '_' + opt.value
-            self.addNode(nodeType=NodeType.NORMALIZATION, name=nodeName, normalizationType=opt)
+            self.addNode(nodeType=NodeType.NORMALIZATION, 
+                         name=nodeName, 
+                         normalizationType=opt, 
+                         numFeatures=numFeatures)
         self.prevNodes = self.curNodes
         self.curNodes = []         
 
@@ -282,8 +286,10 @@ class Graph:
             if ind >= len(sample):
                 raise Exception("Output node could not be reached")
             curNode = self.graph[curNode["edges"][sample[ind]]]
-            self.sample.append(sample[ind])
+            #self.sample.append(sample[ind])
+            self.sample.append(curNode['node'])
             ind += 1
+        return self.sample
 
 
     def sampleArchitectureHuman(self, clearTerminal=True, output=sys.stdout):
