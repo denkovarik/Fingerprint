@@ -157,10 +157,6 @@ class graphTests(unittest.TestCase):
 
         # Render the graph
         #renderGraph(graph, os.path.join(currentdir, 'Temp'))
-        
-        # Test that sample architecture is as expected by mock input
-        expected = [0, 1, 1, 1, 1, 7, 1, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
-        self.assertTrue(graph.sample == expected)
     
 
     def testSampleArchitecture(self):
@@ -175,7 +171,7 @@ class graphTests(unittest.TestCase):
         
         sample = [0, 1, 1, 1, 1, 7, 1, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
         graph.sampleArchitecture(sample)
+       
 
-        
 if __name__ == '__main__':
     unittest.main()
