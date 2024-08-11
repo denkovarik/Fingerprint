@@ -65,13 +65,10 @@ class ENAS:
         for i in range(len(nodes)-1):
             layers.append(nodes[i].getLayer(out.shape))
             out = layers[-1](out)
- 
-        
+         
         # Construct the CustomCNN instance with the nodes
         model = CustomCNN(layers, self.inputShape)
         self.sample = model
-
-
 
 
 class CustomCNN(nn.Module):
