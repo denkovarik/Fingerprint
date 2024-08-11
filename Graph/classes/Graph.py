@@ -239,10 +239,14 @@ class Graph:
         if len(self.sample) > 0:
             curNode = self.graph['input']
             nodes.append(curNode['node'].name)
-            for edge in self.sample:
-                edges.append(self.graph[curNode['node'].name]['edges'][edge])
-                curNode = self.graph[self.graph[curNode['node'].name]['edges'][edge]]
-                nodes.append(curNode['node'].name)
+            
+            curNode = self.sample[0]
+            nodes.append(curNode.name)
+            for node in self.sample[1:]:
+                edge = self.graph[curNode.name]['edges'].index(node.name)
+                edges.append(self.graph[curNode.name]['edges'][edge])
+                curNode = node
+                nodes.append(curNode.name)
 
         # Initialize the graph
         g = Digraph('G', filename = os.path.join(dirPath + 'enas_network_search_space'))
@@ -301,12 +305,12 @@ class Graph:
             return
        
         curNode = self.graph['input']
-        self.sample = []
+        sample = []
  
         while curNode["node"].name != 'output':
             if clearTerminal:
                 clearScreen()
-            self.printSampleArchitecture(self.sample)
+            self.printSampleArchitecture(sample)
             print("Select the next node from the following options:\n")
             num = 0
             for edge in curNode["edges"]:
@@ -326,10 +330,11 @@ class Graph:
             print("selectedInt: ", end="")
             print(selectedInt)
             curNode = self.graph[curNode["edges"][selectedInt]]
-            self.sample.append(selectedInt)
+            sample.append(selectedInt)
         print("")
-        self.printSampleArchitecture(self.sample)
+        self.printSampleArchitecture(sample)
         sys.stdout = original_stdout
+        self.sampleArchitecture(sample)
 
 
     def writeGraph2File(self, filepath):
