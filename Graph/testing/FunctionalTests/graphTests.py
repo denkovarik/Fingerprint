@@ -172,14 +172,9 @@ class graphTests(unittest.TestCase):
         """ 
         graph = Graph()
         graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
-        testBatchPath = os.path.join(currentdir, 'TestFiles/cifar10_test_batch_pickle')
-        self.assertTrue(testBatchPath)
-        testBatch = unpickle(testBatchPath)
         
         sample = [0, 1, 1, 1, 1, 7, 1, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
         graph.sampleArchitecture(sample)
-        #self.assertTrue(graph.sample == sample)
-
 
         
 if __name__ == '__main__':
