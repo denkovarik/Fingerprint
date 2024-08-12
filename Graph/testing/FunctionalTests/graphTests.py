@@ -137,7 +137,7 @@ class graphTests(unittest.TestCase):
 
 
     @patch('builtins.input', 
-            side_effect=['0', '1', '1', '1', '1', '7', '1', '1', '1', '0', '3', '1', '1', '1', '0', '0', '0'])
+            side_effect=['1', '1', '1', '1', '0', '7', '1', '1', '1', '0', '3', '1', '1', '1', '0', '1', '0'])
     def testSampleArchitectureHuman(self, mock_input):
         """
         Tests the ability of the Graph class to sample NN architecture from 
@@ -169,9 +169,82 @@ class graphTests(unittest.TestCase):
         graph = Graph()
         graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
         
-        sample = [0, 1, 1, 1, 1, 7, 1, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
+        sample = [1, 1, 1, 1, 1, 7, 1, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
         graph.sampleArchitecture(sample)
+
+
+    def testGetNextSampleArchitecture(self):
+        """ 
+        Tests method for returning the next list of edge traversals for the 
+        next sample architecture.
+        
+        :param self: An instance of the graphTests class.
+        """
+        graph = Graph()
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
+
+        itr = graph.getSampleArchitectures('input')
+        
+        nextSample = next(itr)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.assertTrue(nextSample == expNextSample)
+
+        nextSample = next(itr)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+        self.assertTrue(nextSample == expNextSample)
+
+        nextSample = next(itr)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0] 
+        self.assertTrue(nextSample == expNextSample)
+
+        nextSample = next(itr)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0]
+        self.assertTrue(nextSample == expNextSample)
+        
+
+        graph = Graph()
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
+
+        itr = graph.getSampleArchitectures('input')  
+
+        nextSample = next(itr)
+        graph.sampleArchitecture(nextSample)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.assertTrue(nextSample == expNextSample)
+
+        nextSample = next(itr)
+        graph.sampleArchitecture(nextSample)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+        self.assertTrue(nextSample == expNextSample)
+
+        nextSample = next(itr)
+        graph.sampleArchitecture(nextSample)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0] 
+        self.assertTrue(nextSample == expNextSample)
+
+        nextSample = next(itr)
+        graph.sampleArchitecture(nextSample)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0]
+        self.assertTrue(nextSample == expNextSample)
+
+
+    def testdfs(self):
+        """ 
+        Tests method for returning the next list of edge traversals for the 
+        next sample architecture.
+        
+        :param self: An instance of the graphTests class.
+        """
+        graph = Graph()
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32]))
+
+        for path in graph.getSampleArchitectures('input'):
+            pass
+            #print(path)
+
        
+
+
 
 if __name__ == '__main__':
     unittest.main()
