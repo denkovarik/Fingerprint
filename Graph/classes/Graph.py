@@ -201,6 +201,24 @@ class Graph:
         self.addOutputLayer()
 
 
+    def getSampleArchitectures(self, startNode='input'):
+        stack = [(startNode, [])]
+
+        while stack:
+            nodeName, path = stack.pop()
+            currentNode = self.graph[nodeName]
+
+            # Check if current node can reach an 'output' directly
+            if 'output' in currentNode['edges']:
+                yield path + [currentNode['edges'].index('output')]
+
+            # Traverse through edges and store the index
+            for idx in reversed(range(len(currentNode['edges']))):
+                nextNode = currentNode['edges'][idx]
+                if nextNode != 'output':  # Prevent adding output prematurely
+                    stack.append((nextNode, path + [idx]))
+
+
     def printSampleArchitecture(self, sample):
         print("") # Extra newline for formatting
         # Get the terminal size
@@ -237,12 +255,10 @@ class Graph:
         nodes = []
         edges = [] 
         if len(self.sample) > 0:
-            curNode = self.graph['input']
-            nodes.append(curNode['node'].name)
-            
-            curNode = self.sample[0]
+            curNode = self.graph['input']['node']
             nodes.append(curNode.name)
-            for node in self.sample[1:]:
+            
+            for node in self.sample:
                 edge = self.graph[curNode.name]['edges'].index(node.name)
                 edges.append(self.graph[curNode.name]['edges'][edge])
                 curNode = node
@@ -290,7 +306,6 @@ class Graph:
             if ind >= len(sample):
                 raise Exception("Output node could not be reached")
             curNode = self.graph[curNode["edges"][sample[ind]]]
-            #self.sample.append(sample[ind])
             self.sample.append(curNode['node'])
             ind += 1
         return self.sample
@@ -345,4 +360,60 @@ class Graph:
 
         with open(filepath, 'wb') as file:
             pickle.dump(self.graph, file)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
