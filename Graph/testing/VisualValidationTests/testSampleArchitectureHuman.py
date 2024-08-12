@@ -25,7 +25,7 @@ class graphTests(unittest.TestCase):
 
 
     @patch('builtins.input', 
-            side_effect=['0', '1', '1', '1', '0', '7', '1', '1', '1', '0', '3', '1', '1', '1', '0', '0', '0'])
+            side_effect=['1', '1', '1', '1', '0', '7', '1', '1', '1', '0', '3', '1', '1', '1', '0', '1', '0'])
     def testSampleArchitectureHuman(self, mock_input):
         """
         Tests the ability of the Graph class to sample NN architecture from 
