@@ -17,3 +17,4 @@ pip3 install ipython
 # Install PyTorch
 pip install torch torchvision torchaudio
 
+pip install tqdm
