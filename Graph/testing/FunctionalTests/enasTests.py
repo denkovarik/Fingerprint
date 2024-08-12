@@ -21,7 +21,7 @@ from classes.SharedLinear import SharedLinear
 import random
 import numpy as np
 import math
-
+from tqdm import tqdm
 
 
 
@@ -366,6 +366,50 @@ class enasTests(unittest.TestCase):
         self.assertTrue(torch.allclose(enasOut, testOut))
 
 
+    def test_forward_prop_itr(self):
+        """
+        Tests the forward prop for all sample architectures from the ENAS graph.
         
+        :param self: An instance of the graphTests class.
+        """
+        testBatchPath = os.path.join(currentdir, 'TestFiles/cifar10_test_batch_pickle')
+        self.assertTrue(testBatchPath)
+        testBatch = unpickle(testBatchPath)
+        # Test pytorch layers on images from test batch
+        imgData = testBatch[b'data'][:4]
+        batch = imgData.reshape(4, 3, 32, 32)
+        tensorData = torch.tensor(testBatch[b'data'][:4], dtype=torch.float32).reshape(4, 3, 32, 32)
+
+        torch.manual_seed(42)
+        np.random.seed(42)
+        random.seed(42)
+
+        enas = ENAS(inputShape=torch.Size([4, 3, 32, 32]))
+        enas.construct()
+
+        itr = enas.graph.getSampleArchitectures('input') 
+        
+        nextSample = next(itr)
+        enas.sampleArchitecture(nextSample)
+        enasOutput = enas.sample(tensorData)
+        
+        nextSample = next(itr)
+        enas.sampleArchitecture(nextSample)
+        enasOutput = enas.sample(tensorData)
+        
+        nextSample = next(itr)
+        enas.sampleArchitecture(nextSample)
+        enasOutput = enas.sample(tensorData)
+
+        total = 10000
+        # Water sucks, Gatorade is better.
+        samples = list(enas.graph.getSampleArchitectures('input'))
+        samples = samples[:total]
+
+        for sample in tqdm(samples, total=len(samples), desc="Testing Forward Prop for ENAS Sample Architectures"):
+            enas.sampleArchitecture(sample)
+            enasOutput = enas.sample(tensorData)
+
+
 if __name__ == '__main__':
     unittest.main()
