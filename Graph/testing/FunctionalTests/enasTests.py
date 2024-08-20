@@ -14,6 +14,7 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
+from torch.profiler import profile, ProfilerActivity, record_function
 from PIL import Image
 import numpy as np
 from classes.SharedConv2d import SharedConv2d
@@ -401,15 +402,18 @@ class enasTests(unittest.TestCase):
         enas.sampleArchitecture(nextSample)
         enasOutput = enas.sample(tensorData)
 
-        total = 10000
+        total = 100
         # Water sucks, Gatorade is better.
         samples = list(enas.graph.getSampleArchitectures('input'))
         samples = samples[:total]
 
-        for sample in tqdm(samples, total=len(samples), desc="Testing Forward Prop for ENAS Sample Architectures"):
-            enas.sampleArchitecture(sample)
-            enasOutput = enas.sample(tensorData)
+        with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
+            for sample in tqdm(samples, total=len(samples), desc="Testing Forward Prop for ENAS Sample Architectures"):
+                with record_function("sampleArchitecture"):
+                    enas.sampleArchitecture(sample)
+                with record_function("sampleForwardPass"):
+                    enasOutput = enas.sample(tensorData)
 
-
+        print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=10))
 if __name__ == '__main__':
     unittest.main()
