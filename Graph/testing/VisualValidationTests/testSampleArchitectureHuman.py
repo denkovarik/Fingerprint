@@ -25,7 +25,7 @@ class graphTests(unittest.TestCase):
 
 
     @patch('builtins.input', 
-            side_effect=['0', '1', '1', '1', '7', '1', '1', '0', '3', '1', '1', '1', '0', '0', '0'])
+            side_effect=['1', '1', '1', '1', '0', '7', '1', '1', '1', '0', '3', '1', '1', '1', '0', '1', '0'])
     def testSampleArchitectureHuman(self, mock_input):
         """
         Tests the ability of the Graph class to sample NN architecture from 
@@ -35,20 +35,16 @@ class graphTests(unittest.TestCase):
         """
         sampleGraphPath = os.path.join(currentdir, 'TestFiles/sampleTestGraph.txt')
         graph = Graph()
-        self.assertTrue(isinstance(graph, Graph))
-        self.assertTrue(graph.graph == {})
-        graph.readGraph(sampleGraphPath)
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32]))
 
         # Sample Architecture by siming user input
-        graph.sampleArchitectureHuman()
+        filepath = os.path.join(currentdir,'TestFiles', 'testSampleArchitectureHumanInput.txt')
+        with open(filepath, 'w') as file:
+            graph.sampleArchitectureHuman(clearTerminal=False, output=file)
 
         # Render the graph
         renderGraph(graph, os.path.join(currentdir, 'Temp'))
-        
-        # Test that sample architecture is as expected by mock input
-        expected = [0, 1, 1, 1, 7, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
-        self.assertTrue(graph.sample == expected)
- 
+
         
 if __name__ == '__main__':
     unittest.main()

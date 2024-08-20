@@ -7,7 +7,7 @@ from utils import *
 
 
 graph = Graph()
-graph.construct()
+graph.construct(inputShape=torch.Size([1, 3, 32, 32]))
 graph.sampleArchitectureHuman()
 
 image_path = graph.render()

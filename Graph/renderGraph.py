@@ -7,11 +7,11 @@ from utils import *
 
 
 graph = Graph()
-graph.construct()
+graph.construct(inputShape=torch.Size([1, 3, 32, 32]))
 #print(graph.graph)
 image_path = graph.render()
 
-if is_running_in_jupyter_notebook():
+if isRunningInJupyterNotebook():
     display(Image(filename='Graphs/enas_network_search_space_visualization.png'))
 else:
     os.system(f'feh {image_path}')
