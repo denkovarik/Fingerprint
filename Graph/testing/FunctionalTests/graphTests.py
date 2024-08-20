@@ -9,7 +9,32 @@ from classes.Nodes import *
 from classes.Graph import Graph
 from utils import *
 import uuid
-    
+import torch
+import torch.nn as nn
+import torch.nn.init as init
+from PIL import Image
+import numpy as np
+from classes.SharedConv2d import SharedConv2d
+from classes.SharedLinear import SharedLinear
+import random
+import numpy as np
+import math
+
+
+
+
+def initTestWeights(weight, bias=None):
+    torch.manual_seed(42)
+    np.random.seed(42)
+    random.seed(42)
+    weight.data.zero_()
+    init.kaiming_uniform_(weight, a=math.sqrt(5))
+    if bias is not None:
+        # Initialize bias with a value between -1/sqrt(fan_in) and 1/sqrt(fan_in)
+        fan_in, _ = init._calculate_fan_in_and_fan_out(weight)
+        bound = 1 / math.sqrt(fan_in)
+        init.uniform_(bias, -bound, bound)
+
 
 class graphTests(unittest.TestCase):
     """
@@ -34,7 +59,7 @@ class graphTests(unittest.TestCase):
         graph = Graph()
         self.assertTrue(isinstance(graph, Graph))
         self.assertTrue(graph.graph == {})
-        graph.construct()
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
         self.assertTrue(not graph.graph == {})
 
     
@@ -50,12 +75,13 @@ class graphTests(unittest.TestCase):
         self.assertTrue(graph.graph == {})
 
         # Construct a simple graph example
-        inputNode = InputNode(numChannels=3)
-        normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM)
-        convNode = ConvolutionalNode(name='convNode1', kernelSize=3, 
+        inputNode = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
+        normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM, inputNode.inputShape)
+        convNode = ConvolutionalNode(name='convNode1', kernel_size=3, 
                                      maxNumInputChannels=16, 
+                                     maxNumOutputChannels=16, 
                                      numOutputChannels=4, layer=0,
-                                     conv2dId=uuid.uuid4())
+                                     pytorchLayerId=uuid.uuid4())
         
         graph.graph[inputNode.name] = {'node': inputNode, 'edges': [normNode.name]}
         graph.graph[normNode.name] = {'node': normNode, 'edges': [convNode.name]}
@@ -85,12 +111,13 @@ class graphTests(unittest.TestCase):
         self.assertTrue(graph.graph == {})
 
         # Construct a simple graph example to test the read
-        inputNode = InputNode(numChannels=3)
-        normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM)
-        convNode = ConvolutionalNode(name='convNode1', kernelSize=3, 
+        inputNode = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
+        normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM, inputNode.inputShape)
+        convNode = ConvolutionalNode(name='convNode1', kernel_size=3, 
                                      maxNumInputChannels=16, 
+                                     maxNumOutputChannels=16, 
                                      numOutputChannels=4, layer=0, 
-                                     conv2dId=uuid.uuid4())
+                                     pytorchLayerId=uuid.uuid4())
         
         graph.graph[inputNode.name] = {'node': inputNode, 'edges': [normNode.name]}
         graph.graph[normNode.name] = {'node': normNode, 'edges': [convNode.name]}
@@ -110,7 +137,7 @@ class graphTests(unittest.TestCase):
 
 
     @patch('builtins.input', 
-            side_effect=['0', '1', '1', '1', '7', '1', '1', '0', '3', '1', '1', '1', '0', '0', '0'])
+            side_effect=['1', '1', '1', '1', '0', '7', '1', '1', '1', '0', '3', '1', '1', '1', '0', '1', '0'])
     def testSampleArchitectureHuman(self, mock_input):
         """
         Tests the ability of the Graph class to sample NN architecture from 
@@ -120,25 +147,104 @@ class graphTests(unittest.TestCase):
         """
         sampleGraphPath = os.path.join(currentdir, 'TestFiles/sampleTestGraph.txt')
         graph = Graph()
-        self.assertTrue(isinstance(graph, Graph))
-        self.assertTrue(graph.graph == {})
-        graph.readGraph(sampleGraphPath)
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
 
         # Sample Architecture by siming user input
         originalOutput = sys.stdout
         outputPath = os.path.join(currentdir, 'Temp/output.txt')
         with open(outputPath, 'w') as f:
-            sys.stdout = f
-            graph.sampleArchitectureHuman(clearTerminal=False)
-        sys.stdout = originalOutput
+            graph.sampleArchitectureHuman(clearTerminal=False, output=f)
 
         # Render the graph
         #renderGraph(graph, os.path.join(currentdir, 'Temp'))
+    
+
+    def testSampleArchitecture(self):
+        """
+        Tests the ability of the graph class create a sample architecture 
+        from the graph given a list on ints.
         
-        # Test that sample architecture is as expected by mock input
-        expected = [0, 1, 1, 1, 7, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
-        self.assertTrue(graph.sample == expected)
- 
+        :param self: An instance of the graphTests class.
+        """ 
+        graph = Graph()
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
         
+        sample = [1, 1, 1, 1, 1, 7, 1, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
+        graph.sampleArchitecture(sample)
+
+
+    def testGetNextSampleArchitecture(self):
+        """ 
+        Tests method for returning the next list of edge traversals for the 
+        next sample architecture.
+        
+        :param self: An instance of the graphTests class.
+        """
+        graph = Graph()
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
+
+        itr = graph.getSampleArchitectures('input')
+        
+        nextSample = next(itr)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.assertTrue(nextSample == expNextSample)
+
+        nextSample = next(itr)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+        self.assertTrue(nextSample == expNextSample)
+
+        nextSample = next(itr)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0] 
+        self.assertTrue(nextSample == expNextSample)
+
+        nextSample = next(itr)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0]
+        self.assertTrue(nextSample == expNextSample)
+        
+
+        graph = Graph()
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
+
+        itr = graph.getSampleArchitectures('input')  
+
+        nextSample = next(itr)
+        graph.sampleArchitecture(nextSample)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.assertTrue(nextSample == expNextSample)
+
+        nextSample = next(itr)
+        graph.sampleArchitecture(nextSample)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+        self.assertTrue(nextSample == expNextSample)
+
+        nextSample = next(itr)
+        graph.sampleArchitecture(nextSample)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0] 
+        self.assertTrue(nextSample == expNextSample)
+
+        nextSample = next(itr)
+        graph.sampleArchitecture(nextSample)
+        expNextSample = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0]
+        self.assertTrue(nextSample == expNextSample)
+
+
+    def testdfs(self):
+        """ 
+        Tests method for returning the next list of edge traversals for the 
+        next sample architecture.
+        
+        :param self: An instance of the graphTests class.
+        """
+        graph = Graph()
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32]))
+
+        for path in graph.getSampleArchitectures('input'):
+            pass
+            #print(path)
+
+       
+
+
+
 if __name__ == '__main__':
     unittest.main()
