@@ -406,7 +406,7 @@ class enasTests(unittest.TestCase):
         # Water sucks, Gatorade is better.
         samples = list(enas.graph.getSampleArchitectures('input'))
         samples = samples[:total]
-
+        
         with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
             for sample in tqdm(samples, total=len(samples), desc="Testing Forward Prop for ENAS Sample Architectures"):
                 with record_function("sampleArchitecture"):
@@ -414,6 +414,6 @@ class enasTests(unittest.TestCase):
                 with record_function("sampleForwardPass"):
                     enasOutput = enas.sample(tensorData)
 
-        print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=10))
+        print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=30))
 if __name__ == '__main__':
     unittest.main()
