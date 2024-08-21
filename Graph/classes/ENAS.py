@@ -12,6 +12,7 @@ import uuid
 import queue
 import torch
 import torch.nn as nn
+from torch.profiler import profile, ProfilerActivity, record_function
 from utils import ensureFilepathExists
 from classes.SharedConv2d import SharedConv2d
 from classes.SharedLinear import SharedLinear
@@ -55,20 +56,24 @@ class ENAS:
 
     def sampleArchitecture(self, sample):
         # Get the nodes from the graph based on the sample architecture
-        nodes = self.graph.sampleArchitecture(sample)
+        with record_function("graph.sampleArchitecture"):
+            nodes = self.graph.sampleArchitecture(sample)
         # Temp workaround because I'm tired
-        out = torch.rand(self.inputShape)
+        with record_function("tempWorkAround"):
+            out = torch.rand(self.inputShape)
 
         # I ain't heard no Fat Lady!
         layers = []
-
-        for i in range(len(nodes)-1):
-            layers.append(nodes[i].getLayer(out.shape))
-            out = layers[-1](out)
+    
+        with record_function("Node.getLayers"):
+            for i in range(len(nodes)-1):
+                layers.append(nodes[i].getLayer(out.shape))
+                out = layers[-1](out)
          
         # Construct the CustomCNN instance with the nodes
-        model = CustomCNN(layers, self.inputShape)
-        self.sample = model
+        with record_function("CustomCNN"):
+            model = CustomCNN(layers, self.inputShape)
+            self.sample = model
 
 
 class CustomCNN(nn.Module):
