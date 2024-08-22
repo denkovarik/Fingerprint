@@ -168,9 +168,10 @@ class nodeTests(unittest.TestCase):
         
         :param self: An instance of the nodeTests class.
         """
+        pytorchLayerId = uuid.uuid4()
         node = NormalizationNode(name="name", 
                                  normalizationType=NormalizationType.BATCH_NORM, 
-                                 numFeatures=12)
+                                 numFeatures=12, pytorchLayerId=pytorchLayerId)
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.displayName == 'Batch Normalization')
         self.assertTrue(node.normalizationType == NormalizationType.BATCH_NORM)
@@ -336,10 +337,11 @@ class nodeTests(unittest.TestCase):
         self.assertTrue(node.displayName == 'Output')
        
         # Normalization Node
+        pytorchLayerId = uuid.uuid4()
         node = nodeFactory.createNode(NodeType.NORMALIZATION, 
                                       name='name', 
                                       normalizationType=NormalizationType.BATCH_NORM,
-                                      numFeatures=8)
+                                      numFeatures=8, pytorchLayerId=pytorchLayerId)
         self.assertTrue(isinstance(node, NormalizationNode))
         self.assertTrue(node.name == 'name')
         self.assertTrue(node.displayName == 'Batch Normalization')
