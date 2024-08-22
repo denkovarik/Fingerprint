@@ -102,7 +102,7 @@ class PassThrough(nn.Module):
 
 
 class NormalizationNode(Node):
-    def __init__(self, name, normalizationType, numFeatures):
+    def __init__(self, name, normalizationType, numFeatures, pytorchLayerId):
         super().__init__(name, 'No Normalization')
         self.normalizationType = normalizationType
         self.numFeatures = numFeatures
