@@ -1,6 +1,7 @@
 from enum import Enum
 import torch
 import torch.nn as nn
+from torch.profiler import profile, ProfilerActivity, record_function
 from classes.SharedConv2d import SharedConv2d
 from classes.SharedLinear import SharedLinear
 
@@ -101,7 +102,7 @@ class PassThrough(nn.Module):
 
 
 class NormalizationNode(Node):
-    def __init__(self, name, normalizationType, numFeatures):
+    def __init__(self, name, normalizationType, numFeatures, pytorchLayerId):
         super().__init__(name, 'No Normalization')
         self.normalizationType = normalizationType
         self.numFeatures = numFeatures
@@ -111,10 +112,11 @@ class NormalizationNode(Node):
 
 
     def getLayer(self, inputShape):
-        bn = nn.BatchNorm2d(inputShape[1])
-        if self.normalizationType == NormalizationType.NO_NORM:
-            return PassThrough()
-        return bn
+        with record_function("getNormalizationNode"):
+            bn = nn.BatchNorm2d(inputShape[1])
+            if self.normalizationType == NormalizationType.NO_NORM:
+                return PassThrough()
+            return bn
 
 
 class PoolingNode(Node):
@@ -130,9 +132,10 @@ class PoolingNode(Node):
 
 
     def getLayer(self, inputShape):
-        if self.poolingType == PoolingType.MAX_POOLING:
-            return nn.MaxPool2d(self.kernelSize, self.stride)
-        return PassThrough()
+        with record_function("getPoolingNode"):
+            if self.poolingType == PoolingType.MAX_POOLING:
+                return nn.MaxPool2d(self.kernelSize, self.stride)
+            return PassThrough()
 
 
 class ConvolutionalNode(Node):
@@ -172,7 +175,8 @@ class ConvolutionalNode(Node):
 
 
     def getLayer(self, inputShape):
-        return self
+        with record_function("getConvolutionalNode"):
+            return self
 
 
     def forward(self, x):
@@ -191,7 +195,8 @@ class FlattenNode(Node):
 
 
     def getLayer(self, inputShape):
-        return nn.Flatten()
+        with record_function("getFlattenNode"):
+            return nn.Flatten()
 
 
 class LinearNode(Node):
@@ -216,7 +221,8 @@ class LinearNode(Node):
 
 
     def getLayer(self, inputShape):
-        return self
+        with record_function("getLinearNode"):
+            return self
 
 
     def setSharedLayer(self, pytorchLayer):
@@ -237,7 +243,8 @@ class ActivationNode(Node):
 
 
     def getLayer(self, inputShape):
-        return nn.ReLU()
+        with record_function("getActivationNode"):
+            return nn.ReLU()
 
 
 class NodeFactory:

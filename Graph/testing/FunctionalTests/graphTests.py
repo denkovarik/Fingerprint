@@ -76,7 +76,8 @@ class graphTests(unittest.TestCase):
 
         # Construct a simple graph example
         inputNode = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
-        normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM, inputNode.inputShape)
+        normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM, 
+                inputNode.inputShape, pytorchLayerId=uuid.uuid4())
         convNode = ConvolutionalNode(name='convNode1', kernel_size=3, 
                                      maxNumInputChannels=16, 
                                      maxNumOutputChannels=16, 
@@ -112,7 +113,8 @@ class graphTests(unittest.TestCase):
 
         # Construct a simple graph example to test the read
         inputNode = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
-        normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM, inputNode.inputShape)
+        normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM, 
+                inputNode.inputShape, pytorchLayerId=uuid.uuid4())
         convNode = ConvolutionalNode(name='convNode1', kernel_size=3, 
                                      maxNumInputChannels=16, 
                                      maxNumOutputChannels=16, 

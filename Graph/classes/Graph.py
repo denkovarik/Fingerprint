@@ -147,11 +147,13 @@ class Graph:
         
     def addNormalizationLayer(self, numFeatures):
         for opt in self.normalizationOptions:
+            pytorchLayerId = uuid.uuid4()
             nodeName = 'L' + str(self.layer) + '_' + opt.value
             self.addNode(nodeType=NodeType.NORMALIZATION, 
                          name=nodeName, 
                          normalizationType=opt, 
-                         numFeatures=numFeatures)
+                         numFeatures=numFeatures,
+                         pytorchLayerId=pytorchLayerId)
         self.prevNodes = self.curNodes
         self.curNodes = []         
 

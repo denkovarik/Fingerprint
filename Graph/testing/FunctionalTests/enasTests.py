@@ -14,6 +14,7 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
+from torch.profiler import profile, ProfilerActivity, record_function
 from PIL import Image
 import numpy as np
 from classes.SharedConv2d import SharedConv2d
@@ -401,14 +402,82 @@ class enasTests(unittest.TestCase):
         enas.sampleArchitecture(nextSample)
         enasOutput = enas.sample(tensorData)
 
-        total = 10000
+        total = 100
         # Water sucks, Gatorade is better.
         samples = list(enas.graph.getSampleArchitectures('input'))
         samples = samples[:total]
+        
+        with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
+            for sample in tqdm(samples, total=len(samples), desc="Testing Forward Prop for ENAS Sample Architectures"):
+                with record_function("sampleArchitecture"):
+                    enas.sampleArchitecture(sample)
+                with record_function("sampleForwardPass"):
+                    enasOutput = enas.sample(tensorData)
 
-        for sample in tqdm(samples, total=len(samples), desc="Testing Forward Prop for ENAS Sample Architectures"):
+        #print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=30))
+
+
+    def test_forward_prop_gpu(self):
+        """
+        Tests the forward prop for sample architectures from the ENAS graph using installed GPUs if available.
+        
+        :param self: An instance of the graphTests class.
+        """
+        testBatchPath = os.path.join(currentdir, 'TestFiles/cifar10_test_batch_pickle')
+        self.assertTrue(testBatchPath)
+        testBatch = unpickle(testBatchPath)
+        # Test pytorch layers on images from test batch
+        imgData = testBatch[b'data'][:4]
+        batch = imgData.reshape(4, 3, 32, 32)
+        tensorData = torch.tensor(testBatch[b'data'][:4], dtype=torch.float32).reshape(4, 3, 32, 32)
+
+        torch.manual_seed(42)
+        np.random.seed(42)
+        random.seed(42)
+
+        enas = ENAS(inputShape=torch.Size([4, 3, 32, 32]))
+        enas.construct()
+
+        itr = enas.graph.getSampleArchitectures('input') 
+        
+        nextSample = next(itr)
+        enas.sampleArchitecture(nextSample)
+        enasOutput = enas.sample(tensorData)
+        
+        nextSample = next(itr)
+        enas.sampleArchitecture(nextSample)
+        enasOutput = enas.sample(tensorData)
+        
+        nextSample = next(itr)
+        enas.sampleArchitecture(nextSample)
+        enasOutput = enas.sample(tensorData)
+
+        total = 10000
+        samples = list(enas.graph.getSampleArchitectures('input'))
+        samples = samples[:total]
+
+        constructed_samples = []
+
+        self.assertTrue(torch.cuda.is_available())
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print("Using device:", device)
+
+        if torch.cuda.is_available():
+            for i in range(torch.cuda.device_count()):
+                print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
+                print(f"  Memory: {torch.cuda.get_device_properties(i).total_memory / 1e9} GB")
+                print(f"  Compute Capability: {torch.cuda.get_device_properties(i).major}.{torch.cuda.get_device_properties(i).minor}")
+        else:
+            print("No CUDA GPUs are available")
+        
+        for sample in tqdm(samples, total=len(samples), desc="Constructing Sample Architectures"):
             enas.sampleArchitecture(sample)
-            enasOutput = enas.sample(tensorData)
+            constructed_samples.append(enas.sample)
+
+        for const_sample in tqdm(constructed_samples, total=len(constructed_samples), desc="Running Forward Prop on CUDA device if available"):
+            model = const_sample.to(device)
+            enasOutput = model(tensorData)
 
 
     def test_forward_prop_random_sample(self):
