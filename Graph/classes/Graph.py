@@ -4,6 +4,7 @@ parentdir = os.path.dirname(currentdir)
 from graphviz import Digraph
 from IPython.display import display, Image
 import copy
+import random
 from classes.Nodes import *
 from utils import *
 import pickle
@@ -199,6 +200,24 @@ class Graph:
         outShape = self.addFlattenLayer(outShape)
         outShape = self.addLinearLayers(outShape)            
         self.addOutputLayer()
+
+
+    def getRandomSampleArchitecture(self, startNode='input'):
+        stack = [(startNode, [])]
+
+        while stack:
+            nodeName, path = stack.pop()
+            currentNode = self.graph[nodeName]
+
+            # Check if current node can reach an 'output' directly
+            if 'output' in currentNode['edges']:
+                return path + [currentNode['edges'].index('output')]
+
+            # Get a random index from the available edges
+            idx = random.randint(0, len(currentNode['edges']) - 1)
+            nextNode = currentNode['edges'][idx]
+            if nextNode != 'output':  # Prevent adding output prematurely
+                stack.append((nextNode, path + [idx]))
 
 
     def getSampleArchitectures(self, startNode='input'):

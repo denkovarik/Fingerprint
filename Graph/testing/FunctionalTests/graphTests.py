@@ -242,8 +242,24 @@ class graphTests(unittest.TestCase):
             pass
             #print(path)
 
-       
 
+    def testGetRandomSampleArchitecture(self):
+        """ 
+        Tests method for sampling and return a random architecture from the graph.
+        
+        :param self: An instance of the graphTests class.
+        """
+        random.seed(42)
+        graph = Graph()
+        graph.construct(inputShape=torch.Size([4, 3, 32, 32]))
+
+        expRslt = [0, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0]
+        randArch = graph.getRandomSampleArchitecture()
+        self.assertTrue(randArch == expRslt)
+        
+        expRslt = [1, 3, 1, 1, 0, 2, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0]
+        randArch = graph.getRandomSampleArchitecture()
+        self.assertTrue(randArch == expRslt)
 
 
 if __name__ == '__main__':
