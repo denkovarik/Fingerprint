@@ -411,5 +411,48 @@ class enasTests(unittest.TestCase):
             enasOutput = enas.sample(tensorData)
 
 
+    def test_forward_prop_random_sample(self):
+        """
+        Tests the forward prop for a set of randomly sample architectures from 
+        the graph.
+        
+        :param self: An instance of the graphTests class.
+        """
+        testBatchPath = os.path.join(currentdir, 'TestFiles/cifar10_test_batch_pickle')
+        self.assertTrue(testBatchPath)
+        testBatch = unpickle(testBatchPath)
+        # Test pytorch layers on images from test batch
+        imgData = testBatch[b'data'][:4]
+        batch = imgData.reshape(4, 3, 32, 32)
+        tensorData = torch.tensor(testBatch[b'data'][:4], dtype=torch.float32).reshape(4, 3, 32, 32)
+
+        torch.manual_seed(42)
+        np.random.seed(42)
+        random.seed(42)
+
+        enas = ENAS(inputShape=torch.Size([4, 3, 32, 32]))
+        enas.construct()
+
+        itr = enas.graph.getSampleArchitectures('input') 
+        
+        nextSample = next(itr)
+        enas.sampleArchitecture(nextSample)
+        enasOutput = enas.sample(tensorData)
+        
+        nextSample = next(itr)
+        enas.sampleArchitecture(nextSample)
+        enasOutput = enas.sample(tensorData)
+        
+        nextSample = next(itr)
+        enas.sampleArchitecture(nextSample)
+        enasOutput = enas.sample(tensorData)
+
+        total = 100
+        for i in tqdm(range(total), desc="Testing Forward Prop for Random Architectures"):
+            sample = enas.graph.getRandomSampleArchitecture()
+            enas.sampleArchitecture(sample)
+            enasOutput = enas.sample(tensorData)
+
+
 if __name__ == '__main__':
     unittest.main()
