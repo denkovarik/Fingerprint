@@ -97,8 +97,13 @@ class PassThrough(nn.Module):
     def __init__(self):
         super(PassThrough, self).__init__()
     
+    
     def forward(self, x):
         return x
+    
+    
+    def to(self, device):
+        return self
 
 
 class NormalizationNode(Node):
@@ -117,6 +122,13 @@ class NormalizationNode(Node):
             if self.normalizationType == NormalizationType.NO_NORM:
                 return PassThrough()
             return bn
+            
+            
+    def parameters(self, recurse: bool = True):
+        if self.pytorchLayer:
+            return self.pytorchLayer.parameters(recurse=recurse)
+        else:
+            return iter([]) 
 
 
 class PoolingNode(Node):
@@ -181,10 +193,21 @@ class ConvolutionalNode(Node):
 
     def forward(self, x):
         return self.pytorchLayer(x, x.shape[1], self.numOutputChannels)
+        
+        
+    def parameters(self, recurse: bool = True):
+        # Yield the parameters of the pytorchLayer
+        for param in self.pytorchLayer.parameters(recurse=recurse):
+            yield param
 
 
     def setSharedLayer(self, pytorchLayer):
         self.pytorchLayer = pytorchLayer
+        
+        
+    def to(self, device):
+        self.pytorchLayer = self.pytorchLayer.to(device)  # Ensure the convolution layer is also moved
+        return self 
 
 
 class FlattenNode(Node):
@@ -223,10 +246,21 @@ class LinearNode(Node):
     def getLayer(self, inputShape):
         with record_function("getLinearNode"):
             return self
+            
+            
+    def parameters(self, recurse: bool = True):
+        # Yield the parameters of the pytorchLayer
+        for param in self.pytorchLayer.parameters(recurse=recurse):
+            yield param
 
 
     def setSharedLayer(self, pytorchLayer):
         self.pytorchLayer = pytorchLayer
+        
+        
+    def to(self, device):
+        self.pytorchLayer = self.pytorchLayer.to(device)  # Ensure the convolution layer is also moved
+        return self 
 
 
 class ActivationNode(Node):
