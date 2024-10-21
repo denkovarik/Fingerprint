@@ -80,6 +80,17 @@ class CustomCNN(nn.Module):
     def __init__(self, layers, inputShape):
         super(CustomCNN, self).__init__()
         self.layers = layers
+        # Manually registering each parameter from custom layers
+        for i, layer in enumerate(layers):
+            for j, param in enumerate(layer.parameters()):
+                self.register_parameter(f'param_{i}_{j}', param)
+        
+        
+    def to(self, device):
+        super().to(device)
+        for layer in self.layers:
+            layer.to(device)
+        return self
 
 
     def forward(self, x):
