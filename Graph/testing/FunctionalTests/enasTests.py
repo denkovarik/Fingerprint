@@ -474,8 +474,12 @@ class enasTests(unittest.TestCase):
         for sample in tqdm(samples, total=len(samples), desc="Constructing Sample Architectures"):
             enas.sampleArchitecture(sample)
             constructed_samples.append(enas.sample)
+        
+        # Sell me this pen
+        tensorData = tensorData.to(device)
 
-        for const_sample in tqdm(constructed_samples, total=len(constructed_samples), desc="Running Forward Prop on CUDA device if available"):
+        for const_sample in tqdm(constructed_samples, total=len(constructed_samples), 
+            desc="Running Forward Prop on CUDA device if available"):
             model = const_sample.to(device)
             enasOutput = model(tensorData)
 
