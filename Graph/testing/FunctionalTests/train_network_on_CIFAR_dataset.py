@@ -5,6 +5,7 @@ import torchvision
 import torchvision.transforms as transforms
 import numpy as np
 import random
+import time
 import os, io, sys, inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -114,7 +115,7 @@ def train_network(model, trainset, device, batch_size=32, num_epochs=10):
     return model
  
     
-trainset, testset = load_cifar10()
+trainset, testset = load_cifar10(data_dir=os.path.join(currentdir, 'Datasets/CIFAR-10'))
 
 enas = ENAS(inputShape=torch.Size([4, 3, 32, 32]))
 enas.construct()
@@ -133,10 +134,14 @@ enas.sample.to(device)
 untrained_accuracy = test_network(enas.sample, testset, device)
 print(f'Accuracy of the untrained network on the test images: {untrained_accuracy}%')
 
+start_time = time.time()
 train_network(enas.sample, trainset, device, batch_size=256, num_epochs=25)
+end_time = time.time()
+elapsed_time = end_time - start_time
 
 trained_accuracy = test_network(enas.sample, testset, device)
 print(f'Accuracy of the trained network on the test images: {trained_accuracy}%')
+print(f'Training time: {elapsed_time}')
     
 if trained_accuracy > 70:
     print("\U0001F60E")
