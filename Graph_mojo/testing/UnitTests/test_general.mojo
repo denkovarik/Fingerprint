@@ -33,6 +33,3 @@ def test_Pytorch_installed():
     
     # Run Test
     out = linearLayer(inputTensor)
-    
-def main():
-    test_Pytorch_installed()
