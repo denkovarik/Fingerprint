@@ -45,7 +45,7 @@ struct NodeType:
         else:
             return self.NONE
         
-        
+      
 struct NormalizationType:    
     # The value for the enum
     var NO_NORM: String
@@ -66,5 +66,49 @@ struct NormalizationType:
             return self.NO_NORM
         elif theType == self.BATCH_NORM:
             return self.BATCH_NORM
+        else:
+            return self.NONE
+            
+        
+struct PoolingType:    
+    # The value for the enum
+    var NO_POOLING: String
+    var MAX_POOLING: String
+    var NONE: String
+    var value: String
+    
+    fn __init__(inout self, theType: String):
+        self.NO_POOLING = 'noPooling'  
+        self.MAX_POOLING = 'maxPooling'
+        self.NONE = 'none'
+        
+        self.value = self.NONE
+        self.value = self.getValidNodeType(theType)
+            
+    fn getValidNodeType(self, theType: String) -> String:
+        if theType == self.NO_POOLING:
+            return self.NO_POOLING
+        elif theType == self.MAX_POOLING:
+            return self.MAX_POOLING
+        else:
+            return self.NONE
+            
+            
+struct ActivationType:    
+    # The value for the enum
+    var RELU: String
+    var NONE: String
+    var value: String
+    
+    fn __init__(inout self, theType: String):
+        self.RELU = 'reluActivation'  
+        self.NONE = 'none'
+        
+        self.value = self.NONE
+        self.value = self.getValidNodeType(theType)
+            
+    fn getValidNodeType(self, theType: String) -> String:
+        if theType == self.RELU:
+            return self.RELU
         else:
             return self.NONE
