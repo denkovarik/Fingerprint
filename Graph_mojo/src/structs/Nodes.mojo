@@ -45,3 +45,26 @@ struct NodeType:
         else:
             return self.NONE
         
+        
+struct NormalizationType:    
+    # The value for the enum
+    var NO_NORM: String
+    var BATCH_NORM: String
+    var NONE: String
+    var value: String
+    
+    fn __init__(inout self, theType: String):
+        self.NO_NORM = 'noNorm'  
+        self.BATCH_NORM = 'batchNorm'
+        self.NONE = 'none'
+        
+        self.value = self.NONE
+        self.value = self.getValidNodeType(theType)
+            
+    fn getValidNodeType(self, theType: String) -> String:
+        if theType == self.NO_NORM:
+            return self.NO_NORM
+        elif theType == self.BATCH_NORM:
+            return self.BATCH_NORM
+        else:
+            return self.NONE
