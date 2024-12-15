@@ -1,7 +1,7 @@
 # Content of test_quickstart.mojo
 from testing import assert_equal, assert_not_equal
 from python import Python
-from structs.Nodes import NodeType, NormalizationType
+from structs.Nodes import NodeType, NormalizationType, PoolingType, ActivationType
 
 
 def test_execution():
@@ -65,3 +65,37 @@ def test_normalization_types():
     normalizationType = NormalizationType('Que')
     assert_not_equal(normalizationType.value, 'Que')
     assert_equal(normalizationType.value, 'none')
+    
+def test_pooling_types():
+    """
+    Tests the ability to use PoolingType.
+    """	    
+    # NO_POOLING
+    var poolingType = PoolingType('noPooling')
+    assert_equal(poolingType.value, 'noPooling')
+        
+    # MAX_POOLING
+    poolingType = PoolingType('maxPooling')
+    assert_equal(poolingType.value, 'maxPooling')
+
+    # Unrecognized Node Type
+    poolingType = PoolingType('Que')
+    assert_not_equal(poolingType.value, 'Que')
+    assert_equal(poolingType.value, 'none')
+    
+def test_activation_types():
+    """
+    Tests the ability to use ActivationType.
+    """	    
+    # RELU
+    var activationType = ActivationType('reluActivation')
+    assert_equal(activationType.value, 'reluActivation')
+        
+    # NONE
+    activationType = ActivationType('none')
+    assert_equal(activationType.value, 'none')
+
+    # Unrecognized Node Type
+    activationType = ActivationType('Que')
+    assert_not_equal(activationType.value, 'Que')
+    assert_equal(activationType.value, 'none')
