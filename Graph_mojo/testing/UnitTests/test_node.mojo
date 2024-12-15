@@ -1,7 +1,7 @@
 # Content of test_quickstart.mojo
 from testing import assert_equal
 from python import Python
-from classes.Nodes import NodeType
+from structs.Nodes import NodeType
 
 
 def test_execution():
