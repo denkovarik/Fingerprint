@@ -1,7 +1,7 @@
 # Content of test_quickstart.mojo
-from testing import assert_equal
+from testing import assert_equal, assert_not_equal
 from python import Python
-from structs.Nodes import NodeType
+from structs.Nodes import NodeType, NormalizationType
 
 
 def test_execution():
@@ -11,9 +11,7 @@ def test_execution():
 def test_node_types():
     """
     Tests the ability to use NodeType.
-    """	
-    assert_equal(0, 0)
-    
+    """	    
     # INPUT
     var nodeType = NodeType('input')
     assert_equal(nodeType.value, 'input')
@@ -48,4 +46,22 @@ def test_node_types():
                 
     # Unrecognized Node Type
     nodeType = NodeType('Que')
+    assert_not_equal(nodeType.value, 'Que')
     assert_equal(nodeType.value, 'none')
+    
+def test_normalization_types():
+    """
+    Tests the ability to use NormalizationType.
+    """	    
+    # NO_NORM
+    var normalizationType = NormalizationType('noNorm')
+    assert_equal(normalizationType.value, 'noNorm')
+        
+    # BATCH_NORM
+    normalizationType = NormalizationType('batchNorm')
+    assert_equal(normalizationType.value, 'batchNorm')
+
+    # Unrecognized Node Type
+    normalizationType = NormalizationType('Que')
+    assert_not_equal(normalizationType.value, 'Que')
+    assert_equal(normalizationType.value, 'none')
