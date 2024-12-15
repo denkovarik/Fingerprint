@@ -1,13 +1,9 @@
 # Content of test_quickstart.mojo
 from testing import assert_equal
 from python import Python
+from Nodes import NodeType
 
 
-struct NodeType:
-    var val: String
-    
-    fn __init__(inout self, theType: String):
-        self.val = theType
 
 
 def test_execution():
@@ -16,8 +12,42 @@ def test_execution():
 
 def test_node_types():
     """
-    Tests the ability to use NodeType enum
+    Tests the ability to use NodeType.
     """	
     assert_equal(0, 0)
+    
+    # INPUT
     var nodeType = NodeType('input')
-    assert_equal(nodeType.val, 'input')
+    assert_equal(nodeType.value, 'input')
+        
+    # OUTPUT
+    nodeType = NodeType('output')
+    assert_equal(nodeType.value, 'output')
+        
+    # CONVOLUTION
+    nodeType = NodeType('convolution')
+    assert_equal(nodeType.value, 'convolution')
+        
+    # NORMALIZATION
+    nodeType = NodeType('normalization')
+    assert_equal(nodeType.value, 'normalization')
+        
+    # POOLING
+    nodeType = NodeType('pooling')
+    assert_equal(nodeType.value, 'pooling')
+        
+    # FLATTEN
+    nodeType = NodeType('flatten')
+    assert_equal(nodeType.value, 'flatten')
+        
+    # LINEAR
+    nodeType = NodeType('linear')
+    assert_equal(nodeType.value, 'linear')
+            
+    # ACTIVATION
+    nodeType = NodeType('activation')
+    assert_equal(nodeType.value, 'activation')
+                
+    # Unrecognized Node Type
+    nodeType = NodeType('Que')
+    assert_equal(nodeType.value, 'none')
