@@ -1,9 +1,7 @@
 # Content of test_quickstart.mojo
 from testing import assert_equal
 from python import Python
-from Nodes import NodeType
-
-
+from classes.Nodes import NodeType
 
 
 def test_execution():
