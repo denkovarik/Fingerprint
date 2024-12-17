@@ -1,3 +1,7 @@
+from collections import Optional
+from python import Python
+
+
 struct NodeType:    
     # The value for the enum
     var INPUT: String
@@ -95,10 +99,9 @@ struct PoolingType:
             
             
 struct ActivationType:    
-    # The value for the enum
-    var RELU: String
-    var NONE: String
-    var value: String
+    var RELU: String    # Value for Relu activation
+    var NONE: String    # Value for No activation type
+    var value: String   # The value for the enum
     
     fn __init__(inout self, theType: String):
         self.RELU = 'reluActivation'  
@@ -112,3 +115,21 @@ struct ActivationType:
             return self.RELU
         else:
             return self.NONE
+            
+            
+struct InputNode:
+    var displayName: String
+    
+
+    fn __init__(inout self) raises:
+        torch = Python.import_module("torch")
+        
+        self.displayName = 'Input'
+        #if not isinstance(inputShape, torch.Size) or len(inputShape) != 4:
+        #    raise ValueError("inputShape must be a torch.Size of length 4")
+        #self.name = 'input'
+        #self.numChannels = inputShape[1]
+        #self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
+        #self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
+        #self.inputShape = inputShape
+        
