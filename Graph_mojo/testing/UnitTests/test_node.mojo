@@ -8,7 +8,7 @@ def test_execution():
     # Just tests running a mojo test
     assert_equal(0, 0)
 
-def test_node_types():
+def test_nodeTypes():
     """
     Tests the ability to use NodeType.
     """	    
@@ -49,7 +49,7 @@ def test_node_types():
     assert_not_equal(nodeType.value, 'Que')
     assert_equal(nodeType.value, 'none')
     
-def test_normalization_types():
+def test_normalizationTypes():
     """
     Tests the ability to use NormalizationType.
     """	    
@@ -66,7 +66,7 @@ def test_normalization_types():
     assert_not_equal(normalizationType.value, 'Que')
     assert_equal(normalizationType.value, 'none')
     
-def test_pooling_types():
+def test_poolingTypes():
     """
     Tests the ability to use PoolingType.
     """	    
@@ -83,7 +83,7 @@ def test_pooling_types():
     assert_not_equal(poolingType.value, 'Que')
     assert_equal(poolingType.value, 'none')
     
-def test_activation_types():
+def test_activationTypes():
     """
     Tests the ability to use ActivationType.
     """	    
@@ -99,3 +99,14 @@ def test_activation_types():
     activationType = ActivationType('Que')
     assert_not_equal(activationType.value, 'Que')
     assert_equal(activationType.value, 'none')
+    
+def test_InputNode(self):
+    """
+    Tests the ability to construct and use the InputNode class
+    
+    :param self: An instance of the allTests class.
+    """
+    node = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
+    self.assertTrue(node.numChannels == 3)
+    self.assertTrue(node.name == 'input')
+    self.assertTrue(node.displayName == 'Input(numChannels=3)')
