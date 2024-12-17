@@ -1,0 +1,670 @@
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+
+Select the next node from the following options:
+
+0: L0_noNorm
+1: L0_batchNorm
+selectedInt: 1
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+
+Select the next node from the following options:
+
+0: L1_3x3_Conv(oc=4)
+1: L1_3x3_Conv(oc=8)
+2: L1_3x3_Conv(oc=16)
+3: L1_3x3_Conv(oc=32)
+4: L1_5x5_Conv(oc=4)
+5: L1_5x5_Conv(oc=8)
+6: L1_5x5_Conv(oc=16)
+7: L1_5x5_Conv(oc=32)
+selectedInt: 1
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+
+Select the next node from the following options:
+
+0: L1_noNorm
+1: L1_batchNorm
+selectedInt: 1
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+
+Select the next node from the following options:
+
+0: L1_noActivation
+1: L1_reluActivation
+selectedInt: 1
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+
+Select the next node from the following options:
+
+0: L1_noPooling
+1: L1_maxPooling
+selectedInt: 0
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                          No Pooling                                                                         
+
+Select the next node from the following options:
+
+0: L2_3x3_Conv(oc=4)
+1: L2_3x3_Conv(oc=8)
+2: L2_3x3_Conv(oc=16)
+3: L2_3x3_Conv(oc=32)
+4: L2_5x5_Conv(oc=4)
+5: L2_5x5_Conv(oc=8)
+6: L2_5x5_Conv(oc=16)
+7: L2_5x5_Conv(oc=32)
+selectedInt: 7
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                          No Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       5x5 Conv(oc=32)                                                                       
+
+Select the next node from the following options:
+
+0: L2_noNorm
+1: L2_batchNorm
+selectedInt: 1
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                          No Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       5x5 Conv(oc=32)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+
+Select the next node from the following options:
+
+0: L2_noActivation
+1: L2_reluActivation
+selectedInt: 1
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                          No Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       5x5 Conv(oc=32)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+
+Select the next node from the following options:
+
+0: L2_noPooling
+1: L2_maxPooling
+selectedInt: 1
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                          No Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       5x5 Conv(oc=32)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                         Max Pooling                                                                         
+
+Select the next node from the following options:
+
+0: L2_flatten
+selectedInt: 0
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                          No Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       5x5 Conv(oc=32)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                         Max Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                           Flatten                                                                           
+
+Select the next node from the following options:
+
+0: L3_Linear(of=16)
+1: L3_Linear(of=32)
+2: L3_Linear(of=64)
+3: L3_Linear(of=128)
+4: L3_Linear(of=256)
+selectedInt: 3
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                          No Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       5x5 Conv(oc=32)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                         Max Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                           Flatten                                                                           
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=128)                                                                       
+
+Select the next node from the following options:
+
+0: L3_noActivation
+1: L3_reluActivation
+selectedInt: 1
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                          No Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       5x5 Conv(oc=32)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                         Max Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                           Flatten                                                                           
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=128)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+
+Select the next node from the following options:
+
+0: L4_Linear(of=16)
+1: L4_Linear(of=32)
+2: L4_Linear(of=64)
+3: L4_Linear(of=128)
+4: L4_Linear(of=256)
+selectedInt: 1
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                          No Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       5x5 Conv(oc=32)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                         Max Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                           Flatten                                                                           
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=128)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=32)                                                                        
+
+Select the next node from the following options:
+
+0: L4_noActivation
+1: L4_reluActivation
+selectedInt: 1
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                          No Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       5x5 Conv(oc=32)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                         Max Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                           Flatten                                                                           
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=128)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=32)                                                                        
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+
+Select the next node from the following options:
+
+0: L5_Linear(of=10)
+selectedInt: 0
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                          No Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       5x5 Conv(oc=32)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                         Max Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                           Flatten                                                                           
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=128)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=32)                                                                        
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=10)                                                                        
+
+Select the next node from the following options:
+
+0: L5_noActivation
+1: L5_reluActivation
+selectedInt: 1
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                          No Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       5x5 Conv(oc=32)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                         Max Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                           Flatten                                                                           
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=128)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=32)                                                                        
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=10)                                                                        
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+
+Select the next node from the following options:
+
+0: output
+selectedInt: 0
+
+
+                                                                     Sample Architecture                                                                     
+                                                                     -------------------
+                                                                    
+                                                                     Input(numChannels=3)                                                                    
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        3x3 Conv(oc=8)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                          No Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       5x5 Conv(oc=32)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                     Batch Normalization                                                                     
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                         Max Pooling                                                                         
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                           Flatten                                                                           
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=128)                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=32)                                                                        
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                        Linear(of=10)                                                                        
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                       Relu Activation                                                                       
+                                                                              |                                                                              
+                                                                              V                                                                              
+                                                                            Output                                                                           
+
