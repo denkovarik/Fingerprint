@@ -13,92 +13,72 @@ def test_nodeTypes():
     Tests the ability to use NodeType.
     """	    
     # INPUT
-    var nodeType = NodeType('input')
-    assert_equal(nodeType.value, 'input')
+    var nodeType = NodeType.INPUT
+    assert_equal(nodeType.value, NodeType.INPUT.value)
         
     # OUTPUT
-    nodeType = NodeType('output')
-    assert_equal(nodeType.value, 'output')
+    nodeType = NodeType.OUTPUT
+    assert_equal(nodeType.value, NodeType.OUTPUT.value)
         
     # CONVOLUTION
-    nodeType = NodeType('convolution')
-    assert_equal(nodeType.value, 'convolution')
+    nodeType = NodeType.CONVOLUTION
+    assert_equal(nodeType.value, NodeType.CONVOLUTION.value)
         
     # NORMALIZATION
-    nodeType = NodeType('normalization')
-    assert_equal(nodeType.value, 'normalization')
+    nodeType = NodeType.NORMALIZATION
+    assert_equal(nodeType.value, NodeType.NORMALIZATION.value)
         
     # POOLING
-    nodeType = NodeType('pooling')
-    assert_equal(nodeType.value, 'pooling')
+    nodeType = NodeType.POOLING
+    assert_equal(nodeType.value, NodeType.POOLING.value)
         
     # FLATTEN
-    nodeType = NodeType('flatten')
-    assert_equal(nodeType.value, 'flatten')
+    nodeType = NodeType.FLATTEN
+    assert_equal(nodeType.value, NodeType.FLATTEN.value)
         
     # LINEAR
-    nodeType = NodeType('linear')
-    assert_equal(nodeType.value, 'linear')
+    nodeType = NodeType.LINEAR
+    assert_equal(nodeType.value, NodeType.LINEAR.value)
             
     # ACTIVATION
-    nodeType = NodeType('activation')
-    assert_equal(nodeType.value, 'activation')
-                
-    # Unrecognized Node Type
-    nodeType = NodeType('Que')
-    assert_not_equal(nodeType.value, 'Que')
-    assert_equal(nodeType.value, 'none')
+    nodeType = NodeType.ACTIVATION
+    assert_equal(nodeType.value, NodeType.ACTIVATION.value)
     
 def test_normalizationTypes():
     """
     Tests the ability to use NormalizationType.
     """	    
     # NO_NORM
-    var normalizationType = NormalizationType('noNorm')
-    assert_equal(normalizationType.value, 'noNorm')
+    var normalizationType = NormalizationType.NO_NORM
+    assert_equal(normalizationType.value, NormalizationType.NO_NORM.value)
         
     # BATCH_NORM
-    normalizationType = NormalizationType('batchNorm')
-    assert_equal(normalizationType.value, 'batchNorm')
-
-    # Unrecognized Node Type
-    normalizationType = NormalizationType('Que')
-    assert_not_equal(normalizationType.value, 'Que')
-    assert_equal(normalizationType.value, 'none')
+    normalizationType = NormalizationType.BATCH_NORM
+    assert_equal(normalizationType.value, NormalizationType.BATCH_NORM.value)
     
 def test_poolingTypes():
     """
     Tests the ability to use PoolingType.
     """	    
     # NO_POOLING
-    var poolingType = PoolingType('noPooling')
-    assert_equal(poolingType.value, 'noPooling')
+    var poolingType = PoolingType.NO_POOLING
+    assert_equal(poolingType.value, PoolingType.NO_POOLING.value)
         
     # MAX_POOLING
-    poolingType = PoolingType('maxPooling')
-    assert_equal(poolingType.value, 'maxPooling')
-
-    # Unrecognized Node Type
-    poolingType = PoolingType('Que')
-    assert_not_equal(poolingType.value, 'Que')
-    assert_equal(poolingType.value, 'none')
+    poolingType = PoolingType.MAX_POOLING
+    assert_equal(poolingType.value, PoolingType.MAX_POOLING.value)
     
 def test_activationTypes():
     """
     Tests the ability to use ActivationType.
     """	    
     # RELU
-    var activationType = ActivationType('reluActivation')
-    assert_equal(activationType.value, 'reluActivation')
+    var activationType = ActivationType.RELU
+    assert_equal(activationType.value, ActivationType.RELU.value)
         
     # NONE
-    activationType = ActivationType('none')
-    assert_equal(activationType.value, 'none')
-
-    # Unrecognized Node Type
-    activationType = ActivationType('Que')
-    assert_not_equal(activationType.value, 'Que')
-    assert_equal(activationType.value, 'none')
+    activationType = ActivationType.NONE
+    assert_equal(activationType.value, ActivationType.NONE.value)
     
 def test_inputNode():
     """
