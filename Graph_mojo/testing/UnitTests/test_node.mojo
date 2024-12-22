@@ -1,6 +1,6 @@
 # Content of test_quickstart.mojo
 from testing import assert_equal, assert_not_equal
-from python import Python
+from python import Python, PythonObject
 from structs.Nodes import NodeType, NormalizationType, PoolingType, ActivationType, InputNode
 
 
@@ -87,13 +87,8 @@ def test_inputNode():
     nn = Python.import_module("torch.nn")
     np = Python.import_module("numpy")
     torch = Python.import_module("torch")
-    
-    var size_list = Python.list()
-    size_list = [4, 3, 32, 32]
-    #var shape = List[Int](4, 3, 32, 32)
-    var inputShape = torch.Size([4, 3, 32, 32])
-    var node = InputNode()
-    #var node = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
-    #assert_true(node.numChannels == 3)
-    #assert_true(node.name == 'input')
-    #assert_true(node.displayName == 'Input(numChannels=3)')
+
+    var node = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
+    assert_equal(node.numChannels, 3)
+    assert_equal(node.name, 'input')
+    assert_equal(node.displayName, 'Input(numChannels=3)')

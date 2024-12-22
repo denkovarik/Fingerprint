@@ -1,5 +1,6 @@
 from collections import Optional
-from python import Python
+from python import Python, PythonObject
+
 
 # Enums
 
@@ -51,17 +52,14 @@ struct ActivationType:
             
 struct InputNode:
     var displayName: String
-    
+    var inputShape: PythonObject
+    var numChannels: Int
+    var name: String
 
-    fn __init__(inout self) raises:
-        torch = Python.import_module("torch")
-        
-        self.displayName = 'Input'
-        #if not isinstance(inputShape, torch.Size) or len(inputShape) != 4:
-        #    raise ValueError("inputShape must be a torch.Size of length 4")
-        #self.name = 'input'
-        #self.numChannels = inputShape[1]
-        #self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
-        #self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
-        #self.inputShape = inputShape
+    fn __init__(inout self, inputShape: PythonObject) raises:
+        torch = Python.import_module("torch")      
+        self.inputShape = inputShape
+        self.name = 'input'
+        self.numChannels = inputShape[1]
+        self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
         
