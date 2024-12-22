@@ -128,3 +128,4 @@ cython_debug/
 Graph/Graphs/GraphVisualizations/*
 Graph/testing/FunctionalTests/Temp/*
 Graph/testing/VisualValidationTests/Temp/*
+Graph/testing/VisualValidationTests/TestFiles/testSampleArchitectureHumanInput.txt
