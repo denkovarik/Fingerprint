@@ -28,6 +28,14 @@ struct NormalizationType:
     alias invalid = NormalizationType(0)
     alias NO_NORM = NormalizationType(1) 
     alias BATCH_NORM = NormalizationType(2)
+    
+    fn __init__(inout self):
+        pass
+    
+    fn __eq__(self, other: NormalizationType) -> Bool:
+        if self.value == other.value:
+            return True
+        return False
   
 
 @value
@@ -68,7 +76,27 @@ struct OutputNode:
     var displayName: String
     var name: String
     
-    def __init__(inout self):
+    fn __init__(inout self):
         self.name = 'output'
         self.displayName = 'Output'
         
+        
+struct NormalizationNode:
+    var displayName: String
+    var name: String
+    var normalizationType: NormalizationType
+    var numFeatures: Int
+    var pytorchLayerId: PythonObject
+    var pytorchLayer: PythonObject
+
+    fn __init__(inout self, name: String, normalizationType: NormalizationType, numFeatures: Int, pytorchLayerId: PythonObject) raises:
+        nn = Python.import_module("torch.nn")
+        self.pytorchLayer = None
+        self.name = name
+        self.displayName = 'No Normalization'
+        self.normalizationType = normalizationType
+        self.numFeatures = numFeatures
+        self.pytorchLayerId = pytorchLayerId
+        if normalizationType == NormalizationType.BATCH_NORM:
+            self.displayName = 'Batch Normalization'
+            self.pytorchLayer = nn.BatchNorm2d(self.numFeatures)
