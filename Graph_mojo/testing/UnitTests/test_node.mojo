@@ -84,11 +84,17 @@ def test_inputNode():
     """
     Tests the ability to construct and use the InputNode struct
     """
-    nn = Python.import_module("torch.nn")
-    np = Python.import_module("numpy")
     torch = Python.import_module("torch")
 
     var node = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
     assert_equal(node.numChannels, 3)
     assert_equal(node.name, 'input')
     assert_equal(node.displayName, 'Input(numChannels=3)')
+    
+def testOutputNode(self):
+    """
+    Tests the ability to construct and use the OutputNode stuct
+    """
+    node = OutputNode()
+    assert_equal(node.name, 'output')
+    assert_equal(node.displayName, 'Output')
