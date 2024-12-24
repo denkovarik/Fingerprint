@@ -1,7 +1,7 @@
 # Content of test_quickstart.mojo
 from testing import assert_equal, assert_not_equal
 from python import Python, PythonObject
-from structs.Nodes import NodeType, NormalizationType, PoolingType, ActivationType, InputNode
+from structs.Nodes import NodeType, NormalizationType, PoolingType, ActivationType, InputNode, OutputNode, NormalizationNode
 
 
 def test_execution():
@@ -91,10 +91,26 @@ def test_inputNode():
     assert_equal(node.name, 'input')
     assert_equal(node.displayName, 'Input(numChannels=3)')
     
-def testOutputNode(self):
+def test_OutputNode():
     """
     Tests the ability to construct and use the OutputNode stuct
     """
     node = OutputNode()
     assert_equal(node.name, 'output')
     assert_equal(node.displayName, 'Output')
+    
+def test_NormalizationNode():
+    """
+    Tests the ability to construct and use a node of the NormalizationNode 
+    struct
+    """
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4()
+    node = NormalizationNode(name="name", 
+                             normalizationType=NormalizationType.BATCH_NORM, 
+                             numFeatures=12, pytorchLayerId=pytorchLayerId)
+    assert_equal(node.name, 'name')
+    assert_equal(node.displayName, 'Batch Normalization')
+    assert_equal(node.normalizationType.value, NormalizationType.BATCH_NORM.value)
+    assert_equal(pytorchLayerId, node.pytorchLayerId)
+    
