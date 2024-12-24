@@ -63,3 +63,12 @@ struct InputNode:
         self.numChannels = inputShape[1]
         self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
         
+               
+struct OutputNode:
+    var displayName: String
+    var name: String
+    
+    def __init__(inout self):
+        self.name = 'output'
+        self.displayName = 'Output'
+        
