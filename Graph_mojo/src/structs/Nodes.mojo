@@ -100,3 +100,44 @@ struct NormalizationNode:
         if normalizationType == NormalizationType.BATCH_NORM:
             self.displayName = 'Batch Normalization'
             self.pytorchLayer = nn.BatchNorm2d(self.numFeatures)
+            
+      
+struct PoolingNode:
+    var displayName: String
+    var name: String
+    var poolingType: PoolingType
+    var kernelSize: Int
+    var stride: Int
+    
+    fn __init__(inout self, name: String, poolingType: PoolingType):
+        self.name = name 
+        self.displayName = 'No Pooling'
+        self.poolingType = poolingType
+        self.kernelSize = 2
+        self.stride = 2
+        if poolingType.value == PoolingType.MAX_POOLING.value:
+            self.displayName = 'Max Pooling'
+            
+            
+struct ActivationNode:
+    var displayName: String
+    var name: String
+    var activationType: ActivationType
+
+    fn __init__(inout self, name: String, activationType: ActivationType):
+        self.activationType = activationType
+        self.name = name
+        self.displayName = "None"
+        if self.activationType.value == activationType.NONE.value:
+            self.displayName = 'No Activation'
+        elif self.activationType.value == activationType.RELU.value:
+            self.displayName = 'Relu Activation'
+
+
+struct FlattenNode:
+    var displayName: String
+    var name: String
+    
+    def __init__(inout self, name: String):
+        self.name = name
+        self.displayName = 'Flatten'
