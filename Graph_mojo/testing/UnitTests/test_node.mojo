@@ -1,7 +1,8 @@
 # Content of test_quickstart.mojo
 from testing import assert_equal, assert_not_equal
 from python import Python, PythonObject
-from structs.Nodes import NodeType, NormalizationType, PoolingType, ActivationType, InputNode, OutputNode, NormalizationNode
+from structs.Nodes import NodeType, NormalizationType, PoolingType, ActivationType
+from structs.Nodes import InputNode, OutputNode, NormalizationNode, PoolingNode, ActivationNode, FlattenNode
 
 
 def test_execution():
@@ -114,3 +115,31 @@ def test_NormalizationNode():
     assert_equal(node.normalizationType.value, NormalizationType.BATCH_NORM.value)
     assert_equal(pytorchLayerId, node.pytorchLayerId)
     
+def test_PoolingNode():
+    """
+    Tests the ability to construct and use a node of the PoolingNode 
+    struct
+    """
+    node = PoolingNode(name='name', poolingType=PoolingType.MAX_POOLING)
+    assert_equal(node.name, 'name')
+    assert_equal(node.displayName, 'Max Pooling')
+    assert_equal(node.poolingType.value, PoolingType.MAX_POOLING.value)
+    
+def test_ActivationNode():
+    """
+    Tests the ability to construct and use a node of the ActivationNode 
+    struct
+    """
+    node = ActivationNode(name='name', activationType=ActivationType.RELU)
+    assert_equal(node.name, 'name')
+    assert_equal(node.displayName, 'Relu Activation')
+    assert_equal(node.activationType.value, ActivationType.RELU.value)
+
+def test_FlattenNode():
+    """
+    Tests the ability to construct and use a node of the FlattenNode 
+    struct    
+    """
+    node = FlattenNode(name='name')
+    assert_equal(node.name, 'name')
+    assert_equal(node.displayName, 'Flatten')
