@@ -125,7 +125,7 @@ cython_debug/
 .ipynb_checkpoints
 
 # Custom additions
-Graph/Graphs/GraphVisualizations/*
-Graph/testing/FunctionalTests/Temp/*
-Graph/testing/VisualValidationTests/Temp/*
-Graph/testing/VisualValidationTests/TestFiles/*
+Graph/Graphs/GraphVisualizations/
+Graph/testing/FunctionalTests/Temp/
+Graph/testing/VisualValidationTests/Temp/
+Graph/testing/VisualValidationTests/TestFiles/
