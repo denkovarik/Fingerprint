@@ -79,7 +79,3 @@ def test_Print():
     sharedConv2d = SharedConv2d(in_channels=3, out_channels=8, kernel_size=3)
     exp = "SharedConv2d(3, 8, kernel_size=3)"
     assert_true(sharedConv2d.__str__() == exp)
-
-
-def main():
-    print("hello")
