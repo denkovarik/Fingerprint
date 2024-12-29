@@ -1,9 +1,9 @@
 # Content of test_quickstart.mojo
-from testing import assert_equal, assert_not_equal
+from testing import assert_equal, assert_not_equal, assert_true, assert_false
 from python import Python, PythonObject
 from structs.Nodes import NodeType, NormalizationType, PoolingType, ActivationType
 from structs.Nodes import InputNode, OutputNode, NormalizationNode, PoolingNode, ActivationNode, FlattenNode
-
+from structs.Nodes import ConvolutionalNode, LinearNode
 
 def test_execution():
     # Just tests running a mojo test
@@ -143,3 +143,44 @@ def test_FlattenNode():
     node = FlattenNode(name='name')
     assert_equal(node.name, 'name')
     assert_equal(node.displayName, 'Flatten')
+
+def test_CovolutionalNode():
+    """
+    Tests the ability to construct and use a node of the CovolutionalNode 
+    class.
+    """
+    # Valid Construction with int for kernel size
+    uuid = Python.import_module("uuid")
+    var pytorchLayerId = uuid.uuid4()
+    node = ConvolutionalNode(name='name', kernel_size=3, 
+                             maxNumInputChannels=128, 
+                             maxNumOutputChannels=128, 
+                             numOutputChannels=32,
+                             layer=0, pytorchLayerId=pytorchLayerId)
+    assert_true(node.name == 'name')
+    assert_true(node.layer == 0)
+    assert_true(node.pytorchLayerId == pytorchLayerId)
+    assert_true(node.displayName == '3x3 Conv(oc=32)')
+    assert_true(node.kernel_size == 3)
+    assert_true(node.maxNumInputChannels == 128)
+    assert_true(node.numOutputChannels == 32)
+
+def test_LinearNode():
+    """
+    Tests the ability to construct and use a node of the LinearNode 
+    class.
+    """
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4()
+    node = LinearNode(name='name', 
+                      maxNumInFeatures=512, 
+                      maxNumOutFeatures=512,
+                      numOutFeatures=32, 
+                      layer=1, pytorchLayerId=pytorchLayerId)
+    assert_true(node.name == 'name')
+    assert_true(node.layer == 1)
+    assert_true(node.pytorchLayerId == pytorchLayerId)
+    assert_true(node.maxNumInFeatures == 512)
+    assert_true(node.numOutFeatures == 32)
+    assert_true(node.displayName == 'Linear(of=32)')
+    
