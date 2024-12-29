@@ -192,7 +192,7 @@ class nodeTests(unittest.TestCase):
 
     def testCovolutionalNode(self):
         """
-        Tests the ability to construct and use a node of the PoolingNode 
+        Tests the ability to construct and use a node of the CovolutionalNode 
         class
         
         :param self: An instance of the nodeTests class.
