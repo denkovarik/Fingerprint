@@ -29,44 +29,63 @@ def test_ForwardPass():
     os = Python.import_module("os")
     pickle = Python.import_module("pickle")
     sys = Python.import_module("sys")
-        
-    torch.manual_seed(42)
-    np.random.seed(42)
-    random.seed(42)
     
-    var weights = torch.nn.init.kaiming_uniform_(torch.empty(8, 3, 3, 3), mode='fan_in', nonlinearity='relu')
-    var weightsSub = torch.narrow(weights, 0, 0, 4).clone()
-
-    # Construct control conv2d layer
-    var conv2d = nn.Conv2d(3, 4, 3)
-    conv2d.weight.data = weightsSub
-    conv2d.bias.data.zero_()
-    # Construct shared conv2d layer
-    var sharedConv2d = SharedConv2d(3, 8, 3)
-    sharedConv2d.weight = nn.Parameter(weights)
-    sharedConv2d.bias.data.zero_()
-    # Make sure initialization was done correctly
-    assert_true(conv2d.kernel_size == 3)
-    assert_true(sharedConv2d.kernel_size == 3)
-    assert_true(torch.allclose(conv2d.weight, weightsSub))
-    assert_true(torch.allclose(sharedConv2d.weight, weights))
-    assert_true(torch.all(conv2d.bias.eq(0)))
-    assert_true(torch.all(sharedConv2d.bias.eq(0)))
-    assert_true(torch.allclose(conv2d.weight, torch.narrow(sharedConv2d.weight, 0, 0, 4)))
     # Get test batch
     testBatchPath = 'testing/UnitTests/TestFiles/cifar10_test_batch_pickle'
-    
     assert_true(os.path.exists(testBatchPath))
     Python.add_to_path(".")
     utils = Python.import_module("utils")
     imgData = utils.unpickle_test_data(testBatchPath, 4)
     batch = imgData.reshape(4, 3, 32, 32)
     tensorData = torch.tensor(batch, dtype=torch.float32)
-    # Forward prop
+        
+    torch.manual_seed(42)
+    np.random.seed(42)
+    random.seed(42)
+    
+    var weights = torch.nn.init.kaiming_uniform_(torch.empty(16, 6, 3, 3), mode='fan_in', nonlinearity='relu')
+    var weightsSub = torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3).clone()
+    
+    # Template
+    var random_tensor = torch.rand(8, 3, 3, 3)
+    
+    # Response
+    var random_tensor_clone = random_tensor.clone()
+    assert_true(torch.allclose(random_tensor, random_tensor_clone)) # Hello
+    
+    # Template
+    var random_tensor2 = torch.rand(16, 6, 3, 3)
+    
+    # Response
+    random_tensor2_sub = torch.narrow(torch.narrow(random_tensor2, 0, 0, 8), 1, 0, 3).clone()
+    assert_true(torch.allclose(torch.narrow(torch.narrow(random_tensor2, 0, 0, 8), 1, 0, 3), random_tensor2_sub)) # Hello
+    
+    # Template
+    random_tensor = torch.rand(8, 3, 3, 3)
+    
+    # Response
+    var random_tensor_defective = torch.rand(8, 3, 3, 3)
+    assert_false(torch.allclose(random_tensor, random_tensor_defective)) # I'm not defective! 
+    
+    # Template
+    var conv2d = nn.Conv2d(3, 8, 3)
+    conv2d.weight.data = weightsSub
+    conv2d.bias.data.zero_()
+    assert_true(conv2d.kernel_size == 3)
+    assert_true(torch.allclose(conv2d.weight, weightsSub))
+    assert_true(torch.all(conv2d.bias.eq(0)))
     var outConv2d = conv2d(tensorData)
-    outSharedConv2d = sharedConv2d.forward(tensorData, 3, 4)
-    # Test the output is the same
-    assert_true(torch.allclose(outConv2d, outSharedConv2d))
+    
+    # Response
+    var sharedConv2d = SharedConv2d(6, 16, 3)
+    sharedConv2d.weight = nn.Parameter(weights)
+    sharedConv2d.bias.data.zero_()    
+    assert_true(sharedConv2d.kernel_size == 3)
+    assert_true(torch.allclose(sharedConv2d.weight, weights))
+    assert_true(torch.all(sharedConv2d.bias.eq(0)))   
+    assert_true(torch.allclose(conv2d.weight, torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3)))
+    outSharedConv2d = sharedConv2d.forward(tensorData, 3, 8)
+    assert_true(torch.allclose(outConv2d, outSharedConv2d)) # Hello
 
 def test_Print():
     """
@@ -78,3 +97,4 @@ def test_Print():
     sharedConv2d = SharedConv2d(in_channels=3, out_channels=8, kernel_size=3)
     exp = "SharedConv2d(3, 8, kernel_size=3)"
     assert_true(sharedConv2d.__str__() == exp)
+    
