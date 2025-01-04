@@ -54,7 +54,6 @@ def test_ForwardPass():
     assert_true(torch.all(sharedConv2d.bias.eq(0)))
     assert_true(torch.allclose(conv2d.weight, torch.narrow(sharedConv2d.weight, 0, 0, 4)))
     # Get test batch
-    #testBatchPath = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), 'Graph_mojo/testing/UnitTests/TestFiles/cifar10_test_batch_pickle')
     testBatchPath = 'testing/UnitTests/TestFiles/cifar10_test_batch_pickle'
     
     assert_true(os.path.exists(testBatchPath))
