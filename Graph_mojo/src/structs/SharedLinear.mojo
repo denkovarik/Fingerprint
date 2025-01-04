@@ -32,10 +32,12 @@ struct SharedLinear:
         strRep += ", max_out_features=" + str(self.maxOutFeatures) + ")"
         return strRep
 
-    def forward(self, x, inChannels, outChannels):
+    def forward(inout self, x: PythonObject, inChannels: Int, outChannels: Int) -> PythonObject:
         F = Python.import_module("torch.nn.functional")
         # Dynamically select the subset of weights and biases
-        weight = self.weight[:outChannels, :inChannels]
-        bias = self.bias[:outChannels]
-        x = F.linear(x, weight, bias)   
-        return x
+        var weight = self.weight.narrow(0, 0, outChannels)  # slices on the 0th dimension (out_channels)
+        weight = weight.narrow(1, 0, inChannels)  # slices on the 1st dimension (in_channels)
+        var bias = self.bias.narrow(0, 0, outChannels)  # slices on the 0th dimension (out_channels)
+        var out = F.linear(x, weight, bias)   
+        return out
+        
