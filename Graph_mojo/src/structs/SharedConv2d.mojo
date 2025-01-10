@@ -48,8 +48,7 @@ struct SharedConv2d():
 
     def forward(inout self, x: PythonObject, inChannels: Int, outChannels: Int) -> PythonObject:
         F = Python.import_module("torch.nn.functional")
-        var weight = self.weight.narrow(0, 0, outChannels)  # slices on the 0th dimension (out_channels)
-        weight = weight.narrow(1, 0, inChannels)  # slices on the 1st dimension (in_channels)
+        var weight = self.weight.narrow(0, 0, outChannels).narrow(1, 0, inChannels) 
         var bias = self.bias.narrow(0, 0, outChannels)  # slices on the 0th dimension (out_channels)
         var rslt = F.conv2d(x, weight, bias)
         return rslt
