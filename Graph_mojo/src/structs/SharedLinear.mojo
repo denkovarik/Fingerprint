@@ -35,8 +35,7 @@ struct SharedLinear:
     def forward(inout self, x: PythonObject, inChannels: Int, outChannels: Int) -> PythonObject:
         F = Python.import_module("torch.nn.functional")
         # Dynamically select the subset of weights and biases
-        var weight = self.weight.narrow(0, 0, outChannels)  # slices on the 0th dimension (out_channels)
-        weight = weight.narrow(1, 0, inChannels)  # slices on the 1st dimension (in_channels)
+        var weight = self.weight.narrow(0, 0, outChannels).narrow(1, 0, inChannels)
         var bias = self.bias.narrow(0, 0, outChannels)  # slices on the 0th dimension (out_channels)
         var out = F.linear(x, weight, bias)   
         return out
