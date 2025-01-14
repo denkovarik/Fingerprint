@@ -3,7 +3,6 @@ from python import Python, PythonObject
 from structs.SharedConv2d import SharedConv2d
 
 
-
 # Enums
 
 @value
@@ -11,7 +10,7 @@ from structs.SharedConv2d import SharedConv2d
 struct NodeType:
     var value: Int
     
-    alias invalid = NodeType(0)
+    alias NONE = NodeType(0)
     alias INPUT = NodeType(1) 
     alias OUTPUT = NodeType(2)
     alias CONVOLUTION = NodeType(3)
@@ -60,7 +59,63 @@ struct ActivationType:
     alias NONE = ActivationType(2)
             
             
-struct InputNode:
+# Define the trait for Node
+trait NodeTrait:
+    def forward(inout self, x: PythonObject) -> PythonObject:
+        pass
+    
+    
+@value
+struct Node(NodeTrait):
+    var nodeType: NodeType
+    var name: String
+    var displayName: String
+    var inputNode: Optional[InputNode]
+    var outputNode: Optional[OutputNode]
+    var normalizationNode: Optional[NormalizationNode]
+    var poolingNode: Optional[PoolingNode]
+    var activationNode: Optional[ActivationNode]
+    var flattenNode: Optional[FlattenNode]
+    var convNode: Optional[ConvolutionalNode]
+    var linearNode: Optional[LinearNode]
+
+    fn __init__(inout self, name: String, displayName: String):
+        self.nodeType = NodeType.NONE
+        self.name = name
+        self.displayName = displayName     
+        self.inputNode = Optional[InputNode](None)
+        self.outputNode = Optional[OutputNode](None)
+        self.normalizationNode = Optional[NormalizationNode](None)
+        self.poolingNode = Optional[PoolingNode](None)
+        self.activationNode = Optional[ActivationNode](None)
+        self.flattenNode = Optional[FlattenNode](None)
+        self.convNode = Optional[ConvolutionalNode](None)
+        self.linearNode = Optional[LinearNode](None)
+        
+    def forward(inout self, x: PythonObject) -> PythonObject:
+        var out = x
+        if self.nodeType.value == NodeType.INPUT.value:
+            out = self.inputNode.value().forward(x)
+        elif self.nodeType.value == NodeType.OUTPUT.value:
+            out = self.outputNode.value().forward(x)
+        elif self.nodeType.value == NodeType.CONVOLUTION.value:
+            out = self.normalizationNode.value().forward(x)
+        elif self.nodeType.value == NodeType.NORMALIZATION.value:
+            out = self.poolingNode.value().forward(x)
+        elif self.nodeType.value == NodeType.POOLING.value:
+            out = self.activationNode.value().forward(x)
+        elif self.nodeType.value == NodeType.FLATTEN.value:
+            out = self.flattenNode.value().forward(x)
+        elif self.nodeType.value == NodeType.LINEAR.value:
+            out = self.convNode.value().forward(x)
+        elif self.nodeType.value == NodeType.ACTIVATION.value:
+            out = self.linearNode.value().forward(x)
+        
+        return out
+            
+
+@value
+struct InputNode(NodeTrait):
     var displayName: String
     var inputShape: PythonObject
     var numChannels: Int
@@ -72,9 +127,13 @@ struct InputNode:
         self.name = 'input'
         self.numChannels = inputShape[1]
         self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
-        
                
-struct OutputNode:
+    def forward(inout self, x: PythonObject) -> PythonObject:
+        return x
+     
+
+@value     
+struct OutputNode(NodeTrait):
     var displayName: String
     var name: String
     
@@ -82,8 +141,12 @@ struct OutputNode:
         self.name = 'output'
         self.displayName = 'Output'
         
+    def forward(inout self, x: PythonObject) -> PythonObject:
+        return x
         
-struct NormalizationNode:
+
+@value  
+struct NormalizationNode(NodeTrait):
     var displayName: String
     var name: String
     var normalizationType: NormalizationType
@@ -103,49 +166,81 @@ struct NormalizationNode:
             self.displayName = 'Batch Normalization'
             self.pytorchLayer = nn.BatchNorm2d(self.numFeatures)
             
-      
-struct PoolingNode:
+    def forward(inout self, x: PythonObject) -> PythonObject:
+        if self.normalizationType == NormalizationType.NO_NORM:
+            return x
+        return self.pytorchLayer.forward(x)
+            
+
+@value      
+struct PoolingNode(NodeTrait):
     var displayName: String
     var name: String
     var poolingType: PoolingType
     var kernelSize: Int
     var stride: Int
+    var pytorchLayer: PythonObject
     
-    fn __init__(inout self, name: String, poolingType: PoolingType):
+    def __init__(inout self, name: String, poolingType: PoolingType):
         self.name = name 
         self.displayName = 'No Pooling'
         self.poolingType = poolingType
         self.kernelSize = 2
         self.stride = 2
+        nn = Python.import_module("torch.nn")
+        self.pytorchLayer = None
         if poolingType.value == PoolingType.MAX_POOLING.value:
             self.displayName = 'Max Pooling'
+            self.pytorchLayer = nn.MaxPool2d(self.kernelSize, self.stride)
             
-            
-struct ActivationNode:
+    def forward(inout self, x: PythonObject) -> PythonObject:
+        if self.poolingType.value == PoolingType.NO_POOLING.value:
+            return x
+        return self.pytorchLayer.forward(x)
+        
+
+@value            
+struct ActivationNode(NodeTrait):
     var displayName: String
     var name: String
     var activationType: ActivationType
+    var pytorchLayer: PythonObject
 
-    fn __init__(inout self, name: String, activationType: ActivationType):
+    def __init__(inout self, name: String, activationType: ActivationType):
         self.activationType = activationType
         self.name = name
         self.displayName = "None"
-        if self.activationType.value == activationType.NONE.value:
-            self.displayName = 'No Activation'
-        elif self.activationType.value == activationType.RELU.value:
+        nn = Python.import_module("torch.nn")
+        self.pytorchLayer = None
+        self.displayName = 'No Activation'
+        if self.activationType.value == activationType.RELU.value:
             self.displayName = 'Relu Activation'
+            self.pytorchLayer = nn.ReLU()
+            
+    def forward(inout self, x: PythonObject) -> PythonObject:
+        if self.activationType.value == ActivationType.NONE.value:
+            return x
+        return self.pytorchLayer.forward(x)
+        
 
-
-struct FlattenNode:
+@value
+struct FlattenNode(NodeTrait):
     var displayName: String
     var name: String
+    var pytorchLayer: PythonObject
     
     def __init__(inout self, name: String):
         self.name = name
         self.displayName = 'Flatten'
+        nn = Python.import_module("torch.nn")
+        self.pytorchLayer = nn.Flatten()
+            
+    def forward(inout self, x: PythonObject) -> PythonObject:
+        return self.pytorchLayer(x)   
         
-        
-struct ConvolutionalNode:
+  
+@value   
+struct ConvolutionalNode(NodeTrait):
     var kernel_size: Int
     var name: String
     var displayName: String
@@ -154,7 +249,7 @@ struct ConvolutionalNode:
     var maxNumInputChannels: Int
     var maxNumOutputChannels: Int
     var numOutputChannels: Int
-    var sharedConv2DLayer: PythonObject
+    var pytorchLayer: PythonObject
 
     fn __init__(inout self, name: String, kernel_size: Int, maxNumInputChannels: Int, 
                  maxNumOutputChannels: Int, numOutputChannels: Int, layer: Int, pytorchLayerId: Int):        
@@ -167,24 +262,15 @@ struct ConvolutionalNode:
         self.maxNumInputChannels = maxNumInputChannels
         self.maxNumOutputChannels = maxNumOutputChannels
         self.numOutputChannels = numOutputChannels
-        self.sharedConv2DLayer = None
+        self.pytorchLayer = None
 
     def constructLayer(inout self):
         return SharedConv2d(kernel_size=self.kernel_size, 
                             in_channels=self.maxNumInputChannels, 
                             out_channels=self.maxNumOutputChannels)
 
-    def getLayer(inout self, inputShape: PythonObject):
-        with record_function("getConvolutionalNode"):
-            return self
-
-    def forward(inout self, x: PythonObject):
+    def forward(inout self, x: PythonObject) -> PythonObject:
         return self.pytorchLayer(x, x.shape[1], self.numOutputChannels)
-                
-    def parameters(inout self, recurse: Bool):
-        # Yield the parameters of the pytorchLayer
-        for param in self.pytorchLayer.parameters(recurse=recurse):
-            yield param
 
     def setSharedLayer(inout self, pytorchLayer: PythonObject):
         self.pytorchLayer = pytorchLayer
@@ -193,8 +279,9 @@ struct ConvolutionalNode:
         self.pytorchLayer = self.pytorchLayer.to(device)  # Ensure the convolution layer is also moved
         return self 
         
-     
-struct LinearNode:
+
+@value     
+struct LinearNode(NodeTrait):
     var name: String
     var displayName: String
     var layer: Int
@@ -202,6 +289,7 @@ struct LinearNode:
     var maxNumInFeatures: Int
     var maxNumOutFeatures: Int
     var numOutFeatures: Int
+    var pytorchLayer: PythonObject
         
     fn __init__(inout self, name: String, maxNumInFeatures: Int, maxNumOutFeatures: Int, 
                  numOutFeatures: Int, layer: Int, pytorchLayerId: Int):
@@ -212,21 +300,13 @@ struct LinearNode:
         self.maxNumInFeatures = maxNumInFeatures
         self.maxNumOutFeatures = maxNumOutFeatures
         self.numOutFeatures = numOutFeatures
+        self.pytorchLayer = None
 
     def constructLayer(inout self):
         return SharedLinear(self.maxNumInFeatures, self.maxNumOutFeatures)
 
-    def forward(inout self, x: PythonObject):
+    def forward(inout self, x: PythonObject) -> PythonObject:
         return self.pytorchLayer(x, x.shape[1], self.numOutFeatures)
-
-    def getLayer(inout self, inputShape: PythonObject):
-        with record_function("getLinearNode"):
-            return self
-                        
-    def parameters(inout self, recurse: Bool):
-        # Yield the parameters of the pytorchLayer
-        for param in self.pytorchLayer.parameters(recurse=recurse):
-            yield param
 
     def setSharedLayer(inout self, pytorchLayer: PythonObject):
         self.pytorchLayer = pytorchLayer
