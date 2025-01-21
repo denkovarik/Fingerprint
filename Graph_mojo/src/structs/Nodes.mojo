@@ -1,6 +1,7 @@
 from collections import Optional
 from python import Python, PythonObject
 from structs.SharedConv2d import SharedConv2d
+from utils import Variant
 
 
 # Enums
@@ -64,55 +65,63 @@ trait NodeTrait:
     def forward(inout self, x: PythonObject) -> PythonObject:
         pass
     
-    
+
+# Yankee Navy Assholes!
+alias NodeVariant = Variant[InputNode, OutputNode, NormalizationNode, PoolingNode, ActivationNode, FlattenNode, LinearNode, ConvolutionalNode]
+
 @value
 struct Node(NodeTrait):
+    # ● ●
+    var node: NodeVariant
     var nodeType: NodeType
-    var name: String
-    var displayName: String
-    var inputNode: Optional[InputNode]
-    var outputNode: Optional[OutputNode]
-    var normalizationNode: Optional[NormalizationNode]
-    var poolingNode: Optional[PoolingNode]
-    var activationNode: Optional[ActivationNode]
-    var flattenNode: Optional[FlattenNode]
-    var convNode: Optional[ConvolutionalNode]
-    var linearNode: Optional[LinearNode]
 
-    fn __init__(inout self, name: String, displayName: String):
+    fn __init__(inout self, theNode: NodeVariant) raises:
         self.nodeType = NodeType.NONE
-        self.name = name
-        self.displayName = displayName     
-        self.inputNode = Optional[InputNode](None)
-        self.outputNode = Optional[OutputNode](None)
-        self.normalizationNode = Optional[NormalizationNode](None)
-        self.poolingNode = Optional[PoolingNode](None)
-        self.activationNode = Optional[ActivationNode](None)
-        self.flattenNode = Optional[FlattenNode](None)
-        self.convNode = Optional[ConvolutionalNode](None)
-        self.linearNode = Optional[LinearNode](None)
+        self.node = theNode
+        self.nodeType = self.getNodeType()
+        
+    def getNodeType(inout self) -> NodeType:
+        if self.node.isa[InputNode]():
+            return NodeType.INPUT
+        if self.node.isa[OutputNode]():
+            return NodeType.OUTPUT
+        if self.node.isa[ConvolutionalNode]():
+            return NodeType.CONVOLUTION
+        if self.node.isa[NormalizationNode]():
+            return NodeType.NORMALIZATION
+        if self.node.isa[PoolingNode]():
+            return NodeType.POOLING
+        if self.node.isa[FlattenNode]():
+            return NodeType.FLATTEN
+        if self.node.isa[LinearNode]():
+            return NodeType.LINEAR
+        if self.node.isa[ActivationNode]():
+            return NodeType.ACTIVATION
+        return NodeType.NONE
         
     def forward(inout self, x: PythonObject) -> PythonObject:
         var out = x
+        self.nodeType = self.getNodeType()
+        
         if self.nodeType.value == NodeType.INPUT.value:
-            out = self.inputNode.value().forward(x)
+            out = self.node[InputNode].forward(x)
         elif self.nodeType.value == NodeType.OUTPUT.value:
-            out = self.outputNode.value().forward(x)
+            out = self.node[OutputNode].forward(x)
         elif self.nodeType.value == NodeType.CONVOLUTION.value:
-            out = self.normalizationNode.value().forward(x)
+            out = self.node[ConvolutionalNode].forward(x)
         elif self.nodeType.value == NodeType.NORMALIZATION.value:
-            out = self.poolingNode.value().forward(x)
+            out = self.node[NormalizationNode].forward(x)
         elif self.nodeType.value == NodeType.POOLING.value:
-            out = self.activationNode.value().forward(x)
+            out = self.node[PoolingNode].forward(x)
         elif self.nodeType.value == NodeType.FLATTEN.value:
-            out = self.flattenNode.value().forward(x)
+            out = self.node[FlattenNode].forward(x)
         elif self.nodeType.value == NodeType.LINEAR.value:
-            out = self.convNode.value().forward(x)
+            out = self.node[LinearNode].forward(x)
         elif self.nodeType.value == NodeType.ACTIVATION.value:
-            out = self.linearNode.value().forward(x)
+            out = self.node[ActivationNode].forward(x)
         
         return out
-            
+    
 
 @value
 struct InputNode(NodeTrait):
