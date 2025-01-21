@@ -99,11 +99,10 @@ def test_inputNodeWrapper():
     """
     torch = Python.import_module("torch")
 
-    node = Node(name='inputNode', displayName='Input Node')
-    node.inputNode = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
-    assert_equal(node.inputNode.value().numChannels, 3)
-    assert_equal(node.inputNode.value().name, 'input')
-    assert_equal(node.inputNode.value().displayName, 'Input(numChannels=3)')
+    node = Node(theNode=InputNode(inputShape=torch.Size([4, 3, 32, 32])))
+    assert_equal(node.node[InputNode].numChannels, 3)
+    assert_equal(node.node[InputNode].name, 'input')
+    assert_equal(node.node[InputNode].displayName, 'Input(numChannels=3)')
     
 def test_OutputNode():
     """
@@ -117,10 +116,9 @@ def test_OutputNodeWrapper():
     """
     Tests the ability to construct and use the Node struct wrapper for OutputNode struct.
     """
-    node = Node(name='outputNode', displayName='Output Node')
-    node.outputNode = OutputNode()
-    assert_equal(node.outputNode.value().name, 'output')
-    assert_equal(node.outputNode.value().displayName, 'Output')
+    node = Node(theNode=OutputNode())
+    assert_equal(node.node[OutputNode].name, 'output')
+    assert_equal(node.node[OutputNode].displayName, 'Output')
     
 def test_NormalizationNode():
     """
@@ -198,51 +196,4 @@ def test_LinearNode():
     assert_true(node.pytorchLayerId == pytorchLayerId)
     assert_true(node.maxNumInFeatures == 512)
     assert_true(node.numOutFeatures == 32)
-    assert_true(node.displayName == 'Linear(of=32)')
-    
-def test_Node():
-    """
-    Tests the ability to construct and use a node of the Node struct.
-    """
-    uuid = Python.import_module("uuid")
-    
-    node = Node(name='name', displayName='Node Name')
-    
-    pytorchLayerId = uuid.uuid4()
-    
-    #var convNode: Optional[ConvolutionalNode] = None
-    #convNode = None
-    #convNode = ConvolutionalNode(name='name', kernel_size=3, 
-    #                     maxNumInputChannels=128, 
-    #                     maxNumOutputChannels=128, 
-    #                     numOutputChannels=32,
-    #                     layer=0, pytorchLayerId=pytorchLayerId)
-    
-    pytorchLayerId = uuid.uuid4()
-    linearNode = LinearNode(name='name', 
-                      maxNumInFeatures=512, 
-                      maxNumOutFeatures=512,
-                      numOutFeatures=32, 
-                      layer=1, pytorchLayerId=pytorchLayerId)
-                      
-    var genNode: AnyType
-
-
-def main():
-    print('hi')
-    from collections import Optional
-    var a = Optional(1)
-    var b = Optional[Int](None)
-    if a:
-        print(a.value())  # prints 1
-    if b:  # bool(b) is False, so no print
-        print(b.value())
-    var c = a.or_else(2)
-    var d = b.or_else(2)
-    print(c)  # prints 1
-    print(d)  # prints 2
-    
-    var node: Optional[ConvolutionalNode]
-    node = Optional[ConvolutionalNode](None)
-    #node = Node(name='name', displayName='Node Name')
-
+    assert_true(node.displayName == 'Linear(of=32)')   
