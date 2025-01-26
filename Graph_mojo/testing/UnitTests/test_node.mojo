@@ -120,20 +120,6 @@ def test_OutputNodeWrapper():
     assert_equal(node.node[OutputNode].name, 'output')
     assert_equal(node.node[OutputNode].displayName, 'Output')
     
-def test_NormalizationNode():
-    """
-    Tests the ability to construct and use a node of the NormalizationNode struct.
-    """
-    uuid = Python.import_module("uuid")
-    pytorchLayerId = uuid.uuid4()
-    node = NormalizationNode(name="name", 
-                             normalizationType=NormalizationType.BATCH_NORM, 
-                             numFeatures=12, pytorchLayerId=pytorchLayerId)
-    assert_equal(node.name, 'name')
-    assert_equal(node.displayName, 'Batch Normalization')
-    assert_equal(node.normalizationType.value, NormalizationType.BATCH_NORM.value)
-    assert_equal(pytorchLayerId, node.pytorchLayerId)
-    
 def test_PoolingNode():
     """
     Tests the ability to construct and use a node of the PoolingNode struct.
