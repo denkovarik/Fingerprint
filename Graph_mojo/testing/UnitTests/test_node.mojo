@@ -149,7 +149,7 @@ def test_forwardNoNormalization():
     
     var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)
     
-    var nodeNoNormTestOutput = node.node[NormalizationNode].forward(inputTensor)
+    var nodeNoNormTestOutput = node.forward(inputTensor)
     assert_true(torch.allclose(inputTensor, nodeNoNormTestOutput))
 
 def test_forwardBatchNormalization():
@@ -169,7 +169,7 @@ def test_forwardBatchNormalization():
     var batchNormModule: PythonObject = nn.BatchNorm2d(3) 
     
     var batchNormModuleOuptput = batchNormModule(inputTensor)
-    var nodeBatchNormTestOutput = node.node[NormalizationNode].forward(inputTensor)
+    var nodeBatchNormTestOutput = node.forward(inputTensor)
     assert_false(torch.allclose(inputTensor, nodeBatchNormTestOutput))
     assert_true(torch.allclose(batchNormModuleOuptput, nodeBatchNormTestOutput))
     
