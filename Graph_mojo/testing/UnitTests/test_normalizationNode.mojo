@@ -89,31 +89,4 @@ def test_toStringBatchNorm():
     var batchNormModule: PythonObject = nn.BatchNorm2d(3)
                   
     assert_equal(batchNorm.__str__(), str(batchNormModule))
-
-def main():
-    print('hi')
-    torch = Python.import_module("torch")
-    nn = Python.import_module("torch.nn")
-    uuid = Python.import_module("uuid")
-    pytorchLayerId = uuid.uuid4()
-    
-    # Test Pytorch Tensor
-    var input_tensor: PythonObject = torch.randn(1, 3, 5, 5)
-    var batch_norm_module: PythonObject = nn.BatchNorm2d(3) 
-    var batch_norm_module2: PythonObject = nn.BatchNorm2d(3) 
-        
-    var output_tensor = batch_norm_module(input_tensor)
-    var output_tensor2 = batch_norm_module2(input_tensor)
-        
-    assert_true(torch.allclose(output_tensor, output_tensor2))
-    
-    print(batch_norm_module)
-    var noNorm = NormalizationNode(name="name", 
-                         normalizationType=NormalizationType.NO_NORM, 
-                         numFeatures=3, pytorchLayerId=pytorchLayerId)
-    var batchNorm = NormalizationNode(name="name", 
-                         normalizationType=NormalizationType.BATCH_NORM, 
-                         numFeatures=3, pytorchLayerId=pytorchLayerId)
-    print(noNorm.__str__())
-    print(batchNorm.__str__())
     
