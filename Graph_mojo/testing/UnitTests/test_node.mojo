@@ -120,19 +120,86 @@ def test_OutputNodeWrapper():
     assert_equal(node.node[OutputNode].name, 'output')
     assert_equal(node.node[OutputNode].displayName, 'Output')
     
-def test_NormalizationNode():
+def test_NormalizationNodeWrapperConstruction():
     """
-    Tests the ability to construct and use a node of the NormalizationNode struct.
+    Tests the ability to construct and use a node of the NormalizationNode wrapper (Node) struct.
     """
     uuid = Python.import_module("uuid")
     pytorchLayerId = uuid.uuid4()
-    node = NormalizationNode(name="name", 
+    node = Node(theNode=NormalizationNode(name="name", 
                              normalizationType=NormalizationType.BATCH_NORM, 
-                             numFeatures=12, pytorchLayerId=pytorchLayerId)
-    assert_equal(node.name, 'name')
-    assert_equal(node.displayName, 'Batch Normalization')
-    assert_equal(node.normalizationType.value, NormalizationType.BATCH_NORM.value)
-    assert_equal(pytorchLayerId, node.pytorchLayerId)
+                             numFeatures=12, pytorchLayerId=pytorchLayerId))
+    assert_equal(node.node[NormalizationNode].name, 'name')
+    assert_equal(node.node[NormalizationNode].displayName, 'Batch Normalization')
+    assert_equal(node.node[NormalizationNode].normalizationType.value, NormalizationType.BATCH_NORM.value)
+    assert_equal(pytorchLayerId, node.node[NormalizationNode].pytorchLayerId)
+    
+def test_forwardNoNormalization():
+    """
+    Test forward propigation for the NormalizationNode wrapper (Node) struct with no normalization set.
+    """
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4()
+    
+    node = Node(theNode=NormalizationNode(name="name", 
+                         normalizationType=NormalizationType.NO_NORM, 
+                         numFeatures=3, pytorchLayerId=pytorchLayerId))
+    
+    var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)
+    
+    var nodeNoNormTestOutput = node.forward(inputTensor)
+    assert_true(torch.allclose(inputTensor, nodeNoNormTestOutput))
+
+def test_forwardBatchNormalization():
+    """
+    Test forward propigation for the NormalizationNode wrapper (Node) struct with no normalization set.
+    """
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4()
+
+    node = Node(theNode=NormalizationNode(name="name", 
+                             normalizationType=NormalizationType.BATCH_NORM, 
+                             numFeatures=3, pytorchLayerId=pytorchLayerId))
+    
+    var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)
+    var batchNormModule: PythonObject = nn.BatchNorm2d(3) 
+    
+    var batchNormModuleOuptput = batchNormModule(inputTensor)
+    var nodeBatchNormTestOutput = node.forward(inputTensor)
+    assert_false(torch.allclose(inputTensor, nodeBatchNormTestOutput))
+    assert_true(torch.allclose(batchNormModuleOuptput, nodeBatchNormTestOutput))
+    
+def test_toStringNoNorm():
+    """
+    Tests the NormalizationNode wrapper (Node) struct to string overloaded function for NO_NORM type.
+    """
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4()
+
+    node = Node(theNode=NormalizationNode(name="name", 
+                         normalizationType=NormalizationType.NO_NORM, 
+                         numFeatures=3, pytorchLayerId=pytorchLayerId))
+                  
+    assert_equal(node.node[NormalizationNode].__str__(), 'NoNorm2d()')
+
+def test_toStringBatchNorm():
+    """
+    Tests the NormalizationNode wrapper (Node) struct to string overloaded function for NO_NORM type.
+    """
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4()
+    nn = Python.import_module("torch.nn")
+
+    node = Node(theNode=NormalizationNode(name="name", 
+                         normalizationType=NormalizationType.BATCH_NORM, 
+                         numFeatures=3, pytorchLayerId=pytorchLayerId))
+    var batchNormModule: PythonObject = nn.BatchNorm2d(3)
+                  
+    assert_equal(node.node[NormalizationNode].__str__(), str(batchNormModule))
     
 def test_PoolingNode():
     """
