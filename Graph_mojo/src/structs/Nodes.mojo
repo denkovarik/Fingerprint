@@ -38,6 +38,11 @@ struct NormalizationType:
         if self.value == other.value:
             return True
         return False
+        
+    fn __ne__(self, other: NormalizationType) -> Bool:
+        if self.value != other.value:
+            return True
+        return False
   
 
 @value
@@ -174,6 +179,12 @@ struct NormalizationNode(NodeTrait):
         if normalizationType == NormalizationType.BATCH_NORM:
             self.displayName = 'Batch Normalization'
             self.pytorchLayer = nn.BatchNorm2d(self.numFeatures)
+            
+    fn __str__(inout self) -> String:
+        var strRep: String = 'NoNorm2d()'
+        if self.normalizationType != NormalizationType.NO_NORM:
+            strRep = str(self.pytorchLayer)
+        return strRep
             
     def forward(inout self, x: PythonObject) -> PythonObject:
         if self.normalizationType == NormalizationType.NO_NORM:
