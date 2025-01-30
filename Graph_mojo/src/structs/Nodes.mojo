@@ -259,7 +259,7 @@ struct ActivationNode(NodeTrait):
     var activationType: ActivationType
     var pytorchLayer: PythonObject
 
-    def __init__(inout self, name: String, activationType: ActivationType):
+    fn __init__(inout self, name: String, activationType: ActivationType) raises:
         self.activationType = activationType
         self.name = name
         self.displayName = "None"
@@ -269,6 +269,12 @@ struct ActivationNode(NodeTrait):
         if self.activationType.value == activationType.RELU.value:
             self.displayName = 'Relu Activation'
             self.pytorchLayer = nn.ReLU()
+            
+    fn __str__(inout self) -> String:
+        var strRep: String = 'LinearActivation()'
+        if self.activationType != ActivationType.LINEAR:
+            strRep = str(self.pytorchLayer)
+        return strRep
             
     def forward(inout self, x: PythonObject) -> PythonObject:
         if self.activationType.value == ActivationType.LINEAR.value:
