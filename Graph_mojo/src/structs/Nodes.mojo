@@ -75,7 +75,20 @@ struct ActivationType:
     
     alias invalid = ActivationType(0)
     alias RELU = ActivationType(1) 
-    alias NONE = ActivationType(2)
+    alias LINEAR = ActivationType(2)
+        
+    fn __init__(inout self):
+        pass
+    
+    fn __eq__(self, other: ActivationType) -> Bool:
+        if self.value == other.value:
+            return True
+        return False
+        
+    fn __ne__(self, other: ActivationType) -> Bool:
+        if self.value != other.value:
+            return True
+        return False
             
             
 # Define the trait for Node
@@ -246,7 +259,7 @@ struct ActivationNode(NodeTrait):
     var activationType: ActivationType
     var pytorchLayer: PythonObject
 
-    def __init__(inout self, name: String, activationType: ActivationType):
+    fn __init__(inout self, name: String, activationType: ActivationType) raises:
         self.activationType = activationType
         self.name = name
         self.displayName = "None"
@@ -257,8 +270,14 @@ struct ActivationNode(NodeTrait):
             self.displayName = 'Relu Activation'
             self.pytorchLayer = nn.ReLU()
             
+    fn __str__(inout self) -> String:
+        var strRep: String = 'LinearActivation()'
+        if self.activationType != ActivationType.LINEAR:
+            strRep = str(self.pytorchLayer)
+        return strRep
+            
     def forward(inout self, x: PythonObject) -> PythonObject:
-        if self.activationType.value == ActivationType.NONE.value:
+        if self.activationType.value == ActivationType.LINEAR.value:
             return x
         return self.pytorchLayer.forward(x)
         
