@@ -1,8 +1,7 @@
-# Content of test_quickstart.mojo
 from testing import assert_equal, assert_not_equal, assert_true, assert_false
 from python import Python, PythonObject
-from structs.Nodes import NodeType, NormalizationType, PoolingType
-from structs.Nodes import NormalizationNode, PoolingNode, NodeTrait
+from structs.Nodes import NodeType, PoolingType
+from structs.Nodes import PoolingNode, NodeTrait
 
 
 def test_execution():
@@ -59,7 +58,7 @@ def test_forwardMaxPooling():
     
 def test_toStringNoPooling():
     """
-    Tests the to string overloaded function for NO_NORM type.
+    Tests the to string overloaded function for NO_POOLING type.
     """
     uuid = Python.import_module("uuid")
     pytorchLayerId = uuid.uuid4()

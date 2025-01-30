@@ -1,4 +1,3 @@
-# Content of test_quickstart.mojo
 from testing import assert_equal, assert_not_equal, assert_true, assert_false
 from python import Python, PythonObject
 from structs.Nodes import NodeType, NormalizationType, PoolingType, ActivationType
@@ -7,7 +6,9 @@ from structs.Nodes import ConvolutionalNode, LinearNode, NodeTrait
 
 
 def test_execution():
-    # Just tests running a mojo test
+    """
+    Just tests running a mojo test
+    """
     assert_equal(0, 0)
 
 def test_nodeTypes():
@@ -184,7 +185,7 @@ def test_toStringNoNorm():
                          normalizationType=NormalizationType.NO_NORM, 
                          numFeatures=3, pytorchLayerId=pytorchLayerId))
                   
-    assert_equal(node.node[NormalizationNode].__str__(), 'NoNorm2d()')
+    assert_equal(node.__str__(), 'NoNorm2d()')
 
 def test_toStringBatchNorm():
     """
@@ -199,7 +200,7 @@ def test_toStringBatchNorm():
                          numFeatures=3, pytorchLayerId=pytorchLayerId))
     var batchNormModule: PythonObject = nn.BatchNorm2d(3)
                   
-    assert_equal(node.node[NormalizationNode].__str__(), str(batchNormModule))
+    assert_equal(node.__str__(), str(batchNormModule))
     
 def test_forwardNoPooling():
     """
@@ -248,7 +249,7 @@ def test_toStringNoPooling():
     node = Node(PoolingNode(name="name", 
                              poolingType=PoolingType.NO_POOLING))
                   
-    assert_equal(node.node[PoolingNode].__str__(), 'NoPooling2d()')
+    assert_equal(node.__str__(), 'NoPooling2d()')
 
 def test_toStringMaxPooling():
     """
@@ -263,7 +264,7 @@ def test_toStringMaxPooling():
     
     var maxPoolingModule: PythonObject = nn.MaxPool2d(kernel_size=2, stride=2) 
                   
-    assert_equal(node.node[PoolingNode].__str__(), str(maxPoolingModule))
+    assert_equal(node.__str__(), str(maxPoolingModule))
     
 def test_ActivationNode():
     """
@@ -318,7 +319,7 @@ def test_toStringLinearActivation():
 
     node = Node(ActivationNode(name='name', activationType=ActivationType.LINEAR))
                   
-    assert_equal(node.node[ActivationNode].__str__(), 'LinearActivation()')
+    assert_equal(node.__str__(), 'LinearActivation()')
 
 def test_toStringReluActivation():
     """
@@ -331,15 +332,43 @@ def test_toStringReluActivation():
     node = Node(ActivationNode(name='name', activationType=ActivationType.RELU))
     var reluModule: PythonObject = nn.ReLU()
                   
-    assert_equal(node.node[ActivationNode].__str__(), str(reluModule))
+    assert_equal(node.__str__(), str(reluModule))
 
-def test_FlattenNode():
+def test_flattenNodeConstruction():
     """
     Tests the ability to construct and use a node of the FlattenNode struct.
     """
-    node = FlattenNode(name='name')
-    assert_equal(node.name, 'name')
-    assert_equal(node.displayName, 'Flatten')
+    node = Node(FlattenNode(name='name'))
+    assert_equal(node.node[FlattenNode].name, 'name')
+    assert_equal(node.node[FlattenNode].displayName, 'Flatten')
+    
+def test_flattenNodeForward():
+    """
+    Test forward propigation for the FlattenNode struct.
+    """
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    
+    node = Node(FlattenNode(name='name'))
+    flattenLayer = nn.Flatten()
+    
+    var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)    
+    var nodeFlattenTestOutput = node.forward(inputTensor)
+    var flattenLayerControlOut = flattenLayer(inputTensor)
+    
+    assert_not_equal(inputTensor.shape, nodeFlattenTestOutput.shape)
+    assert_equal(nodeFlattenTestOutput.shape, flattenLayerControlOut.shape)
+    
+def test_flattenNodeToString():
+    """
+    Tests the to string overloaded function.
+    """
+    nn = Python.import_module("torch.nn")
+
+    node = Node(FlattenNode(name='name'))
+    flattenLayer = nn.Flatten()
+                  
+    assert_equal(node.__str__(), str(flattenLayer))
 
 def test_CovolutionalNode():
     """

@@ -1,4 +1,3 @@
-# Content of test_quickstart.mojo
 from testing import assert_equal, assert_not_equal, assert_true, assert_false
 from python import Python, PythonObject
 from structs.Nodes import NodeType, PoolingType, ActivationType
