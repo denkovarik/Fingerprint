@@ -1,8 +1,8 @@
 # Content of test_quickstart.mojo
 from testing import assert_equal, assert_not_equal, assert_true, assert_false
 from python import Python, PythonObject
-from structs.Nodes import NodeType, NormalizationType, PoolingType
-from structs.Nodes import NormalizationNode, PoolingNode, NodeTrait
+from structs.Nodes import NodeType, PoolingType
+from structs.Nodes import, PoolingNode, NodeTrait
 
 
 def test_execution():
