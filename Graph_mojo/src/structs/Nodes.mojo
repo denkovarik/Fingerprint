@@ -93,6 +93,9 @@ struct ActivationType:
             
 # Define the trait for Node
 trait NodeTrait:
+    fn __str__(inout self) -> String:
+        pass
+
     def forward(inout self, x: PythonObject) -> PythonObject:
         pass
     
@@ -111,6 +114,26 @@ struct Node(NodeTrait):
         self.nodeType = NodeType.NONE
         self.node = theNode
         self.nodeType = self.getNodeType()
+        
+    fn __str__(inout self) -> String:
+        var strRep: String = 'NoNorm2d()'
+        if self.nodeType.value == NodeType.INPUT.value:
+            strRep = self.node[InputNode].__str__()
+        elif self.nodeType.value == NodeType.OUTPUT.value:
+            strRep = self.node[OutputNode].__str__()
+        elif self.nodeType.value == NodeType.CONVOLUTION.value:
+            strRep = self.node[ConvolutionalNode].__str__()
+        elif self.nodeType.value == NodeType.NORMALIZATION.value:
+            strRep = self.node[NormalizationNode].__str__()
+        elif self.nodeType.value == NodeType.POOLING.value:
+            strRep = self.node[PoolingNode].__str__()
+        elif self.nodeType.value == NodeType.FLATTEN.value:
+            strRep = self.node[FlattenNode].__str__()
+        elif self.nodeType.value == NodeType.LINEAR.value:
+            strRep = self.node[LinearNode].__str__()
+        elif self.nodeType.value == NodeType.ACTIVATION.value:
+            strRep = self.node[ActivationNode].__str__()       
+        return strRep
         
     def getNodeType(inout self) -> NodeType:
         if self.node.isa[InputNode]():
@@ -168,6 +191,9 @@ struct InputNode(NodeTrait):
         self.name = 'input'
         self.numChannels = inputShape[1]
         self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
+        
+    fn __str__(inout self) -> String:
+        return 'Input()'
                
     def forward(inout self, x: PythonObject) -> PythonObject:
         return x
@@ -181,6 +207,9 @@ struct OutputNode(NodeTrait):
     fn __init__(inout self):
         self.name = 'output'
         self.displayName = 'Output'
+        
+    fn __str__(inout self) -> String:
+        return 'Output()'
         
     def forward(inout self, x: PythonObject) -> PythonObject:
         return x
@@ -294,6 +323,9 @@ struct FlattenNode(NodeTrait):
         nn = Python.import_module("torch.nn")
         self.pytorchLayer = nn.Flatten()
             
+    fn __str__(inout self) -> String:
+        return 'Flatten()'
+            
     def forward(inout self, x: PythonObject) -> PythonObject:
         return self.pytorchLayer(x)   
         
@@ -322,6 +354,10 @@ struct ConvolutionalNode(NodeTrait):
         self.maxNumOutputChannels = maxNumOutputChannels
         self.numOutputChannels = numOutputChannels
         self.pytorchLayer = None
+        
+    fn __str__(inout self) -> String:
+        var strRep = str(self.pytorchLayer)
+        return strRep
 
     def constructLayer(inout self):
         return SharedConv2d(kernel_size=self.kernel_size, 
@@ -360,6 +396,10 @@ struct LinearNode(NodeTrait):
         self.maxNumOutFeatures = maxNumOutFeatures
         self.numOutFeatures = numOutFeatures
         self.pytorchLayer = None
+        
+    fn __str__(inout self) -> String:
+        var strRep = str(self.pytorchLayer)
+        return strRep
 
     def constructLayer(inout self):
         return SharedLinear(self.maxNumInFeatures, self.maxNumOutFeatures)
