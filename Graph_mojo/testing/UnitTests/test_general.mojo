@@ -1,4 +1,3 @@
-# Content of test_quickstart.mojo
 from testing import assert_equal
 from python import Python
 
