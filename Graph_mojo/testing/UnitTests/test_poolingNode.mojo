@@ -58,7 +58,7 @@ def test_forwardMaxPooling():
     
 def test_toStringNoPooling():
     """
-    Tests the to string overloaded function for NO_NORM type.
+    Tests the to string overloaded function for NO_POOLING type.
     """
     uuid = Python.import_module("uuid")
     pytorchLayerId = uuid.uuid4()
