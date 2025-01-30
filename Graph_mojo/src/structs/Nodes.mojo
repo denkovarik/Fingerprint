@@ -54,6 +54,19 @@ struct PoolingType:
     alias NO_POOLING = PoolingType(1) 
     alias MAX_POOLING = PoolingType(2)
     
+    fn __init__(inout self):
+        pass
+    
+    fn __eq__(self, other: PoolingType) -> Bool:
+        if self.value == other.value:
+            return True
+        return False
+        
+    fn __ne__(self, other: PoolingType) -> Bool:
+        if self.value != other.value:
+            return True
+        return False
+    
 
 @value
 @register_passable("trivial")
@@ -76,7 +89,8 @@ alias NodeVariant = Variant[InputNode, OutputNode, NormalizationNode, PoolingNod
 
 @value
 struct Node(NodeTrait):
-    # ● ●
+    # ● 
+    # ● 
     var node: NodeVariant
     var nodeType: NodeType
 
@@ -201,7 +215,7 @@ struct PoolingNode(NodeTrait):
     var stride: Int
     var pytorchLayer: PythonObject
     
-    def __init__(inout self, name: String, poolingType: PoolingType):
+    fn __init__(inout self, name: String, poolingType: PoolingType) raises:
         self.name = name 
         self.displayName = 'No Pooling'
         self.poolingType = poolingType
@@ -212,6 +226,12 @@ struct PoolingNode(NodeTrait):
         if poolingType.value == PoolingType.MAX_POOLING.value:
             self.displayName = 'Max Pooling'
             self.pytorchLayer = nn.MaxPool2d(self.kernelSize, self.stride)
+            
+    fn __str__(inout self) -> String:
+        var strRep: String = 'NoPooling2d()'
+        if self.poolingType != PoolingType.NO_POOLING:
+            strRep = str(self.pytorchLayer)
+        return strRep
             
     def forward(inout self, x: PythonObject) -> PythonObject:
         if self.poolingType.value == PoolingType.NO_POOLING.value:
