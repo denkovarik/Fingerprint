@@ -201,14 +201,73 @@ def test_toStringBatchNorm():
                   
     assert_equal(node.node[NormalizationNode].__str__(), str(batchNormModule))
     
-def test_PoolingNode():
+def test_forwardNoPooling():
     """
-    Tests the ability to construct and use a node of the PoolingNode struct.
+    Test forward propigation for the PoolingNode struct with no pooling set.
     """
-    node = PoolingNode(name='name', poolingType=PoolingType.MAX_POOLING)
-    assert_equal(node.name, 'name')
-    assert_equal(node.displayName, 'Max Pooling')
-    assert_equal(node.poolingType.value, PoolingType.MAX_POOLING.value)
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4()
+    
+    node = Node(PoolingNode(name="name", 
+                             poolingType=PoolingType.NO_POOLING))
+    
+    var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)
+    
+    var nodeNoPoolingTestOutput =  node.forward(inputTensor)
+    assert_true(torch.allclose(inputTensor, nodeNoPoolingTestOutput))
+
+def test_forwardMaxPooling():
+    """
+    Test forward propigation for the PoolingNode struct with no pooling set.
+    """
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4()
+
+    node = Node(PoolingNode(name="name", 
+                             poolingType=PoolingType.MAX_POOLING))
+    
+    var inputTensor: PythonObject = torch.randn(1, 3, 8, 8)
+    var maxPoolingModule: PythonObject = nn.MaxPool2d(kernel_size=2, stride=2) 
+    
+    var maxPoolingModuleOuptput = maxPoolingModule(inputTensor)
+    var nodeMaxPoolingTestOutput = node.forward(inputTensor)
+    assert_false(inputTensor.shape == nodeMaxPoolingTestOutput.shape)
+    assert_true(torch.allclose(maxPoolingModuleOuptput, nodeMaxPoolingTestOutput))
+    
+def test_toStringNoPooling():
+    """
+    Tests the to string overloaded function for NO_NORM type.
+    """
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4()
+
+    node = Node(PoolingNode(name="name", 
+                             poolingType=PoolingType.NO_POOLING))
+                  
+    assert_equal(node.node[PoolingNode].__str__(), 'NoPooling2d()')
+
+def test_toStringMaxPooling():
+    """
+    Tests the to string overloaded function for MAX_POOLING type.
+    """
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4()
+    nn = Python.import_module("torch.nn")
+
+    node = Node(PoolingNode(name="name", 
+                             poolingType=PoolingType.MAX_POOLING))
+    
+    var maxPoolingModule: PythonObject = nn.MaxPool2d(kernel_size=2, stride=2) 
+                  
+    assert_equal(node.node[PoolingNode].__str__(), str(maxPoolingModule))
+    
+    
+    
+    
     
 def test_ActivationNode():
     """
