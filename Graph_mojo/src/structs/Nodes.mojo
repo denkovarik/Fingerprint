@@ -76,6 +76,19 @@ struct ActivationType:
     alias invalid = ActivationType(0)
     alias RELU = ActivationType(1) 
     alias LINEAR = ActivationType(2)
+        
+    fn __init__(inout self):
+        pass
+    
+    fn __eq__(self, other: ActivationType) -> Bool:
+        if self.value == other.value:
+            return True
+        return False
+        
+    fn __ne__(self, other: ActivationType) -> Bool:
+        if self.value != other.value:
+            return True
+        return False
             
             
 # Define the trait for Node
