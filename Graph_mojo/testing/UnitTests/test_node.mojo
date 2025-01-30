@@ -183,7 +183,7 @@ def test_toStringNoNorm():
                          normalizationType=NormalizationType.NO_NORM, 
                          numFeatures=3, pytorchLayerId=pytorchLayerId))
                   
-    assert_equal(node.node[NormalizationNode].__str__(), 'NoNorm2d()')
+    assert_equal(node.__str__(), 'NoNorm2d()')
 
 def test_toStringBatchNorm():
     """
@@ -198,7 +198,7 @@ def test_toStringBatchNorm():
                          numFeatures=3, pytorchLayerId=pytorchLayerId))
     var batchNormModule: PythonObject = nn.BatchNorm2d(3)
                   
-    assert_equal(node.node[NormalizationNode].__str__(), str(batchNormModule))
+    assert_equal(node.__str__(), str(batchNormModule))
     
 def test_forwardNoPooling():
     """
@@ -247,7 +247,7 @@ def test_toStringNoPooling():
     node = Node(PoolingNode(name="name", 
                              poolingType=PoolingType.NO_POOLING))
                   
-    assert_equal(node.node[PoolingNode].__str__(), 'NoPooling2d()')
+    assert_equal(node.__str__(), 'NoPooling2d()')
 
 def test_toStringMaxPooling():
     """
@@ -262,7 +262,7 @@ def test_toStringMaxPooling():
     
     var maxPoolingModule: PythonObject = nn.MaxPool2d(kernel_size=2, stride=2) 
                   
-    assert_equal(node.node[PoolingNode].__str__(), str(maxPoolingModule))
+    assert_equal(node.__str__(), str(maxPoolingModule))
     
 def test_ActivationNode():
     """
@@ -317,7 +317,7 @@ def test_toStringLinearActivation():
 
     node = Node(ActivationNode(name='name', activationType=ActivationType.LINEAR))
                   
-    assert_equal(node.node[ActivationNode].__str__(), 'LinearActivation()')
+    assert_equal(node.__str__(), 'LinearActivation()')
 
 def test_toStringReluActivation():
     """
@@ -330,7 +330,7 @@ def test_toStringReluActivation():
     node = Node(ActivationNode(name='name', activationType=ActivationType.RELU))
     var reluModule: PythonObject = nn.ReLU()
                   
-    assert_equal(node.node[ActivationNode].__str__(), str(reluModule))
+    assert_equal(node.__str__(), str(reluModule))
 
 def test_FlattenNode():
     """
