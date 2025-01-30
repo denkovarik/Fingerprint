@@ -324,7 +324,7 @@ struct FlattenNode(NodeTrait):
         self.pytorchLayer = nn.Flatten()
             
     fn __str__(inout self) -> String:
-        return 'Flatten()'
+        return str(self.pytorchLayer)
             
     def forward(inout self, x: PythonObject) -> PythonObject:
         return self.pytorchLayer(x)   

@@ -6,7 +6,9 @@ from structs.Nodes import ConvolutionalNode, LinearNode, NodeTrait
 
 
 def test_execution():
-    # Just tests running a mojo test
+    """
+    Just tests running a mojo test
+    """
     assert_equal(0, 0)
 
 def test_nodeTypes():
@@ -332,13 +334,41 @@ def test_toStringReluActivation():
                   
     assert_equal(node.__str__(), str(reluModule))
 
-def test_FlattenNode():
+def test_flattenNodeConstruction():
     """
     Tests the ability to construct and use a node of the FlattenNode struct.
     """
-    node = FlattenNode(name='name')
-    assert_equal(node.name, 'name')
-    assert_equal(node.displayName, 'Flatten')
+    node = Node(FlattenNode(name='name'))
+    assert_equal(node.node[FlattenNode].name, 'name')
+    assert_equal(node.node[FlattenNode].displayName, 'Flatten')
+    
+def test_flattenNodeForward():
+    """
+    Test forward propigation for the FlattenNode struct.
+    """
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    
+    node = Node(FlattenNode(name='name'))
+    flattenLayer = nn.Flatten()
+    
+    var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)    
+    var nodeFlattenTestOutput = node.forward(inputTensor)
+    var flattenLayerControlOut = flattenLayer(inputTensor)
+    
+    assert_not_equal(inputTensor.shape, nodeFlattenTestOutput.shape)
+    assert_equal(nodeFlattenTestOutput.shape, flattenLayerControlOut.shape)
+    
+def test_flattenNodeToString():
+    """
+    Tests the to string overloaded function.
+    """
+    nn = Python.import_module("torch.nn")
+
+    node = Node(FlattenNode(name='name'))
+    flattenLayer = nn.Flatten()
+                  
+    assert_equal(node.__str__(), str(flattenLayer))
 
 def test_CovolutionalNode():
     """
