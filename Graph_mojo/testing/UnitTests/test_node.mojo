@@ -117,21 +117,33 @@ def test_toString():
     
     assert_equal(node.__str__(), 'Input()')
     
-def test_OutputNode():
+def test_constructionOutputNode():
     """
     Tests the ability to construct and use the OutputNode stuct.
-    """
-    node = OutputNode()
-    assert_equal(node.name, 'output')
-    assert_equal(node.displayName, 'Output')
-    
-def test_OutputNodeWrapper():
-    """
-    Tests the ability to construct and use the Node struct wrapper for OutputNode struct.
     """
     node = Node(theNode=OutputNode())
     assert_equal(node.node[OutputNode].name, 'output')
     assert_equal(node.node[OutputNode].displayName, 'Output')
+    
+def test_forwardOutputNode():
+    """
+    Test forward propigation for the OutputNode struct.
+    """
+    torch = Python.import_module("torch")
+    
+    node = OutputNode()
+    
+    var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)    
+    var nodeTestOutput = node.forward(inputTensor)
+    
+    assert_equal(nodeTestOutput, inputTensor)
+    
+def test_toStringOutputNode():
+    """
+    Tests the to string overloaded function.
+    """    
+    node = OutputNode()           
+    assert_equal(node.__str__(), 'Output()')
     
 def test_NormalizationNodeWrapperConstruction():
     """
