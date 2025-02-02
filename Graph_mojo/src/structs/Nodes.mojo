@@ -340,10 +340,10 @@ struct ConvolutionalNode(NodeTrait):
     var maxNumInputChannels: Int
     var maxNumOutputChannels: Int
     var numOutputChannels: Int
-    var pytorchLayer: PythonObject
+    var pytorchLayer: SharedConv2d
 
     fn __init__(inout self, name: String, kernel_size: Int, maxNumInputChannels: Int, 
-                 maxNumOutputChannels: Int, numOutputChannels: Int, layer: Int, pytorchLayerId: Int):        
+                 maxNumOutputChannels: Int, numOutputChannels: Int, layer: Int, pytorchLayerId: Int) raises:        
         self.kernel_size = kernel_size
         self.name = name
         self.displayName = str(self.kernel_size) + 'x' + str(self.kernel_size) 
@@ -353,19 +353,16 @@ struct ConvolutionalNode(NodeTrait):
         self.maxNumInputChannels = maxNumInputChannels
         self.maxNumOutputChannels = maxNumOutputChannels
         self.numOutputChannels = numOutputChannels
-        self.pytorchLayer = None
+        self.pytorchLayer = SharedConv2d(kernel_size=self.kernel_size, 
+                                         in_channels=self.maxNumInputChannels, 
+                                         out_channels=self.maxNumOutputChannels)
         
     fn __str__(inout self) -> String:
-        var strRep = str(self.pytorchLayer)
+        var strRep = self.pytorchLayer.__str__()
         return strRep
 
-    def constructLayer(inout self):
-        return SharedConv2d(kernel_size=self.kernel_size, 
-                            in_channels=self.maxNumInputChannels, 
-                            out_channels=self.maxNumOutputChannels)
-
     def forward(inout self, x: PythonObject) -> PythonObject:
-        return self.pytorchLayer(x, x.shape[1], self.numOutputChannels)
+        return self.pytorchLayer.forward(x, x.shape[1], self.numOutputChannels)
 
     def setSharedLayer(inout self, pytorchLayer: PythonObject):
         self.pytorchLayer = pytorchLayer
