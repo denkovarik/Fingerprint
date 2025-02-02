@@ -94,9 +94,9 @@ def test_inputNodeWrapper():
     assert_equal(node.node[InputNode].name, 'input')
     assert_equal(node.node[InputNode].displayName, 'Input(numChannels=3)')
     
-def test_forward():
+def test_forwardInputNode():
     """
-    Test forward propigation for the FlattenNode struct.
+    Test forward propigation for the InputNode struct.
     """
     torch = Python.import_module("torch")
     
@@ -107,7 +107,7 @@ def test_forward():
     
     assert_equal(nodeTestOutput, inputTensor)
     
-def test_toString():
+def test_toStringInputNode():
     """
     Tests the to string overloaded function.
     """
