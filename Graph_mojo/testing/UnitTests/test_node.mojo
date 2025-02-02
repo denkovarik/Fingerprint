@@ -83,17 +83,6 @@ def test_activationTypes():
     activationType = ActivationType.LINEAR
     assert_equal(activationType.value, ActivationType.LINEAR.value)
     
-def test_inputNode():
-    """
-    Tests the ability to construct and use the InputNode struct.
-    """
-    torch = Python.import_module("torch")
-
-    var node = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
-    assert_equal(node.numChannels, 3)
-    assert_equal(node.name, 'input')
-    assert_equal(node.displayName, 'Input(numChannels=3)')
-    
 def test_inputNodeWrapper():
     """
     Tests the ability to construct and use the Node struct wrapper for InputNode struct.
@@ -104,6 +93,29 @@ def test_inputNodeWrapper():
     assert_equal(node.node[InputNode].numChannels, 3)
     assert_equal(node.node[InputNode].name, 'input')
     assert_equal(node.node[InputNode].displayName, 'Input(numChannels=3)')
+    
+def test_forward():
+    """
+    Test forward propigation for the FlattenNode struct.
+    """
+    torch = Python.import_module("torch")
+    
+    node = Node(theNode=InputNode(inputShape=torch.Size([4, 3, 32, 32])))
+    
+    var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)    
+    var nodeTestOutput = node.forward(inputTensor)
+    
+    assert_equal(nodeTestOutput, inputTensor)
+    
+def test_toString():
+    """
+    Tests the to string overloaded function.
+    """
+    torch = Python.import_module("torch")
+    
+    node = Node(theNode=InputNode(inputShape=torch.Size([4, 3, 32, 32])))
+    
+    assert_equal(node.__str__(), 'Input()')
     
 def test_OutputNode():
     """
