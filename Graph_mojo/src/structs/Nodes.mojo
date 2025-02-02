@@ -1,6 +1,7 @@
 from collections import Optional
 from python import Python, PythonObject
 from structs.SharedConv2d import SharedConv2d
+from structs.SharedLinear import SharedLinear
 from utils import Variant
 
 
@@ -381,10 +382,10 @@ struct LinearNode(NodeTrait):
     var maxNumInFeatures: Int
     var maxNumOutFeatures: Int
     var numOutFeatures: Int
-    var pytorchLayer: PythonObject
+    var pytorchLayer: SharedLinear
         
     fn __init__(inout self, name: String, maxNumInFeatures: Int, maxNumOutFeatures: Int, 
-                 numOutFeatures: Int, layer: Int, pytorchLayerId: Int):
+                 numOutFeatures: Int, layer: Int, pytorchLayerId: Int) raises:
         self.name = name
         self.displayName = 'Linear(of=' + str(numOutFeatures) + ')'
         self.layer = layer
@@ -392,17 +393,14 @@ struct LinearNode(NodeTrait):
         self.maxNumInFeatures = maxNumInFeatures
         self.maxNumOutFeatures = maxNumOutFeatures
         self.numOutFeatures = numOutFeatures
-        self.pytorchLayer = None
+        self.pytorchLayer = SharedLinear(self.maxNumInFeatures, self.maxNumOutFeatures)
         
     fn __str__(inout self) -> String:
-        var strRep = str(self.pytorchLayer)
-        return strRep
-
-    def constructLayer(inout self):
-        return SharedLinear(self.maxNumInFeatures, self.maxNumOutFeatures)
+        var strRep = self.pytorchLayer.__str__()
+        return self.displayName
 
     def forward(inout self, x: PythonObject) -> PythonObject:
-        return self.pytorchLayer(x, x.shape[1], self.numOutFeatures)
+        return self.pytorchLayer.forward(x, x.shape[1], self.numOutFeatures)
 
     def setSharedLayer(inout self, pytorchLayer: PythonObject):
         self.pytorchLayer = pytorchLayer
