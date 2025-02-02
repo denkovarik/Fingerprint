@@ -1,6 +1,7 @@
 from python import Python, PythonObject
 
 
+@value
 struct SharedLinear:
     var maxInFeatures: Int
     var maxOutFeatures: Int
