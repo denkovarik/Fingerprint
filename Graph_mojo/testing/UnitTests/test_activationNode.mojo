@@ -1,7 +1,7 @@
 from testing import assert_equal, assert_not_equal, assert_true, assert_false
 from python import Python, PythonObject
-from structs.Nodes import NodeType, PoolingType, ActivationType
-from structs.Nodes import ActivationNode, PoolingNode, NodeTrait
+from structs.Nodes import NodeType, ActivationType
+from structs.Nodes import ActivationNode, NodeTrait
 
 
 def test_execution():
