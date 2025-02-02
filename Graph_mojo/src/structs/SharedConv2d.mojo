@@ -2,6 +2,7 @@ from collections import Optional
 from python import Python, PythonObject
 
 
+@value
 struct SharedConv2d():
     var kernel_size: Int
     var maxInChannels: Int
