@@ -34,6 +34,15 @@ struct NormalizationType:
     
     fn __init__(inout self):
         pass
+        
+    fn __str__(inout self) -> String:
+        if self.value == 0:
+            return 'invalid'
+        elif self.value == 1:
+            return 'NO_NORM'
+        elif self.value == 2:
+            return 'BATCH_NORM'
+        return 'Que?'
     
     fn __eq__(self, other: NormalizationType) -> Bool:
         if self.value == other.value:
@@ -98,6 +107,9 @@ trait NodeTrait:
         pass
 
     def forward(inout self, x: PythonObject) -> PythonObject:
+        pass
+        
+    def getName(inout self) -> String:
         pass
     
 
@@ -174,8 +186,29 @@ struct Node(NodeTrait):
         elif self.nodeType.value == NodeType.LINEAR.value:
             out = self.node[LinearNode].forward(x)
         elif self.nodeType.value == NodeType.ACTIVATION.value:
-            out = self.node[ActivationNode].forward(x)
+            out = self.node[ActivationNode].forward(x)    
+        return out
+    
+    def getName(inout self) -> String:
+        var out: String = 'None'
+        self.nodeType = self.getNodeType()
         
+        if self.nodeType.value == NodeType.INPUT.value:
+            out = self.node[InputNode].getName()
+        elif self.nodeType.value == NodeType.OUTPUT.value:
+            out = self.node[OutputNode].getName()
+        elif self.nodeType.value == NodeType.CONVOLUTION.value:
+            out = self.node[ConvolutionalNode].getName()
+        elif self.nodeType.value == NodeType.NORMALIZATION.value:
+            out = self.node[NormalizationNode].getName()
+        elif self.nodeType.value == NodeType.POOLING.value:
+            out = self.node[PoolingNode].getName()
+        elif self.nodeType.value == NodeType.FLATTEN.value:
+            out = self.node[FlattenNode].getName()
+        elif self.nodeType.value == NodeType.LINEAR.value:
+            out = self.node[LinearNode].getName()
+        elif self.nodeType.value == NodeType.ACTIVATION.value:
+            out = self.node[ActivationNode].getName()    
         return out
     
 
@@ -198,6 +231,9 @@ struct InputNode(NodeTrait):
                
     def forward(inout self, x: PythonObject) -> PythonObject:
         return x
+        
+    def getName(inout self) -> String:
+        return self.name
      
 
 @value     
@@ -214,6 +250,9 @@ struct OutputNode(NodeTrait):
         
     def forward(inout self, x: PythonObject) -> PythonObject:
         return x
+        
+    def getName(inout self) -> String:
+        return self.name
         
 
 @value  
@@ -247,6 +286,9 @@ struct NormalizationNode(NodeTrait):
         if self.normalizationType == NormalizationType.NO_NORM:
             return x
         return self.pytorchLayer.forward(x)
+        
+    def getName(inout self) -> String:
+        return self.name
             
 
 @value      
@@ -281,6 +323,9 @@ struct PoolingNode(NodeTrait):
             return x
         return self.pytorchLayer.forward(x)
         
+    def getName(inout self) -> String:
+        return self.name
+        
 
 @value            
 struct ActivationNode(NodeTrait):
@@ -311,6 +356,9 @@ struct ActivationNode(NodeTrait):
             return x
         return self.pytorchLayer.forward(x)
         
+    def getName(inout self) -> String:
+        return self.name
+        
 
 @value
 struct FlattenNode(NodeTrait):
@@ -329,6 +377,9 @@ struct FlattenNode(NodeTrait):
             
     def forward(inout self, x: PythonObject) -> PythonObject:
         return self.pytorchLayer(x)   
+        
+    def getName(inout self) -> String:
+        return self.name
         
   
 @value   
@@ -364,6 +415,9 @@ struct ConvolutionalNode(NodeTrait):
 
     def forward(inout self, x: PythonObject) -> PythonObject:
         return self.pytorchLayer.forward(x, x.shape[1], self.numOutputChannels)
+        
+    def getName(inout self) -> String:
+        return self.name
 
     def setSharedLayer(inout self, pytorchLayer: PythonObject):
         self.pytorchLayer = pytorchLayer
@@ -401,6 +455,9 @@ struct LinearNode(NodeTrait):
 
     def forward(inout self, x: PythonObject) -> PythonObject:
         return self.pytorchLayer.forward(x, x.shape[1], self.numOutFeatures)
+        
+    def getName(inout self) -> String:
+        return self.name
 
     def setSharedLayer(inout self, pytorchLayer: PythonObject):
         self.pytorchLayer = pytorchLayer
