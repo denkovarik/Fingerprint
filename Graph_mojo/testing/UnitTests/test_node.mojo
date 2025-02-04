@@ -131,7 +131,7 @@ def test_forwardOutputNode():
     """
     torch = Python.import_module("torch")
     
-    node = OutputNode()
+    node = Node(theNode=OutputNode())
     
     var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)    
     var nodeTestOutput = node.forward(inputTensor)
@@ -142,7 +142,7 @@ def test_toStringOutputNode():
     """
     Tests the to string overloaded function.
     """    
-    node = OutputNode()           
+    node = Node(theNode=OutputNode())           
     assert_equal(node.__str__(), 'Output()')
     
 def test_NormalizationNodeWrapperConstruction():
