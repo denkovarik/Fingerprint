@@ -13,6 +13,7 @@ struct Graph:
     var ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS: Set[Int]
     var MAX_NUMBER_OF_CONVOLUTION_CHANNELS: Int
     var ALLOWED_NUMBER_OF_LINEAR_FEATURES: Set[Int]
+    var MAX_NUMBER_OF_LINEAR_FEATURES: Int
     var nodes: Dict[String, Node]
     var edges: Dict[String, List[String]]
     var normalizationOptions: List[NormalizationType]
@@ -32,6 +33,7 @@ struct Graph:
         self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS = Set[Int](4, 8, 16, 32)
         self.MAX_NUMBER_OF_CONVOLUTION_CHANNELS = 0
         self.ALLOWED_NUMBER_OF_LINEAR_FEATURES = Set[Int](16, 32, 64, 128, 256)
+        self.MAX_NUMBER_OF_LINEAR_FEATURES = 0
         self.nodes = Dict[String, Node]()
         self.edges = Dict[String, List[String]]()
         self.normalizationOptions = List[NormalizationType](NormalizationType.NO_NORM, NormalizationType.BATCH_NORM)
@@ -44,10 +46,14 @@ struct Graph:
         self.curNodes = List[String]()
         self.layer = 0
         self.sample = List[Node]()
-        
+        # Find the max number of features for convolutional layers
         for c in self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS:
             if c[] > self.MAX_NUMBER_OF_CONVOLUTION_CHANNELS:
                 self.MAX_NUMBER_OF_CONVOLUTION_CHANNELS = c[]
+        # Find the max number of features for Linear Layers        
+        for c in self.ALLOWED_NUMBER_OF_LINEAR_FEATURES:
+            if c[] > self.MAX_NUMBER_OF_LINEAR_FEATURES:
+                self.MAX_NUMBER_OF_LINEAR_FEATURES = c[]
     
     def addNode(inout self, node: Node):
         """
@@ -193,6 +199,66 @@ struct Graph:
         self.curNodes = List[String]()
         self.addNormalizationLayer(inputShape[1])
         return inputShape
+        
+    fn addLinearLayer(inout self, layer: Int, inputShape: PythonObject) raises -> PythonObject: 
+        """
+        Adds a layer of LinearlNodes to the graph.
+        
+        Args:
+            layer (Int): The current layer in the graph
+            inputShape (PythonObject): The shape of the input tensor as a PyTorch Tensor.Size() object
+            
+        Returns:
+            outputShape (PythonObject): The shape of the input tensor as a PyTorch Tensor.Size() object
+        """
+        uuid = Python.import_module("uuid")
+        torch = Python.import_module("torch")
+        for of in self.ALLOWED_NUMBER_OF_LINEAR_FEATURES:
+            nodeName = 'L' + str(layer) + '_Linear(of=' + str(of[]) + ')'
+            var pytorchLayerId = uuid.uuid4()
+            node = Node(LinearNode(name=nodeName, 
+                                   maxNumInFeatures=inputShape[1], 
+                                   maxNumOutFeatures=self.MAX_NUMBER_OF_LINEAR_FEATURES,
+                                   numOutFeatures=of[], 
+                                   layer=layer, 
+                                   pytorchLayerId=pytorchLayerId))
+            self.addNode(node)             
+        self.prevNodes = self.curNodes
+        self.curNodes = List[String]()
+        var outShape: PythonObject = torch.Size([inputShape[0], self.MAX_NUMBER_OF_LINEAR_FEATURES])
+        return outShape
+            
+    def addLinearLayers(inout self, inputShape: PythonObject):
+        """
+        Adds layers of LinearNodes to the graph.
+        
+        Args:
+            inputShape (PythonObject): The shape of the input tensor as a PyTorch Tensor.Size() object
+        """
+        uuid = Python.import_module("uuid")
+        torch = Python.import_module("torch")
+        var outShapes = List[PythonObject]()
+        var outShape = inputShape
+        for i in range(self.numLinearLayers - 1):
+            var inShape: PythonObject = torch.Size([outShape[0], outShape[1]])
+            print(inShape)
+            self.layer += 1            
+            outShape = self.addLinearLayer(self.layer, inShape)
+            self.addActivationLayer()                                                  
+        self.layer += 1            
+        nodeName = 'L' + str(self.layer) + '_Linear(of=' + str(10) + ')'  
+        # Add the final linear layer
+        var pytorchLayerId = uuid.uuid4()
+        node = Node(LinearNode(name=nodeName, 
+                               maxNumInFeatures=outShape[1], 
+                               maxNumOutFeatures=self.numClasses,
+                               numOutFeatures=self.numClasses, 
+                               layer=self.layer, 
+                               pytorchLayerId=pytorchLayerId))
+        self.addNode(node)                 
+        self.prevNodes = self.curNodes
+        self.curNodes = List[String]()
+        self.addActivationLayer()
             
     def addNormalizationLayer(inout self, numFeatures: Int): 
         """

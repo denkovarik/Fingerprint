@@ -69,6 +69,18 @@ def test_addFlattenLayer():
     assert_equal(len(grph.nodes), 1)   
     for item in grph.nodes.items():
         assert_true(item[].value.getNodeType().value == NodeType.FLATTEN.value)
+        
+def test_addLinearLayer():
+    """
+    Tests the method for adding the Linear Layer to the graph.
+    """   
+    torch = Python.import_module("torch")  
+    var grph = Graph()
+    var inputShape=torch.Size([4, 3, 32, 32])
+    grph.addLinearLayer(layer=0, inputShape=inputShape)
+    assert_equal(len(grph.nodes), 5)   
+    for item in grph.nodes.items():
+        assert_true(item[].value.getNodeType().value == NodeType.LINEAR.value)
 
 
 from collections import Set
@@ -81,11 +93,7 @@ def main():
     var out_shape = grph.addInputLayer(inputShape=inputShape)
     out_shape = grph.addConvolutionalLayers(inputShape=out_shape)
     outShape = grph.addFlattenLayer(out_shape)
-
-    #out_shape = grph.addConvolutionalLayer(layer=0,inputShape=inputShape)
-    #grph.addActivationLayer()
-    #grph.addPoolingLayer()
-    
+    grph.addLinearLayers(inputShape=outShape)
     
     print(len(grph.nodes))
     var nodeLen: Int = len(grph.nodes)
