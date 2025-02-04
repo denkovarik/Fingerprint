@@ -53,5 +53,49 @@ struct SharedConv2d():
         var bias = self.bias.narrow(0, 0, outChannels)  # slices on the 0th dimension (out_channels)
         var rslt = F.conv2d(x, weight, bias)
         return rslt
-
         
+    def getOutSize(self, tensorShape: PythonObject, outChannels: Optional[Int] = Optional[Int](None)) -> PythonObject:
+        """
+        Returns the output height and width of a Conv2d layer.
+        
+        Args:
+            tensorShape(): Shape of tensor as torch.Size
+            outChannels(Int): The number of output channels
+        
+        Returns:
+            outputShape(PythonObject): torch.Size object containing the shape of the output tensor
+        """
+        # Calculate output height and width
+        var inputHeight = tensorShape[2]
+        var inputWidth = tensorShape[3]
+        var outputChannels: Int = self.maxOutChannels
+        if outChannels:
+            outputChannels = outChannels.value()
+        var outputShape = SharedConv2d.calcOutSize(tensorShape, outputChannels, self.kernel_size, self.stride, self.padding, self.dilation)
+
+        return outputShape        
+
+    @staticmethod
+    def calcOutSize(tensorShape: PythonObject, outChannels: Int, kernel_size: Int,  stride: Int = 1, padding: Int = 0, dilation: Int = 1) -> PythonObject:
+        """
+        Calculate the output height and width of a Conv2d layer.
+        
+        Args:
+            tensorShape(PythonObject): Shape of tensor as torch.Size
+            outChannels(Int): The number of output channels
+            kernel_size(Int): The kernel size for each dimension
+            stride(Int): The stride
+            padding(Int): Size of the padding for each dimension
+            dilation(Int): The size for the dilation
+        
+        Returns:
+            outputShape(PythonObject): torch.Size object containing the shape of the output tensor
+        """
+        torch = Python.import_module("torch")
+        # Calculate output height and width
+        var inputHeight = tensorShape[2]
+        var inputWidth = tensorShape[3]
+        var outputHeight = ((inputHeight + 2 * padding - dilation * (kernel_size - 1) - 1) // stride) + 1
+        var outputWidth = ((inputWidth + 2 * padding - dilation * (kernel_size - 1) - 1) // stride) + 1
+        var outputShape = torch.Size([tensorShape[0], outChannels, outputHeight, outputWidth])
+        return outputShape

@@ -1,5 +1,6 @@
 from testing import assert_equal, assert_not_equal, assert_true, assert_false
 from python import Python, PythonObject
+from collections import Optional
 from structs.SharedConv2d import SharedConv2d
 
 
@@ -98,3 +99,189 @@ def test_Print():
     exp = "SharedConv2d(3, 8, kernel_size=3)"
     assert_true(sharedConv2d.__str__() == exp)
     
+def test_CalOutputSize():
+    """
+    Tests method calcOutSize of the SharedConv2DTests class.
+    """
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    init = Python.import_module("torch.nn.init")
+    F = Python.import_module("torch.nn.functional")
+    np = Python.import_module("numpy")
+    math = Python.import_module("math")
+    random = Python.import_module("random")
+    os = Python.import_module("os")
+    pickle = Python.import_module("pickle")
+    sys = Python.import_module("sys")
+    
+    # Get test batch
+    testBatchPath = 'testing/UnitTests/TestFiles/cifar10_test_batch_pickle'
+    assert_true(os.path.exists(testBatchPath))
+    Python.add_to_path(".")
+    utils = Python.import_module("utils")
+    imgData = utils.unpickle_test_data(testBatchPath, 4)
+    batch = imgData.reshape(4, 3, 32, 32)
+    tensorData = torch.tensor(batch, dtype=torch.float32)
+    
+    # Test 1: Kernel Size 3x3
+    var conv2d = nn.Conv2d(3, 8,kernel_size=3)
+    var sharedConv2d = SharedConv2d(3, 8, kernel_size=3)
+    # Calculate what the output size should be
+    var calcOutputSize = SharedConv2d.calcOutSize(tensorData.shape, outChannels=8, kernel_size=3, stride=1, padding=0, dilation=1)
+    # Forward prop
+    var outConv2d = conv2d(tensorData)
+    var outSharedConv2d = sharedConv2d.forward(tensorData, 3, 8)
+    assert_true(calcOutputSize == outConv2d.shape)
+    assert_true(calcOutputSize == outSharedConv2d.shape)
+
+    # Test 2: Kernel Size 5x5
+    conv2d = nn.Conv2d(3, 16, kernel_size=5)
+    sharedConv2d = SharedConv2d(5, 16, kernel_size=5)
+    # Calculate what the output size should be
+    calcOutputSize = SharedConv2d.calcOutSize(tensorData.shape, outChannels=16, kernel_size=5)
+    # Forward prop
+    outConv2d = conv2d(tensorData)
+    outSharedConv2d = sharedConv2d.forward(tensorData, 3, 16)
+    assert_true(calcOutputSize == outConv2d.shape)
+    assert_true(calcOutputSize == outSharedConv2d.shape)
+
+    # Test 3: Shared Conv2d ouput number of Channels less than max Kernel Size 3x3
+    conv2d = nn.Conv2d(3, 8,kernel_size=3)
+    sharedConv2d = SharedConv2d(3, 16, kernel_size=3)
+    # Calculate what the output size should be
+    calcOutputSize = SharedConv2d.calcOutSize(tensorData.shape, outChannels=8, kernel_size=3)
+    # Forward prop
+    outConv2d = conv2d(tensorData)
+    outSharedConv2d = sharedConv2d.forward(tensorData, 3, 8)
+    assert_true(calcOutputSize == outConv2d.shape)
+    assert_true(calcOutputSize == outSharedConv2d.shape)
+
+    # Test 5: Calculating tensor dimensions for multiple runs
+    # Conv2d
+    var conv2d1 = nn.Conv2d(3, 8, kernel_size=3)
+    var conv2d2 = nn.Conv2d(8, 16, kernel_size=5)
+    var conv2d3 = nn.Conv2d(16, 32, kernel_size=5)
+    # Forward prop Conv2d Layers
+    var outConv2d1 = conv2d1(tensorData)
+    var outConv2d2 = conv2d2(outConv2d1)
+    var outConv2d3 = conv2d3(outConv2d2)
+    # SharedConv2d
+    var sharedConv2d1 = SharedConv2d(3, 256, kernel_size=3) 
+    var sharedConv2d2 = SharedConv2d(256, 256, kernel_size=5) 
+    var sharedConv2d3 = SharedConv2d(256, 256, kernel_size=5)
+    # Calculated SharedConv2d Shapes
+    var calcOutShape1 = SharedConv2d.calcOutSize(tensorData.shape, outChannels=8, kernel_size=3)
+    var calcOutShape2 = SharedConv2d.calcOutSize(calcOutShape1, outChannels=16, kernel_size=5)
+    var calcOutShape3 = SharedConv2d.calcOutSize(calcOutShape2, outChannels=32, kernel_size=5)
+    # Forward Prop Shared Conv2d Layers
+    var outSharedConv2d1 = sharedConv2d1.forward(tensorData, 3, 8)
+    var outSharedConv2d2 = sharedConv2d2.forward(outSharedConv2d1, 8, 16)
+    var outSharedConv2d3 = sharedConv2d3.forward(outSharedConv2d2, 16, 32)
+    # Validate Shapes
+    assert_true(calcOutShape1 == outConv2d1.shape)
+    assert_true(calcOutShape1 == outSharedConv2d1.shape)
+    assert_true(calcOutShape2 == outConv2d2.shape)
+    assert_true(calcOutShape2 == outSharedConv2d2.shape)
+    assert_true(calcOutShape3 == outConv2d3.shape)
+    assert_true(calcOutShape3 == outSharedConv2d3.shape)
+    
+def test_GetOutputSize():
+    """
+    Tests method getOutSize of the SharedConv2DTests class.
+    """    
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    init = Python.import_module("torch.nn.init")
+    F = Python.import_module("torch.nn.functional")
+    np = Python.import_module("numpy")
+    math = Python.import_module("math")
+    random = Python.import_module("random")
+    os = Python.import_module("os")
+    pickle = Python.import_module("pickle")
+    sys = Python.import_module("sys")
+    
+    # Get test batch
+    testBatchPath = 'testing/UnitTests/TestFiles/cifar10_test_batch_pickle'
+    assert_true(os.path.exists(testBatchPath))
+    Python.add_to_path(".")
+    utils = Python.import_module("utils")
+    imgData = utils.unpickle_test_data(testBatchPath, 4)
+    batch = imgData.reshape(4, 3, 32, 32)
+    tensorData = torch.tensor(batch, dtype=torch.float32)
+    
+    # Test 1: Kernel Size 3x3
+    var conv2d = nn.Conv2d(3, 8,kernel_size=3)
+    var sharedConv2d = SharedConv2d(3, 8, kernel_size=3)
+    # Calculate what the output size should be
+    var calcOutputSize = sharedConv2d.getOutSize(tensorData.shape, outChannels=8)
+    # Forward prop
+    var outConv2d = conv2d(tensorData)
+    var outSharedConv2d = sharedConv2d.forward(tensorData, 3, 8)
+    assert_true(calcOutputSize == outConv2d.shape)
+    assert_true(calcOutputSize == outSharedConv2d.shape)
+
+    # Test 2: Kernel Size 5x5
+    conv2d = nn.Conv2d(3, 16, kernel_size=5)
+    sharedConv2d = SharedConv2d(3, 16, kernel_size=5)
+    # Calculate what the output size should be
+    calcOutputSize = sharedConv2d.getOutSize(tensorData.shape, outChannels=16)
+    # Forward prop
+    outConv2d = conv2d(tensorData)
+    outSharedConv2d = sharedConv2d.forward(tensorData, 3, 16)
+    assert_true(calcOutputSize == outConv2d.shape)
+    assert_true(calcOutputSize == outSharedConv2d.shape)
+
+    # Test 3: Shared Conv2d ouput number of Channels less than max 
+    #         Kernel Size 3x3
+    conv2d = nn.Conv2d(3, 8,kernel_size=3)
+    sharedConv2d = SharedConv2d(3, 16, kernel_size=3)
+    # Calculate what the output size should be
+    calcOutputSize = sharedConv2d.getOutSize(tensorData.shape, outChannels=8)
+    # Forward prop
+    outConv2d = conv2d(tensorData)
+    outSharedConv2d = sharedConv2d.forward(tensorData, 3, 8)
+    assert_true(calcOutputSize == outConv2d.shape)
+    assert_true(calcOutputSize == outSharedConv2d.shape)
+
+    # Test 5: Calculating tensor dimensions for multiple runs
+    # Conv2d
+    var conv2d1 = nn.Conv2d(3, 8, kernel_size=3)
+    var conv2d2 = nn.Conv2d(8, 16, kernel_size=5)
+    var conv2d3 = nn.Conv2d(16, 32, kernel_size=5)
+    # Forward prop Conv2d Layers
+    var outConv2d1 = conv2d1(tensorData)
+    var outConv2d2 = conv2d2(outConv2d1)
+    var outConv2d3 = conv2d3(outConv2d2)
+    # SharedConv2d
+    var sharedConv2d1 = SharedConv2d(3, 256, kernel_size=3) 
+    var sharedConv2d2 = SharedConv2d(256, 256, kernel_size=5) 
+    var sharedConv2d3 = SharedConv2d(256, 256, kernel_size=5)
+    # Calculated SharedConv2d Shapes
+    var calcOutShape1 = sharedConv2d1.getOutSize(tensorData.shape, outChannels=8)
+    var calcOutShape2 = sharedConv2d2.getOutSize(calcOutShape1, outChannels=16)
+    var calcOutShape3 = sharedConv2d3.getOutSize(calcOutShape2, outChannels=32)
+    # Forward Prop Shared Conv2d Layers
+    var outSharedConv2d1 = sharedConv2d1.forward(tensorData, 3, 8)
+    var outSharedConv2d2 = sharedConv2d2.forward(outSharedConv2d1, 8, 16)
+    var outSharedConv2d3 = sharedConv2d3.forward(outSharedConv2d2, 16, 32)
+    # Validate Shapes
+    assert_true(calcOutShape1 == outConv2d1.shape)
+    assert_true(calcOutShape1 == outSharedConv2d1.shape)
+    assert_true(calcOutShape2 == outConv2d2.shape)
+    assert_true(calcOutShape2 == outSharedConv2d2.shape)
+    assert_true(calcOutShape3 == outConv2d3.shape)
+    assert_true(calcOutShape3 == outSharedConv2d3.shape)
+    
+    
+def main():
+    print('hi')
+    var a = Optional(1)
+    var b = Optional[Int](None)
+    if a:
+        print(a.value())  # prints 1
+    if b:  # Bool(b) is False, so no print
+        print(b.value())
+    var c = a.or_else(2)
+    var d = b.or_else(2)
+    print(c)  # prints 1
+    print(d)  # prints 2
