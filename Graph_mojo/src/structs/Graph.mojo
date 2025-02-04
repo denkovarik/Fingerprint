@@ -41,23 +41,7 @@ struct Graph:
         self.curNodes = List[String]()
         self.layer = 0
         self.sample = List[Node]()
-        
-    def addInputLayer(inout self, inputShape: PythonObject):
-        """
-        Adds an InputNode to the graph.
-        
-        Args:
-            inputShape (PythonObject): The shape of the input tensor as a PyTorch Tensor.Size() object
-            
-        Returns:
-            inputShape (PythonObject): The shape of the input tensor as a PyTorch Tensor.Size() object
-        """
-        node = Node(theNode=InputNode(inputShape=inputShape))
-        self.addNode(node)
-        self.prevNodes = self.curNodes
-        self.curNodes = List[String]()
-        self.addNormalizationLayer(inputShape[1])
-        
+    
     def addNode(inout self, node: Node):
         """
         Adds a node to the Graph.
@@ -73,10 +57,45 @@ struct Graph:
             var prev: String = self.prevNodes[i]
             self.edges[prev].append(nodeName)
         self.curNodes.append(nodeName)
+        
+    def addActivationLayer(inout self): 
+        """
+        Adds a layer of ActivationNodes to the graph.
+                  
+        Returns:
+            outputShape (PythonObject): Resulting tensor shape after passing 
+                                        through layer as PyTorch Tensor.Size() object
+        """
+        uuid = Python.import_module("uuid")
+        var actOptsLen: Int = len(self.activationOptions)
+        for i in range(actOptsLen):
+            var opt = self.activationOptions[i]
+            pytorchLayerId = uuid.uuid4()
+            var nodeName = 'L' + str(0) + '_' + opt.__str__()
+            node = Node(ActivationNode(name=nodeName, activationType=opt))
+            self.addNode(node)
+        self.prevNodes = self.curNodes
+        self.curNodes = List[String]()
+        
+    def addInputLayer(inout self, inputShape: PythonObject) -> PythonObject:
+        """
+        Adds a layer of InputNodes to the graph.
+        
+        Args:
+            inputShape (PythonObject): The shape of the input tensor as a PyTorch Tensor.Size() object
+            
+        Returns:
+            inputShape (PythonObject): The shape of the input tensor as a PyTorch Tensor.Size() object
+        """
+        node = Node(theNode=InputNode(inputShape=inputShape))
+        self.addNode(node)
+        self.prevNodes = self.curNodes
+        self.curNodes = List[String]()
+        return inputShape
             
     def addNormalizationLayer(inout self, numFeatures: Int): 
         """
-        Adds an NormalizationNode to the graph.
+        Adds a a layer of NormalizationNodes to the graph.
         
         Args:
             numFeatures (Int): The number of input features for the layer
@@ -94,5 +113,22 @@ struct Graph:
         self.prevNodes = self.curNodes
         self.curNodes = List[String]()
         
-
+    def addPoolingLayer(inout self): 
+        """
+        Adds a layer of PoolingNodes to the graph.
+                  
+        Returns:
+            outputShape (PythonObject): Resulting tensor shape after passing 
+                                        through layer as PyTorch Tensor.Size() object
+        """
+        uuid = Python.import_module("uuid")
+        var poolOptsLen: Int = len(self.poolingOptions)
+        for i in range(poolOptsLen):
+            var opt = self.poolingOptions[i]
+            pytorchLayerId = uuid.uuid4()
+            var nodeName = 'L' + str(0) + '_' + opt.__str__()
+            node = Node(theNode=PoolingNode(name=nodeName, poolingType=opt))
+            self.addNode(node)
+        self.prevNodes = self.curNodes
+        self.curNodes = List[String]()
         
