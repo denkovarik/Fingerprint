@@ -151,6 +151,32 @@ struct Graph:
             inputShape = outShape
         return outShape
         
+    def addFlattenLayer(inout self, inputShape: PythonObject) -> PythonObject:
+        """
+        Adds a layer of FlattenNodes to the graph.
+                  
+        Returns:
+            outputShape (PythonObject): Resulting tensor shape after passing 
+                                        through layer as PyTorch Tensor.Size() object
+        """
+        torch = Python.import_module("torch")
+        node = Node(FlattenNode(name='L' + str(self.layer) + '_' + 'flatten'))
+        self.addNode(node)
+        self.prevNodes = self.curNodes
+        self.curNodes = List[String]()
+        
+        var numElements = 1
+        # Start from the second dimension (index 1)
+        var numDim = len(inputShape)
+        for i in range(numDim):
+            # Skip first dimension
+            if i > 0: 
+                numElements = numElements * inputShape[i]
+        
+        flattenedShape = torch.tensor(numElements)
+        outShape = torch.Size([inputShape[0], flattenedShape])
+        return outShape
+        
     def addInputLayer(inout self, inputShape: PythonObject) -> PythonObject:
         """
         Adds a layer of InputNodes to the graph.
@@ -165,6 +191,7 @@ struct Graph:
         self.addNode(node)
         self.prevNodes = self.curNodes
         self.curNodes = List[String]()
+        self.addNormalizationLayer(inputShape[1])
         return inputShape
             
     def addNormalizationLayer(inout self, numFeatures: Int): 
@@ -190,10 +217,6 @@ struct Graph:
     def addPoolingLayer(inout self): 
         """
         Adds a layer of PoolingNodes to the graph.
-                  
-        Returns:
-            outputShape (PythonObject): Resulting tensor shape after passing 
-                                        through layer as PyTorch Tensor.Size() object
         """
         uuid = Python.import_module("uuid")
         var poolOptsLen: Int = len(self.poolingOptions)

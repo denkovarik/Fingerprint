@@ -24,9 +24,7 @@ def test_addInputLayer():
     torch = Python.import_module("torch")    
     var grph = Graph()
     grph.addInputLayer(inputShape=torch.Size([4, 3, 32, 32]))
-    assert_equal(len(grph.nodes), 1)
-    for item in grph.nodes.items():
-        assert_true(item[].value.getNodeType().value == NodeType.INPUT.value)
+    assert_equal(len(grph.nodes), 3)
     
 def test_addActivationLayer():
     """
@@ -59,6 +57,18 @@ def test_addConvolutionalLayer():
     assert_equal(len(grph.nodes), 8)   
     for item in grph.nodes.items():
         assert_true(item[].value.getNodeType().value == NodeType.CONVOLUTION.value)
+        
+def test_addFlattenLayer():
+    """
+    Tests the method for adding the Flatten Layer to the graph.
+    """   
+    torch = Python.import_module("torch")  
+    var grph = Graph()
+    var inputShape=torch.Size([4, 3, 32, 32])
+    grph.addFlattenLayer(inputShape=inputShape)
+    assert_equal(len(grph.nodes), 1)   
+    for item in grph.nodes.items():
+        assert_true(item[].value.getNodeType().value == NodeType.FLATTEN.value)
 
 
 from collections import Set
@@ -67,9 +77,11 @@ def main():
     torch = Python.import_module("torch")    
     var grph = Graph()
     var inputShape=torch.Size([4, 3, 32, 32])
+    
     var out_shape = grph.addInputLayer(inputShape=inputShape)
-    grph.addNormalizationLayer(out_shape[1])
     out_shape = grph.addConvolutionalLayers(inputShape=out_shape)
+    outShape = grph.addFlattenLayer(out_shape)
+
     #out_shape = grph.addConvolutionalLayer(layer=0,inputShape=inputShape)
     #grph.addActivationLayer()
     #grph.addPoolingLayer()
