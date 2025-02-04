@@ -280,6 +280,10 @@ struct Graph:
         self.prevNodes = self.curNodes
         self.curNodes = List[String]()
         
+    def addOutputLayer(inout self):
+        node = Node(theNode=OutputNode()) 
+        self.addNode(node)
+        
     def addPoolingLayer(inout self): 
         """
         Adds a layer of PoolingNodes to the graph.

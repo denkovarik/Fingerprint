@@ -81,6 +81,18 @@ def test_addLinearLayer():
     assert_equal(len(grph.nodes), 5)   
     for item in grph.nodes.items():
         assert_true(item[].value.getNodeType().value == NodeType.LINEAR.value)
+        
+def test_addOutputLayer():
+    """
+    Tests the method for adding the Output Layer to the graph.
+    """   
+    torch = Python.import_module("torch")  
+    var grph = Graph()
+    var inputShape=torch.Size([4, 3, 32, 32])
+    grph.addOutputLayer()
+    assert_equal(len(grph.nodes), 1)   
+    for item in grph.nodes.items():
+        assert_true(item[].value.getNodeType().value == NodeType.OUTPUT.value)
 
 
 from collections import Set
@@ -94,6 +106,7 @@ def main():
     out_shape = grph.addConvolutionalLayers(inputShape=out_shape)
     outShape = grph.addFlattenLayer(out_shape)
     grph.addLinearLayers(inputShape=outShape)
+    grph.addOutputLayer()
     
     print(len(grph.nodes))
     var nodeLen: Int = len(grph.nodes)
