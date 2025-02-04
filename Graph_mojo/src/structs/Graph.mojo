@@ -241,7 +241,6 @@ struct Graph:
         var outShape = inputShape
         for i in range(self.numLinearLayers - 1):
             var inShape: PythonObject = torch.Size([outShape[0], outShape[1]])
-            print(inShape)
             self.layer += 1            
             outShape = self.addLinearLayer(self.layer, inShape)
             self.addActivationLayer()                                                  
@@ -298,4 +297,20 @@ struct Graph:
             self.addNode(node)
         self.prevNodes = self.curNodes
         self.curNodes = List[String]()
+        
+    def construct(inout self, inputShape: PythonObject):
+        """
+        Constructs the graph.
+        
+        Args:
+            inputShape (PythonObject): The shape of the input tensor as a PyTorch Tensor.Size() object
+        """
+        self.layer = 0
+        self.prevNodes = List[String]()
+        self.curNodes = List[String]()  
+        var inputOutShape = self.addInputLayer(inputShape)    
+        var convOutShape= self.addConvolutionalLayers(inputOutShape)       
+        var flattenOutShape = self.addFlattenLayer(convOutShape)
+        var linearOutShape = self.addLinearLayers(flattenOutShape)            
+        self.addOutputLayer()
         

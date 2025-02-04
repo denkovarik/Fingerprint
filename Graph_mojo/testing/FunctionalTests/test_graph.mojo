@@ -102,11 +102,12 @@ def main():
     var grph = Graph()
     var inputShape=torch.Size([4, 3, 32, 32])
     
-    var out_shape = grph.addInputLayer(inputShape=inputShape)
-    out_shape = grph.addConvolutionalLayers(inputShape=out_shape)
-    outShape = grph.addFlattenLayer(out_shape)
-    grph.addLinearLayers(inputShape=outShape)
-    grph.addOutputLayer()
+    grph.construct(inputShape)
+    #var out_shape = grph.addInputLayer(inputShape=inputShape)
+    #out_shape = grph.addConvolutionalLayers(inputShape=out_shape)
+    #outShape = grph.addFlattenLayer(out_shape)
+    #grph.addLinearLayers(inputShape=outShape)
+    #grph.addOutputLayer()
     
     print(len(grph.nodes))
     var nodeLen: Int = len(grph.nodes)
