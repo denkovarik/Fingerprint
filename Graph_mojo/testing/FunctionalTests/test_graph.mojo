@@ -47,20 +47,32 @@ def test_addPoolingLayer():
     assert_equal(len(grph.nodes), 2)   
     for item in grph.nodes.items():
         assert_true(item[].value.getNodeType().value == NodeType.POOLING.value)
+        
+def test_addConvolutionalLayer():
+    """
+    Tests the method for adding the CONVOLUTION Layer to the graph.
+    """   
+    torch = Python.import_module("torch")  
+    var grph = Graph()
+    var inputShape=torch.Size([4, 3, 32, 32])
+    grph.addConvolutionalLayer(layer=0, inputShape=inputShape)
+    assert_equal(len(grph.nodes), 8)   
+    for item in grph.nodes.items():
+        assert_true(item[].value.getNodeType().value == NodeType.CONVOLUTION.value)
 
-    
+
+from collections import Set
     
 def main():
     torch = Python.import_module("torch")    
     var grph = Graph()
     var inputShape=torch.Size([4, 3, 32, 32])
     var out_shape = grph.addInputLayer(inputShape=inputShape)
-    print(out_shape)
-    print(out_shape[1])
     grph.addNormalizationLayer(out_shape[1])
-    #out_shape = grph.addConvolutionalLayers(inputShape=out_shape)
-    grph.addActivationLayer()
-    grph.addPoolingLayer()
+    out_shape = grph.addConvolutionalLayers(inputShape=out_shape)
+    #out_shape = grph.addConvolutionalLayer(layer=0,inputShape=inputShape)
+    #grph.addActivationLayer()
+    #grph.addPoolingLayer()
     
     
     print(len(grph.nodes))
