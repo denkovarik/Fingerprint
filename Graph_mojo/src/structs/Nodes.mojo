@@ -66,6 +66,15 @@ struct PoolingType:
     
     fn __init__(inout self):
         pass
+        
+    fn __str__(inout self) -> String:
+        if self.value == 0:
+            return 'invalid'
+        elif self.value == 1:
+            return 'NO_POOLING'
+        elif self.value == 2:
+            return 'MAX_POOLING'
+        return 'Que?'
     
     fn __eq__(self, other: PoolingType) -> Bool:
         if self.value == other.value:
@@ -89,6 +98,15 @@ struct ActivationType:
         
     fn __init__(inout self):
         pass
+        
+    fn __str__(inout self) -> String:
+        if self.value == 0:
+            return 'invalid'
+        elif self.value == 1:
+            return 'RELU'
+        elif self.value == 2:
+            return 'LINEAR'
+        return 'Que?'
     
     fn __eq__(self, other: ActivationType) -> Bool:
         if self.value == other.value:
