@@ -8,12 +8,21 @@ from structs.SharedConv2d import SharedConv2d
 
 
 struct Graph:
-    var test: String
+    var nodes: Dict[String, Node]
+    var edges: Dict[String, List[String]]
+    
+    fn __init__(inout self):
+        self.nodes = Dict[String, Node]()
+        self.edges = Dict[String, List[String]]()
+
+
+struct GraphHandler:
     var ALLOWED_KERNEL_SIZES: Set[Int]
     var ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS: Set[Int]
     var MAX_NUMBER_OF_CONVOLUTION_CHANNELS: Int
     var ALLOWED_NUMBER_OF_LINEAR_FEATURES: Set[Int]
     var MAX_NUMBER_OF_LINEAR_FEATURES: Int
+    var graph: Graph
     var nodes: Dict[String, Node]
     var edges: Dict[String, List[String]]
     var normalizationOptions: List[NormalizationType]
@@ -28,12 +37,12 @@ struct Graph:
     var sample: List[Node]
     
     fn __init__(inout self):
-        self.test = 'test'
         self.ALLOWED_KERNEL_SIZES = Set[Int](3,5)
         self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS = Set[Int](4, 8, 16, 32)
         self.MAX_NUMBER_OF_CONVOLUTION_CHANNELS = 0
         self.ALLOWED_NUMBER_OF_LINEAR_FEATURES = Set[Int](16, 32, 64, 128, 256)
         self.MAX_NUMBER_OF_LINEAR_FEATURES = 0
+        self.graph = Graph()
         self.nodes = Dict[String, Node]()
         self.edges = Dict[String, List[String]]()
         self.normalizationOptions = List[NormalizationType](NormalizationType.NO_NORM, NormalizationType.BATCH_NORM)
@@ -63,12 +72,12 @@ struct Graph:
             node (Node): The node to add to the graph
         """
         var nodeName = node.getName() 
-        self.nodes[nodeName] = node
-        self.edges[nodeName] = List[String]()
+        self.graph.nodes[nodeName] = node
+        self.graph.edges[nodeName] = List[String]()
         prevNodesLength = len(self.prevNodes)
         for i in range(prevNodesLength):
             var prev: String = self.prevNodes[i]
-            self.edges[prev].append(nodeName)
+            self.graph.edges[prev].append(nodeName)
         self.curNodes.append(nodeName)
         
     def addActivationLayer(inout self): 
@@ -306,6 +315,7 @@ struct Graph:
             inputShape (PythonObject): The shape of the input tensor as a PyTorch Tensor.Size() object
         """
         self.layer = 0
+        self.graph = Graph()
         self.prevNodes = List[String]()
         self.curNodes = List[String]()  
         var inputOutShape = self.addInputLayer(inputShape)    
@@ -313,4 +323,3 @@ struct Graph:
         var flattenOutShape = self.addFlattenLayer(convOutShape)
         var linearOutShape = self.addLinearLayers(flattenOutShape)            
         self.addOutputLayer()
-        
