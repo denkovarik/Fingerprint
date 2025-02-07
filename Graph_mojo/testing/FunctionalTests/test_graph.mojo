@@ -1,7 +1,7 @@
 from testing import assert_equal, assert_not_equal, assert_true, assert_false
 from python import Python, PythonObject
 from structs.Nodes import NodeType, NormalizationType, PoolingType, ActivationType
-from structs.Graph import GraphHandler
+from structs.Graph import GraphHandler, Graph
 
 
 # Functional Tests
@@ -15,7 +15,7 @@ def test_addNormalizationLayer():
     grph.addNormalizationLayer(12)
     assert_equal(len(grph.graph.nodes), 2)
     for item in grph.graph.nodes.items():
-        assert_true(item[].value.getNodeType().value == NodeType.NORMALIZATION.value)
+        assert_true(item[].value[].getNodeType().value == NodeType.NORMALIZATION.value)
     
 def test_addInputLayer():
     """
@@ -34,7 +34,7 @@ def test_addActivationLayer():
     grph.addActivationLayer()
     assert_equal(len(grph.graph.nodes), 2)
     for item in grph.graph.nodes.items():
-        assert_true(item[].value.getNodeType().value == NodeType.ACTIVATION.value)
+        assert_true(item[].value[].getNodeType().value == NodeType.ACTIVATION.value)
     
 def test_addPoolingLayer():
     """
@@ -44,7 +44,7 @@ def test_addPoolingLayer():
     grph.addPoolingLayer()
     assert_equal(len(grph.graph.nodes), 2)   
     for item in grph.graph.nodes.items():
-        assert_true(item[].value.getNodeType().value == NodeType.POOLING.value)
+        assert_true(item[].value[].getNodeType().value == NodeType.POOLING.value)
         
 def test_addConvolutionalLayer():
     """
@@ -56,7 +56,7 @@ def test_addConvolutionalLayer():
     grph.addConvolutionalLayer(layer=0, inputShape=inputShape)
     assert_equal(len(grph.graph.nodes), 8)   
     for item in grph.graph.nodes.items():
-        assert_true(item[].value.getNodeType().value == NodeType.CONVOLUTION.value)
+        assert_true(item[].value[].getNodeType().value == NodeType.CONVOLUTION.value)
         
 def test_addFlattenLayer():
     """
@@ -68,7 +68,7 @@ def test_addFlattenLayer():
     grph.addFlattenLayer(inputShape=inputShape)
     assert_equal(len(grph.graph.nodes), 1)   
     for item in grph.graph.nodes.items():
-        assert_true(item[].value.getNodeType().value == NodeType.FLATTEN.value)
+        assert_true(item[].value[].getNodeType().value == NodeType.FLATTEN.value)
         
 def test_addLinearLayer():
     """
@@ -80,7 +80,7 @@ def test_addLinearLayer():
     grph.addLinearLayer(layer=0, inputShape=inputShape)
     assert_equal(len(grph.graph.nodes), 5)   
     for item in grph.graph.nodes.items():
-        assert_true(item[].value.getNodeType().value == NodeType.LINEAR.value)
+        assert_true(item[].value[].getNodeType().value == NodeType.LINEAR.value)
         
 def test_addOutputLayer():
     """
@@ -92,8 +92,32 @@ def test_addOutputLayer():
     grph.addOutputLayer()
     assert_equal(len(grph.graph.nodes), 1)   
     for item in grph.graph.nodes.items():
-        assert_true(item[].value.getNodeType().value == NodeType.OUTPUT.value)
+        assert_true(item[].value[].getNodeType().value == NodeType.OUTPUT.value)
         
+def sampleArchitecture():
+    """
+    Tests the method sampleArchitecture().
+    """   
+    torch = Python.import_module("torch")  
+    var grph = GraphHandler()
+    var inputShape=torch.Size([4, 3, 32, 32])
+    grph.construct(inputShape)
+    
+    var sample: List[Int] = List[Int](1, 3, 1, 1, 0, 2, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0)
+    var sampleGraph: Graph = grph.sampleArchitecture(sample)
+    assert_true(len(sampleGraph.nodes) == 17)
+    
+    var keys: List[String] = List[String]()
+    for item in sampleGraph.nodes.items():
+        keys.append(item[].key)
+    var keysLen: Int = len(keys)
+    
+    for i in range(keysLen - 1):
+        edgLen = len(sampleGraph.edges[keys[i]])
+        assert_true(len(edgeLen) == 1)
+    # Output Node Edges should be 0
+    edgLen = len(sampleGraph.edges[keys[i]])
+        assert_true(len(edgeLen) == 0)
 
 
 from collections import Set
@@ -119,5 +143,22 @@ def main():
         for i in range(edgLen):
             var edges: List[String] = grph.graph.edges[item[].key]
             edg = edges[i]
+            print('\t->' + edg)
+        print("")
+    
+    var sample: List[Int] = List[Int](1, 3, 1, 1, 0, 2, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0)
+    var sampleGraph: Graph = grph.sampleArchitecture(sample)
+    
+    var keys: List[String] = List[String]()
+    for item in sampleGraph.nodes.items():
+        keys.append(item[].key)
+    var keysLen: Int = len(keys)
+    
+    for i in range(keysLen):
+        print(sampleGraph.nodes[keys[i]][].getName())
+        edgLen = len(sampleGraph.edges[keys[i]])
+        for j in range(edgLen):
+            var edges: List[String] = sampleGraph.edges[keys[i]]
+            edg = edges[j]
             print('\t->' + edg)
         print("")

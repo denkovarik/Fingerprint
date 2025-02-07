@@ -5,15 +5,21 @@ from structs.Nodes import NodeType, NormalizationType, PoolingType, ActivationTy
 from structs.Nodes import Node, InputNode, OutputNode, NormalizationNode, PoolingNode, ActivationNode, FlattenNode
 from structs.Nodes import ConvolutionalNode, LinearNode, NodeTrait
 from structs.SharedConv2d import SharedConv2d
+from memory import UnsafePointer
 
 
 struct Graph:
-    var nodes: Dict[String, Node]
+    # Witness Me!
+    var nodes: Dict[String, UnsafePointer[Node]]
     var edges: Dict[String, List[String]]
     
     fn __init__(inout self):
-        self.nodes = Dict[String, Node]()
+        self.nodes = Dict[String, UnsafePointer[Node]]()
         self.edges = Dict[String, List[String]]()
+        
+    fn __copyinit__(inout self, other: Self):
+        self.nodes = other.nodes
+        self.edges = other.edges
 
 
 struct GraphHandler:
@@ -23,8 +29,6 @@ struct GraphHandler:
     var ALLOWED_NUMBER_OF_LINEAR_FEATURES: Set[Int]
     var MAX_NUMBER_OF_LINEAR_FEATURES: Int
     var graph: Graph
-    var nodes: Dict[String, Node]
-    var edges: Dict[String, List[String]]
     var normalizationOptions: List[NormalizationType]
     var poolingOptions: List[PoolingType]
     var activationOptions: List[ActivationType]
@@ -34,7 +38,7 @@ struct GraphHandler:
     var prevNodes: List[String]
     var curNodes: List[String]
     var layer: Int
-    var sample: List[Node]
+    var sample: Graph
     
     fn __init__(inout self):
         self.ALLOWED_KERNEL_SIZES = Set[Int](3,5)
@@ -43,8 +47,6 @@ struct GraphHandler:
         self.ALLOWED_NUMBER_OF_LINEAR_FEATURES = Set[Int](16, 32, 64, 128, 256)
         self.MAX_NUMBER_OF_LINEAR_FEATURES = 0
         self.graph = Graph()
-        self.nodes = Dict[String, Node]()
-        self.edges = Dict[String, List[String]]()
         self.normalizationOptions = List[NormalizationType](NormalizationType.NO_NORM, NormalizationType.BATCH_NORM)
         self.poolingOptions = List[PoolingType](PoolingType.NO_POOLING, PoolingType.MAX_POOLING)
         self.activationOptions = List[ActivationType](ActivationType.LINEAR, ActivationType.RELU)
@@ -54,7 +56,7 @@ struct GraphHandler:
         self.prevNodes = List[String]()
         self.curNodes = List[String]()
         self.layer = 0
-        self.sample = List[Node]()
+        self.sample = Graph()
         # Find the max number of features for convolutional layers
         for c in self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS:
             if c[] > self.MAX_NUMBER_OF_CONVOLUTION_CHANNELS:
@@ -71,8 +73,9 @@ struct GraphHandler:
         Args:
             node (Node): The node to add to the graph
         """
-        var nodeName = node.getName() 
-        self.graph.nodes[nodeName] = node
+        var nodeName = node.getName()         
+        self.graph.nodes[nodeName] = UnsafePointer[Node].alloc(1)
+        self.graph.nodes[nodeName].init_pointee_copy(node)
         self.graph.edges[nodeName] = List[String]()
         prevNodesLength = len(self.prevNodes)
         for i in range(prevNodesLength):
@@ -323,3 +326,25 @@ struct GraphHandler:
         var flattenOutShape = self.addFlattenLayer(convOutShape)
         var linearOutShape = self.addLinearLayers(flattenOutShape)            
         self.addOutputLayer()
+        
+    def sampleArchitecture(inout self, sample: List[Int]) -> Graph:
+        var nodeName: String = 'input'
+        self.sample = Graph()        
+        self.sample.nodes[nodeName] = self.graph.nodes[nodeName]   
+        self.sample.edges[nodeName] = self.graph.edges[nodeName][sample[0]]
+        nodeName = self.graph.edges[nodeName][sample[0]]
+        var ind: Int = 1
+ 
+        while nodeName != 'output':
+            if ind >= len(sample):
+                print("uh-oh")
+            self.sample.nodes[nodeName] = self.graph.nodes[nodeName]
+            self.sample.edges[nodeName] = self.graph.edges[nodeName][sample[ind]]
+            nodeName = self.graph.edges[nodeName][sample[ind]]
+            ind += 1
+        
+        self.sample.nodes[nodeName] = self.graph.nodes[nodeName]
+        self.sample.edges[nodeName] = List[String]()
+
+        return self.sample
+        

@@ -3,6 +3,7 @@ from python import Python, PythonObject
 from structs.Nodes import NodeType, NormalizationType, PoolingType, ActivationType
 from structs.Nodes import Node, InputNode, OutputNode, NormalizationNode, PoolingNode, ActivationNode, FlattenNode
 from structs.Nodes import ConvolutionalNode, LinearNode, NodeTrait
+from memory import UnsafePointer
 
 
 def test_execution():
@@ -486,6 +487,20 @@ def test_forwardPassCovolutionalNode():
     assert_true(torch.allclose(conv2d.weight, torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3)))
     outSharedConv2d = node.forward(tensorData)
     assert_true(torch.allclose(outConv2d, outSharedConv2d)) 
+    
+    # Testing forward with UnsafePointer
+    var nodePtr = UnsafePointer[Node].alloc(1)
+    node.node[ConvolutionalNode].pytorchLayer.weight = nn.Parameter(weights)
+    node.node[ConvolutionalNode].pytorchLayer.bias.data.zero_()
+    nodePtr.init_pointee_copy(node)
+
+
+    assert_true(nodePtr[].node[ConvolutionalNode].kernel_size == 3)
+    assert_true(torch.allclose(nodePtr[].node[ConvolutionalNode].pytorchLayer.weight, weights))
+    assert_true(torch.all(nodePtr[].node[ConvolutionalNode].pytorchLayer.bias.eq(0)))   
+    assert_true(torch.allclose(conv2d.weight, torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3)))
+    var outSharedConv2d2 = nodePtr[].forward(tensorData)
+    assert_true(torch.allclose(outConv2d, outSharedConv2d2)) 
 
 def test_printCovolutionalNode():
     """
