@@ -118,6 +118,51 @@ def test_sampleArchitecture():
     # Output Node Edges should be 0
     edgLen = len(sampleGraph.edges['output'])
     assert_true(edgLen == 0)
+    
+def test_initDfsStack():
+    """
+    Tests the method initDfsStack().
+    """   
+    torch = Python.import_module("torch")  
+    var grph = GraphHandler()
+    var inputShape=torch.Size([4, 3, 32, 32])
+    grph.construct(inputShape)
+    grph.initDfsStack()
+    
+    assert_true(len(grph.dfsStack) > 0)
+    for i in range(len(grph.dfsStack)):
+        assert_true(grph.dfsStack[i] == 0)
+        
+def test_incSampleArchitecture():
+    """
+    Tests the method incSampleArchitecture().
+    """   
+    torch = Python.import_module("torch")  
+    var grph = GraphHandler()
+    var inputShape=torch.Size([4, 3, 32, 32])
+    grph.construct(inputShape)
+
+    var initDfsStack: List[Int] = grph.dfsStack
+    
+    assert_true(grph.incSampleArchitecture())
+    assert_true(initDfsStack != grph.dfsStack)
+    
+def test_nextSampleArchitecture():
+    """
+    Tests the method nextSampleArchitecture().
+    """   
+    torch = Python.import_module("torch")  
+    var grph = GraphHandler()
+    var inputShape=torch.Size([4, 3, 32, 32])
+    grph.construct(inputShape)
+
+    var prevDfsStack: List[Int] = grph.dfsStack
+    
+    for i in range(10000):
+        var sample: Graph = grph.nextSampleArchitecture()
+        var curDfsStack: List[Int] = grph.dfsStack
+        assert_true(prevDfsStack != curDfsStack)
+        prevDfsStack = curDfsStack
 
 
 from collections import Set
@@ -128,37 +173,49 @@ def main():
     var inputShape=torch.Size([4, 3, 32, 32])
     
     grph.construct(inputShape)
-    #var out_shape = grph.addInputLayer(inputShape=inputShape)
-    #out_shape = grph.addConvolutionalLayers(inputShape=out_shape)
-    #outShape = grph.addFlattenLayer(out_shape)
-    #grph.addLinearLayers(inputShape=outShape)
-    #grph.addOutputLayer()
     
-    print(len(grph.graph.nodes))
-    var nodeLen: Int = len(grph.graph.nodes)
+    var dfsStackLen: Int = len(grph.dfsStack)
     
-    for item in grph.graph.nodes.items():
-        print(item[].key)
-        edgLen = len(grph.graph.edges[item[].key])
-        for i in range(edgLen):
-            var edges: List[String] = grph.graph.edges[item[].key]
-            edg = edges[i]
-            print('\t->' + edg)
-        print("")
+    var total: Float32 = 1638399
+    var cnt: Float32 = -1
+    var dfsSample: List[Int] = List[Int]()
+    dfsSample = grph.dfsStack
+
+    print("Construction all Sample Architectures from Graph...")
+    while grph.sampleArchitecturesEnd == False:
+        var sampleGraph: Graph = grph.nextSampleArchitecture()
+        cnt = cnt + 1
+        if cnt % 50000 == 0:
+            var percent: Float32 = cnt / total * 100
+            print(percent, end='% Complete\n')
+    print('100% Complete')
+    print('Number of paths in Graph: ', end='')
+    print(cnt)
     
-    var sample: List[Int] = List[Int](1, 3, 1, 1, 0, 2, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0)
-    var sampleGraph: Graph = grph.sampleArchitecture(sample)
+    #var nodeLen: Int = len(grph.graph.nodes)
     
-    var keys: List[String] = List[String]()
-    for item in sampleGraph.nodes.items():
-        keys.append(item[].key)
-    var keysLen: Int = len(keys)
+    #for item in grph.graph.nodes.items():
+    #    print(item[].key)
+    #    edgLen = len(grph.graph.edges[item[].key])
+    #    for i in range(edgLen):
+    #        var edges: List[String] = grph.graph.edges[item[].key]
+    #        edg = edges[i]
+    #        print('\t->' + edg)
+    #    print("")
     
-    for i in range(keysLen):
-        print(sampleGraph.nodes[keys[i]][].getName())
-        edgLen = len(sampleGraph.edges[keys[i]])
-        for j in range(edgLen):
-            var edges: List[String] = sampleGraph.edges[keys[i]]
-            edg = edges[j]
-            print('\t->' + edg)
-        print("")
+    #var sample: List[Int] = List[Int](1, 3, 1, 1, 0, 2, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0)
+    #var sampleGraph: Graph = grph.sampleArchitecture(sample)
+    
+    #var keys: List[String] = List[String]()
+    #for item in sampleGraph.nodes.items():
+    #    keys.append(item[].key)
+    #var keysLen: Int = len(keys)
+    
+    #for i in range(keysLen):
+    #    print(sampleGraph.nodes[keys[i]][].getName())
+    #    edgLen = len(sampleGraph.edges[keys[i]])
+    #    for j in range(edgLen):
+    #        var edges: List[String] = sampleGraph.edges[keys[i]]
+    #        edg = edges[j]
+    #        print('\t->' + edg)
+    #    print("")

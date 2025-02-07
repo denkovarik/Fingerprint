@@ -39,6 +39,9 @@ struct GraphHandler:
     var curNodes: List[String]
     var layer: Int
     var sample: Graph
+    var dfsStack: List[Int]
+    var dfsStackKeys: List[String]
+    var sampleArchitecturesEnd: Bool
     
     fn __init__(inout self):
         self.ALLOWED_KERNEL_SIZES = Set[Int](3,5)
@@ -56,7 +59,10 @@ struct GraphHandler:
         self.prevNodes = List[String]()
         self.curNodes = List[String]()
         self.layer = 0
+        self.dfsStack = List[Int]()
+        self.dfsStackKeys = List[String]()
         self.sample = Graph()
+        self.sampleArchitecturesEnd = True
         # Find the max number of features for convolutional layers
         for c in self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS:
             if c[] > self.MAX_NUMBER_OF_CONVOLUTION_CHANNELS:
@@ -326,6 +332,60 @@ struct GraphHandler:
         var flattenOutShape = self.addFlattenLayer(convOutShape)
         var linearOutShape = self.addLinearLayers(flattenOutShape)            
         self.addOutputLayer()
+        self.initDfsStack()
+        self.sampleArchitecturesEnd = False
+        
+    def initDfsStack(inout self):
+        """
+        Initializes the stack used to iterate of DFS paths in Graph.
+        """
+        var curDfsNode: String = 'input'
+        self.dfsStack = List[Int]()
+        self.dfsStackKeys = List[String]()
+ 
+        while curDfsNode != 'output':
+            self.dfsStack.append(0)
+            self.dfsStackKeys.append(curDfsNode)
+            curDfsNode = self.graph.edges[curDfsNode][0]
+        self.sampleArchitecturesEnd = False
+            
+    def incSampleArchitecture(inout self) -> Bool:
+        var curDepth: Int = len(self.dfsStackKeys) - 1
+        if self.dfsStack[curDepth] >= len(self.graph.edges[self.dfsStackKeys[curDepth]]) - 1:
+            while curDepth >= 0 and self.dfsStack[curDepth] >= len(self.graph.edges[self.dfsStackKeys[curDepth]]) - 1:
+                self.dfsStack[curDepth] = 0
+                var node: String = self.dfsStackKeys.pop()
+                curDepth = len(self.dfsStackKeys) - 1
+                
+            if curDepth < 0:
+                self.sampleArchitecturesEnd = True 
+                return False
+            else:
+                self.dfsStack[curDepth] = self.dfsStack[curDepth] + 1
+                var curDfsNode: String = self.graph.edges[self.dfsStackKeys[curDepth]][self.dfsStack[curDepth]]
+                while curDfsNode != 'output':
+                    self.dfsStackKeys.append(curDfsNode)
+                    curDepth = len(self.dfsStackKeys) - 1
+                    self.dfsStack[curDepth] = 0
+                    curDfsNode = self.graph.edges[curDfsNode][0]
+        else:
+            self.dfsStack[curDepth] = self.dfsStack[curDepth] + 1
+        self.sampleArchitecturesEnd = False
+        return True
+        
+    def nextSampleArchitecture(inout self) -> Graph:
+        if self.sampleArchitecturesEnd == True:
+            self.initDfsStack()
+        
+        var dfsSample: List[Int]      
+        if self.incSampleArchitecture():  
+            dfsSample = self.dfsStack
+            sampleGraph = self.sampleArchitecture(dfsSample)
+            return sampleGraph
+        else:
+            dfsSample = self.dfsStack
+            sampleGraph = self.sampleArchitecture(dfsSample)
+            return sampleGraph
         
     def sampleArchitecture(inout self, sample: List[Int]) -> Graph:
         var nodeName: String = 'input'
