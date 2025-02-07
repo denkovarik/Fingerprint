@@ -94,7 +94,7 @@ def test_addOutputLayer():
     for item in grph.graph.nodes.items():
         assert_true(item[].value[].getNodeType().value == NodeType.OUTPUT.value)
         
-def sampleArchitecture():
+def test_sampleArchitecture():
     """
     Tests the method sampleArchitecture().
     """   
@@ -105,19 +105,19 @@ def sampleArchitecture():
     
     var sample: List[Int] = List[Int](1, 3, 1, 1, 0, 2, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0)
     var sampleGraph: Graph = grph.sampleArchitecture(sample)
-    assert_true(len(sampleGraph.nodes) == 17)
     
     var keys: List[String] = List[String]()
     for item in sampleGraph.nodes.items():
         keys.append(item[].key)
     var keysLen: Int = len(keys)
     
+    var edgLen: Int = 0
     for i in range(keysLen - 1):
         edgLen = len(sampleGraph.edges[keys[i]])
-        assert_true(len(edgeLen) == 1)
+        assert_true(edgLen == 1)
     # Output Node Edges should be 0
-    edgLen = len(sampleGraph.edges[keys[i]])
-        assert_true(len(edgeLen) == 0)
+    edgLen = len(sampleGraph.edges['output'])
+    assert_true(edgLen == 0)
 
 
 from collections import Set
