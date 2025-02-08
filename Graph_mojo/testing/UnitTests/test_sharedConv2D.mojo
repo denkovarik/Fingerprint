@@ -2,6 +2,7 @@ from testing import assert_equal, assert_not_equal, assert_true, assert_false
 from python import Python, PythonObject
 from collections import Optional
 from structs.SharedConv2d import SharedConv2d
+from memory import UnsafePointer
 
 
 def test_execution():
@@ -14,7 +15,6 @@ def test_Construction():
     Tests construction of the SharedConv2DTests class.
     """
     sharedConv = SharedConv2d(kernel_size=3, in_channels=32, out_channels=32)
-    #self.assertTrue(isinstance(sharedConv, SharedConv2d))
 
 def test_ForwardPass():
     """
@@ -39,6 +39,9 @@ def test_ForwardPass():
     imgData = utils.unpickle_test_data(testBatchPath, 4)
     batch = imgData.reshape(4, 3, 32, 32)
     tensorData = torch.tensor(batch, dtype=torch.float32)
+    var tensor_pointer: UnsafePointer[PythonObject]
+    tensor_pointer = UnsafePointer[PythonObject].alloc(1)
+    tensor_pointer.init_pointee_copy(tensorData)
         
     torch.manual_seed(42)
     np.random.seed(42)
@@ -52,7 +55,7 @@ def test_ForwardPass():
     
     # Response
     var random_tensor_clone = random_tensor.clone()
-    assert_true(torch.allclose(random_tensor, random_tensor_clone)) # Hello
+    #assert_true(torch.allclose(random_tensor, random_tensor_clone)) # Hello
     
     # Template
     var random_tensor2 = torch.rand(16, 6, 3, 3)
@@ -79,14 +82,61 @@ def test_ForwardPass():
     
     # Response
     var sharedConv2d = SharedConv2d(6, 16, 3)
+    sharedConv2d.initSubWeights(tensorData, 3, 8)
     sharedConv2d.weight = nn.Parameter(weights)
     sharedConv2d.bias.data.zero_()    
     assert_true(sharedConv2d.kernel_size == 3)
     assert_true(torch.allclose(sharedConv2d.weight, weights))
     assert_true(torch.all(sharedConv2d.bias.eq(0)))   
     assert_true(torch.allclose(conv2d.weight, torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3)))
-    outSharedConv2d = sharedConv2d.forward(tensorData, 3, 8)
-    assert_true(torch.allclose(outConv2d, outSharedConv2d)) # Hello
+    sharedConv2d.initSubWeights(tensorData, 3, 8)
+    outSharedConv2d = sharedConv2d.forward(tensor_pointer)
+    assert_true(torch.allclose(outConv2d, outSharedConv2d))   
+    tensor_pointer.free()
+
+def test_ForwardPass_GPU():
+    """
+    Tests the forward pass on GPU for the SharedConv2DTests class.
+    """
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    init = Python.import_module("torch.nn.init")
+    F = Python.import_module("torch.nn.functional")
+    np = Python.import_module("numpy")
+    math = Python.import_module("math")
+    random = Python.import_module("random")
+    os = Python.import_module("os")
+    pickle = Python.import_module("pickle")
+    sys = Python.import_module("sys")
+    
+    # Get test batch
+    testBatchPath = 'testing/UnitTests/TestFiles/cifar10_test_batch_pickle'
+    assert_true(os.path.exists(testBatchPath))
+    Python.add_to_path(".")
+    utils = Python.import_module("utils")
+    imgData = utils.unpickle_test_data(testBatchPath, 4)
+    batch = imgData.reshape(4, 3, 32, 32)
+    tensorData = torch.tensor(batch, dtype=torch.float32)
+         
+    # Response
+    var sharedConv2d = SharedConv2d(6, 16, 3) 
+      
+    var device: PythonObject = torch.device("cpu")
+    var cuda_available = torch.cuda.is_available()
+    if cuda_available:
+        device = torch.device("cuda") 
+
+    sharedConv2d.to(device=device)
+    tensorData = tensorData.to(device)
+    
+    var tensor_pointer: UnsafePointer[PythonObject]
+    tensor_pointer = UnsafePointer[PythonObject].alloc(1)
+    tensor_pointer.init_pointee_copy(tensorData)
+    
+    sharedConv2d.initSubWeights(tensor_pointer[], 3, 8)
+    for i in range(100000):
+        outSharedConv2d = sharedConv2d.forward(tensor_pointer)
+    tensor_pointer.free()
 
 def test_Print():
     """
@@ -122,6 +172,9 @@ def test_CalOutputSize():
     imgData = utils.unpickle_test_data(testBatchPath, 4)
     batch = imgData.reshape(4, 3, 32, 32)
     tensorData = torch.tensor(batch, dtype=torch.float32)
+    var tensor_pointer: UnsafePointer[PythonObject]
+    tensor_pointer = UnsafePointer[PythonObject].alloc(1)
+    tensor_pointer.init_pointee_copy(tensorData)
     
     # Test 1: Kernel Size 3x3
     var conv2d = nn.Conv2d(3, 8,kernel_size=3)
@@ -130,7 +183,8 @@ def test_CalOutputSize():
     var calcOutputSize = SharedConv2d.calcOutSize(tensorData.shape, outChannels=8, kernel_size=3, stride=1, padding=0, dilation=1)
     # Forward prop
     var outConv2d = conv2d(tensorData)
-    var outSharedConv2d = sharedConv2d.forward(tensorData, 3, 8)
+    sharedConv2d.initSubWeights(tensorData, 3, 8)
+    var outSharedConv2d = sharedConv2d.forward(tensor_pointer)
     assert_true(calcOutputSize == outConv2d.shape)
     assert_true(calcOutputSize == outSharedConv2d.shape)
 
@@ -141,7 +195,8 @@ def test_CalOutputSize():
     calcOutputSize = SharedConv2d.calcOutSize(tensorData.shape, outChannels=16, kernel_size=5)
     # Forward prop
     outConv2d = conv2d(tensorData)
-    outSharedConv2d = sharedConv2d.forward(tensorData, 3, 16)
+    sharedConv2d.initSubWeights(tensorData, 3, 16)
+    outSharedConv2d = sharedConv2d.forward(tensor_pointer)
     assert_true(calcOutputSize == outConv2d.shape)
     assert_true(calcOutputSize == outSharedConv2d.shape)
 
@@ -152,7 +207,8 @@ def test_CalOutputSize():
     calcOutputSize = SharedConv2d.calcOutSize(tensorData.shape, outChannels=8, kernel_size=3)
     # Forward prop
     outConv2d = conv2d(tensorData)
-    outSharedConv2d = sharedConv2d.forward(tensorData, 3, 8)
+    sharedConv2d.initSubWeights(tensorData, 3, 8)
+    outSharedConv2d = sharedConv2d.forward(tensor_pointer)
     assert_true(calcOutputSize == outConv2d.shape)
     assert_true(calcOutputSize == outSharedConv2d.shape)
 
@@ -174,9 +230,19 @@ def test_CalOutputSize():
     var calcOutShape2 = SharedConv2d.calcOutSize(calcOutShape1, outChannels=16, kernel_size=5)
     var calcOutShape3 = SharedConv2d.calcOutSize(calcOutShape2, outChannels=32, kernel_size=5)
     # Forward Prop Shared Conv2d Layers
-    var outSharedConv2d1 = sharedConv2d1.forward(tensorData, 3, 8)
-    var outSharedConv2d2 = sharedConv2d2.forward(outSharedConv2d1, 8, 16)
-    var outSharedConv2d3 = sharedConv2d3.forward(outSharedConv2d2, 16, 32)
+    sharedConv2d1.initSubWeights(tensorData, 3, 8)
+    var outSharedConv2d1 = sharedConv2d1.forward(tensor_pointer)
+
+    tensor_pointer.init_pointee_copy(outSharedConv2d1)
+    
+    sharedConv2d2.initSubWeights(outSharedConv2d1, 8, 16)
+    var outSharedConv2d2 = sharedConv2d2.forward(tensor_pointer)
+    
+    tensor_pointer.init_pointee_copy(outSharedConv2d2)
+    
+    sharedConv2d3.initSubWeights(outSharedConv2d2, 16, 32)
+    var outSharedConv2d3 = sharedConv2d3.forward(tensor_pointer)
+    
     # Validate Shapes
     assert_true(calcOutShape1 == outConv2d1.shape)
     assert_true(calcOutShape1 == outSharedConv2d1.shape)
@@ -184,6 +250,8 @@ def test_CalOutputSize():
     assert_true(calcOutShape2 == outSharedConv2d2.shape)
     assert_true(calcOutShape3 == outConv2d3.shape)
     assert_true(calcOutShape3 == outSharedConv2d3.shape)
+    
+    tensor_pointer.free()
     
 def test_GetOutputSize():
     """
@@ -208,6 +276,9 @@ def test_GetOutputSize():
     imgData = utils.unpickle_test_data(testBatchPath, 4)
     batch = imgData.reshape(4, 3, 32, 32)
     tensorData = torch.tensor(batch, dtype=torch.float32)
+    var tensor_pointer: UnsafePointer[PythonObject]
+    tensor_pointer = UnsafePointer[PythonObject].alloc(1)
+    tensor_pointer.init_pointee_copy(tensorData)
     
     # Test 1: Kernel Size 3x3
     var conv2d = nn.Conv2d(3, 8,kernel_size=3)
@@ -216,7 +287,8 @@ def test_GetOutputSize():
     var calcOutputSize = sharedConv2d.getOutSize(tensorData.shape, outChannels=8)
     # Forward prop
     var outConv2d = conv2d(tensorData)
-    var outSharedConv2d = sharedConv2d.forward(tensorData, 3, 8)
+    sharedConv2d.initSubWeights(tensorData, 3, 8)
+    var outSharedConv2d = sharedConv2d.forward(tensor_pointer)
     assert_true(calcOutputSize == outConv2d.shape)
     assert_true(calcOutputSize == outSharedConv2d.shape)
 
@@ -227,7 +299,8 @@ def test_GetOutputSize():
     calcOutputSize = sharedConv2d.getOutSize(tensorData.shape, outChannels=16)
     # Forward prop
     outConv2d = conv2d(tensorData)
-    outSharedConv2d = sharedConv2d.forward(tensorData, 3, 16)
+    sharedConv2d.initSubWeights(tensorData, 3, 16)
+    outSharedConv2d = sharedConv2d.forward(tensor_pointer)
     assert_true(calcOutputSize == outConv2d.shape)
     assert_true(calcOutputSize == outSharedConv2d.shape)
 
@@ -239,7 +312,8 @@ def test_GetOutputSize():
     calcOutputSize = sharedConv2d.getOutSize(tensorData.shape, outChannels=8)
     # Forward prop
     outConv2d = conv2d(tensorData)
-    outSharedConv2d = sharedConv2d.forward(tensorData, 3, 8)
+    sharedConv2d.initSubWeights(tensorData, 3, 8)
+    outSharedConv2d = sharedConv2d.forward(tensor_pointer)
     assert_true(calcOutputSize == outConv2d.shape)
     assert_true(calcOutputSize == outSharedConv2d.shape)
 
@@ -261,9 +335,18 @@ def test_GetOutputSize():
     var calcOutShape2 = sharedConv2d2.getOutSize(calcOutShape1, outChannels=16)
     var calcOutShape3 = sharedConv2d3.getOutSize(calcOutShape2, outChannels=32)
     # Forward Prop Shared Conv2d Layers
-    var outSharedConv2d1 = sharedConv2d1.forward(tensorData, 3, 8)
-    var outSharedConv2d2 = sharedConv2d2.forward(outSharedConv2d1, 8, 16)
-    var outSharedConv2d3 = sharedConv2d3.forward(outSharedConv2d2, 16, 32)
+    sharedConv2d1.initSubWeights(tensorData, 3, 8)
+    var outSharedConv2d1 = sharedConv2d1.forward(tensor_pointer)
+    
+    tensor_pointer.init_pointee_copy(outSharedConv2d1)
+    
+    sharedConv2d2.initSubWeights(outSharedConv2d1, 8, 16)
+    var outSharedConv2d2 = sharedConv2d2.forward(tensor_pointer)
+    
+    tensor_pointer.init_pointee_copy(outSharedConv2d2)
+    
+    sharedConv2d3.initSubWeights(outSharedConv2d2, 16, 32)
+    var outSharedConv2d3 = sharedConv2d3.forward(tensor_pointer)
     # Validate Shapes
     assert_true(calcOutShape1 == outConv2d1.shape)
     assert_true(calcOutShape1 == outSharedConv2d1.shape)
@@ -272,16 +355,11 @@ def test_GetOutputSize():
     assert_true(calcOutShape3 == outConv2d3.shape)
     assert_true(calcOutShape3 == outSharedConv2d3.shape)
     
+    tensor_pointer.free()
+    
     
 def main():
     print('hi')
-    var a = Optional(1)
-    var b = Optional[Int](None)
-    if a:
-        print(a.value())  # prints 1
-    if b:  # Bool(b) is False, so no print
-        print(b.value())
-    var c = a.or_else(2)
-    var d = b.or_else(2)
-    print(c)  # prints 1
-    print(d)  # prints 2
+    
+
+

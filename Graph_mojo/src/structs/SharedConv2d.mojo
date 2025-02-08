@@ -1,5 +1,6 @@
 from collections import Optional
 from python import Python, PythonObject
+from memory import UnsafePointer
 
 
 @value
@@ -12,17 +13,32 @@ struct SharedConv2d():
     var dilation: Int
     var weight: PythonObject
     var bias: PythonObject
+    var weightSub: PythonObject
+    var biasSub: PythonObject
+    var device: PythonObject
+    var inChannels: Int
+    var outChannels: Int
+    var F: PythonObject
 
     def __init__(inout self, in_channels: Int, out_channels: Int, kernel_size: Int):
         torch = Python.import_module("torch")
         nn = Python.import_module("torch.nn")
         init = Python.import_module("torch.nn.init")
-        F = Python.import_module("torch.nn.functional")
+        self.F = Python.import_module("torch.nn.functional")
         math = Python.import_module("math")
     
         self.kernel_size = kernel_size
         self.maxInChannels = in_channels
         self.maxOutChannels = out_channels
+        self.device = torch.device("cpu")
+        self.inChannels = self.maxInChannels
+        self.outChannels = self.maxOutChannels
+
+        # Initialize the weights and biases for the maximum configuration
+        self.weight = nn.Parameter(torch.Tensor(self.maxOutChannels, self.maxInChannels)).to(self.device)
+        self.bias = nn.Parameter(torch.Tensor(self.maxOutChannels)).to(self.device)
+        self.weightSub = self.weight.narrow(0, 0, self.outChannels).narrow(1, 0, self.inChannels).to(self.device)
+        self.biasSub = self.bias.narrow(0, 0, self.outChannels).to(self.device)
         self.stride = 1
         self.padding = 0
         self.dilation = 1
@@ -47,11 +63,8 @@ struct SharedConv2d():
         var strRep = "SharedConv2d(" + str(self.maxInChannels) + ", " + str(self.maxOutChannels) + ", kernel_size=" + str(self.kernel_size) + ")"
         return strRep
 
-    def forward(inout self, x: PythonObject, inChannels: Int, outChannels: Int) -> PythonObject:
-        F = Python.import_module("torch.nn.functional")
-        var weight = self.weight.narrow(0, 0, outChannels).narrow(1, 0, inChannels) 
-        var bias = self.bias.narrow(0, 0, outChannels)  # slices on the 0th dimension (out_channels)
-        var rslt = F.conv2d(x, weight, bias)
+    def forward(inout self, x: UnsafePointer[PythonObject]) -> PythonObject:
+        var rslt = self.F.conv2d(x[], self.weightSub, self.biasSub)
         return rslt
         
     def getOutSize(self, tensorShape: PythonObject, outChannels: Optional[Int] = Optional[Int](None)) -> PythonObject:
@@ -72,8 +85,27 @@ struct SharedConv2d():
         if outChannels:
             outputChannels = outChannels.value()
         var outputShape = SharedConv2d.calcOutSize(tensorShape, outputChannels, self.kernel_size, self.stride, self.padding, self.dilation)
-
-        return outputShape        
+        return outputShape      
+        
+    def initSubWeights(inout self, x: PythonObject, inChannels: Int, outChannels: Int):
+        self.inChannels = inChannels
+        self.outChannels = outChannels
+        # Dynamically select the subset of weights and biases
+        self.weightSub = self.weight.narrow(0, 0, self.outChannels).narrow(1, 0, self.inChannels).to(self.device)
+        self.biasSub = self.bias.narrow(0, 0, self.outChannels).to(self.device)
+        
+    def to(inout self, device: PythonObject):
+        """
+        Moves struct to do computations on the devices passed in.
+        
+        Args:
+            device (PythonObject): PythonObject of the device to do computations on.
+        """
+        self.device = device
+        self.weight.to(self.device)
+        self.bias.to(self.device)
+        self.weightSub.to(self.device)
+        self.biasSub.to(self.device)        
 
     @staticmethod
     def calcOutSize(tensorShape: PythonObject, outChannels: Int, kernel_size: Int,  stride: Int = 1, padding: Int = 0, dilation: Int = 1) -> PythonObject:
