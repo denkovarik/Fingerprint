@@ -431,8 +431,11 @@ struct ConvolutionalNode(NodeTrait):
         var strRep = self.pytorchLayer.__str__()
         return strRep
 
-    def forward(inout self, x: PythonObject) -> PythonObject:
-        return self.pytorchLayer.forward(x, x.shape[1], self.numOutputChannels)
+    def initSubWeights(inout self, x: PythonObject, inChannels: Int, outChannels: Int):
+        self.pytorchLayer.initSubWeights(x, inChannels, outChannels)
+
+    fn forward(inout self, x: PythonObject) raises -> PythonObject:
+        return self.pytorchLayer.forward(x)
         
     def getName(inout self) -> String:
         return self.name
@@ -470,9 +473,12 @@ struct LinearNode(NodeTrait):
     fn __str__(inout self) -> String:
         var strRep = self.pytorchLayer.__str__()
         return self.displayName
+        
+    def initSubWeights(inout self, x: PythonObject, inChannels: Int, outChannels: Int):
+        self.pytorchLayer.initSubWeights(x, inChannels, outChannels)
 
-    def forward(inout self, x: PythonObject) -> PythonObject:
-        return self.pytorchLayer.forward(x, x.shape[1], self.numOutFeatures)
+    fn forward(inout self, x: PythonObject) raises -> PythonObject:
+        return self.pytorchLayer.forward(x)
         
     def getName(inout self) -> String:
         return self.name
