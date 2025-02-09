@@ -103,7 +103,8 @@ def test_forward():
               numOutFeatures=8, 
               layer=1, pytorchLayerId=pytorchLayerId)
     node.pytorchLayer.weight = nn.Parameter(weights)
-    node.pytorchLayer.bias.data.zero_() 
+    node.pytorchLayer.bias.data.zero_()
+    node.initSubWeights(flattened_tensor, 3072, 8)    
     var shared_out = node.forward(flattened_tensor)
     assert_true(torch.allclose(fc1_out, shared_out)) 
     

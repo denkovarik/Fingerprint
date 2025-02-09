@@ -485,6 +485,7 @@ def test_forwardPassCovolutionalNode():
     assert_true(torch.allclose(node.node[ConvolutionalNode].pytorchLayer.weight, weights))
     assert_true(torch.all(node.node[ConvolutionalNode].pytorchLayer.bias.eq(0)))   
     assert_true(torch.allclose(conv2d.weight, torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3)))
+    node.node[ConvolutionalNode].initSubWeights(tensorData, 3, 8)
     outSharedConv2d = node.forward(tensorData)
     assert_true(torch.allclose(outConv2d, outSharedConv2d)) 
     
@@ -499,6 +500,7 @@ def test_forwardPassCovolutionalNode():
     assert_true(torch.allclose(nodePtr[].node[ConvolutionalNode].pytorchLayer.weight, weights))
     assert_true(torch.all(nodePtr[].node[ConvolutionalNode].pytorchLayer.bias.eq(0)))   
     assert_true(torch.allclose(conv2d.weight, torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3)))
+    nodePtr[].node[ConvolutionalNode].initSubWeights(tensorData, 3, 8)
     var outSharedConv2d2 = nodePtr[].forward(tensorData)
     assert_true(torch.allclose(outConv2d, outSharedConv2d2)) 
 
@@ -536,7 +538,7 @@ def test_constructionLinearNode():
     assert_true(node.node[LinearNode].numOutFeatures == 16)
     assert_true(node.node[LinearNode].displayName == 'Linear(of=16)')   
 
-def test_Print():
+def test_PrintLinearNode():
     """
     Tests the overloaded to string fucntion.
     """
@@ -554,7 +556,7 @@ def test_Print():
     exp = 'Linear(of=16)'
     assert_equal(node.__str__(), exp)
     
-def test_forward():
+def test_forwardLinearNode():
     """
     Tests just calling the LinearNode struct forward function.
     """
@@ -615,5 +617,6 @@ def test_forward():
               layer=1, pytorchLayerId=pytorchLayerId))
     node.node[LinearNode].pytorchLayer.weight = nn.Parameter(weights)
     node.node[LinearNode].pytorchLayer.bias.data.zero_() 
+    node.node[LinearNode].initSubWeights(flattened_tensor, 3072, 8) 
     var shared_out = node.forward(flattened_tensor)
     assert_true(torch.allclose(fc1_out, shared_out)) 

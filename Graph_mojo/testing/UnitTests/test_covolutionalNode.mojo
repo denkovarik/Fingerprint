@@ -100,6 +100,7 @@ def test_forwardPassCovolutionalNode():
     assert_true(torch.allclose(node.pytorchLayer.weight, weights))
     assert_true(torch.all(node.pytorchLayer.bias.eq(0)))   
     assert_true(torch.allclose(conv2d.weight, torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3)))
+    node.initSubWeights(tensorData, 3, 8)
     outSharedConv2d = node.forward(tensorData)
     assert_true(torch.allclose(outConv2d, outSharedConv2d)) 
 
