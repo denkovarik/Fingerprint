@@ -1,5 +1,4 @@
 from python import Python, PythonObject
-from memory import UnsafePointer
 
 
 @value
@@ -52,8 +51,8 @@ struct SharedLinear:
         self.weightSub = self.weight.narrow(0, 0, self.outChannels).narrow(1, 0, self.inChannels).to(self.device)
         self.biasSub = self.bias.narrow(0, 0, self.outChannels).to(self.device)
 
-    def forward(inout self, x: UnsafePointer[PythonObject]) -> PythonObject:
-        var out = self.F.linear(x[], self.weightSub, self.biasSub)   
+    fn forward(inout self, x: PythonObject) raises -> PythonObject:
+        var out = self.F.linear(x, self.weightSub, self.biasSub)   
         return out
         
     def to(inout self, device: PythonObject):

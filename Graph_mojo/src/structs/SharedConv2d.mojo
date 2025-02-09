@@ -1,6 +1,5 @@
 from collections import Optional
 from python import Python, PythonObject
-from memory import UnsafePointer
 
 
 @value
@@ -63,8 +62,8 @@ struct SharedConv2d():
         var strRep = "SharedConv2d(" + str(self.maxInChannels) + ", " + str(self.maxOutChannels) + ", kernel_size=" + str(self.kernel_size) + ")"
         return strRep
 
-    def forward(inout self, x: UnsafePointer[PythonObject]) -> PythonObject:
-        var rslt = self.F.conv2d(x[], self.weightSub, self.biasSub)
+    fn forward(inout self, x: PythonObject) raises -> PythonObject:
+        var rslt = self.F.conv2d(x, self.weightSub, self.biasSub)
         return rslt
         
     def getOutSize(self, tensorShape: PythonObject, outChannels: Optional[Int] = Optional[Int](None)) -> PythonObject:

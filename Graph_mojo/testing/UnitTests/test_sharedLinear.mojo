@@ -51,9 +51,6 @@ def test_forward():
     batch = imgData.reshape(4, 3, 32, 32)
     tensorData = torch.tensor(batch, dtype=torch.float32)
     var flattened_tensor = tensorData.view(4, -1)  # This reshapes it to shape [4, 3072]
-    var tensor_pointer: UnsafePointer[PythonObject]
-    tensor_pointer = UnsafePointer[PythonObject].alloc(1)
-    tensor_pointer.init_pointee_copy(flattened_tensor)
     
     torch.manual_seed(42)
     np.random.seed(42)
@@ -93,11 +90,9 @@ def test_forward():
     var sharedLinear = SharedLinear(4000, 4000)
     sharedLinear.weight = nn.Parameter(weights)
     sharedLinear.bias.data.zero_() 
-    sharedLinear.initSubWeights(tensor_pointer[], 3072, 8)
-    var shared_out = sharedLinear.forward(tensor_pointer)
+    sharedLinear.initSubWeights(flattened_tensor, 3072, 8)
+    var shared_out = sharedLinear.forward(flattened_tensor)
     assert_true(torch.allclose(fc1_out, shared_out)) 
-    
-    tensor_pointer.free()
     
 def test_forward_gpu():
     """
@@ -113,7 +108,7 @@ def test_forward_gpu():
     os = Python.import_module("os")
     pickle = Python.import_module("pickle")
     sys = Python.import_module("sys")
-    
+   
     # Get test batch
     testBatchPath = 'testing/UnitTests/TestFiles/cifar10_test_batch_pickle'
     assert_true(os.path.exists(testBatchPath))
@@ -132,12 +127,9 @@ def test_forward_gpu():
     var sharedLinear = SharedLinear(4000, 4000)
     sharedLinear.to(device=device)
     flattened_tensor = flattened_tensor.to(device)
-    var tensor_pointer: UnsafePointer[PythonObject]
-    tensor_pointer = UnsafePointer[PythonObject].alloc(1)
-    tensor_pointer.init_pointee_copy(flattened_tensor)
-    sharedLinear.initSubWeights(tensor_pointer[], 3072, 8)
+    sharedLinear.initSubWeights(flattened_tensor, 3072, 8)
     
     for i in range(100000):
-        var shared_out = sharedLinear.forward(tensor_pointer)
+        var shared_out = sharedLinear.forward(flattened_tensor)
+    
         
-    tensor_pointer.free()
