@@ -20,6 +20,10 @@ struct Graph:
     fn __copyinit__(inout self, other: Self):
         self.nodes = other.nodes
         self.edges = other.edges
+        
+    def to(inout self, device: PythonObject):
+        for item in grph.graph.nodes.items():
+            item[].value[].to(device)
 
 
 struct GraphHandler:
