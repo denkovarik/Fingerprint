@@ -2,10 +2,6 @@ from python import Python, PythonObject
 from structs.Nodes import NodeType, NormalizationType, PoolingType, ActivationType
 from structs.Graph import GraphHandler, Graph
 
-# Import PyTorch modules
-torch = Python.import_module("torch")
-nn = Python.import_module("torch.nn")
-F = Python.import_module("torch.nn.functional")
 
 @value
 struct CustomCNN:
