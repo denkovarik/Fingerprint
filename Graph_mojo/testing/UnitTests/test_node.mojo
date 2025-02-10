@@ -8,7 +8,7 @@ from memory import UnsafePointer
 
 def test_execution():
     """
-    Just tests running a mojo test
+    Just tests running a mojo test.
     """
     assert_equal(0, 0)
 
@@ -415,7 +415,6 @@ def test_constructionCovolutionalNode():
     assert_true(node.node[ConvolutionalNode].maxNumInputChannels == 128)
     assert_true(node.node[ConvolutionalNode].numOutputChannels == 32)
     
-
 def test_forwardPassCovolutionalNode():
     """
     Tests the forward pass for the ConvolutionalNode class.
@@ -485,24 +484,99 @@ def test_forwardPassCovolutionalNode():
     assert_true(torch.allclose(node.node[ConvolutionalNode].pytorchLayer.weight, weights))
     assert_true(torch.all(node.node[ConvolutionalNode].pytorchLayer.bias.eq(0)))   
     assert_true(torch.allclose(conv2d.weight, torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3)))
-    node.node[ConvolutionalNode].initSubWeights(tensorData, 3, 8)
+    node.initSubWeights(tensorData, 3, 8)
     outSharedConv2d = node.forward(tensorData)
     assert_true(torch.allclose(outConv2d, outSharedConv2d)) 
     
     # Testing forward with UnsafePointer
+    node = Node(ConvolutionalNode(name='name', kernel_size=3, 
+                             maxNumInputChannels=6, 
+                             maxNumOutputChannels=16, 
+                             numOutputChannels=8,
+                             layer=0, pytorchLayerId=pytorchLayerId))
     var nodePtr = UnsafePointer[Node].alloc(1)
     node.node[ConvolutionalNode].pytorchLayer.weight = nn.Parameter(weights)
     node.node[ConvolutionalNode].pytorchLayer.bias.data.zero_()
     nodePtr.init_pointee_copy(node)
 
-
     assert_true(nodePtr[].node[ConvolutionalNode].kernel_size == 3)
     assert_true(torch.allclose(nodePtr[].node[ConvolutionalNode].pytorchLayer.weight, weights))
     assert_true(torch.all(nodePtr[].node[ConvolutionalNode].pytorchLayer.bias.eq(0)))   
     assert_true(torch.allclose(conv2d.weight, torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3)))
-    nodePtr[].node[ConvolutionalNode].initSubWeights(tensorData, 3, 8)
+    nodePtr[].initSubWeights(tensorData, 3, 8)
     var outSharedConv2d2 = nodePtr[].forward(tensorData)
     assert_true(torch.allclose(outConv2d, outSharedConv2d2)) 
+    nodePtr.free()
+
+def test_forwardPassCovolutionalNodeGPU():
+    """
+    Tests the forward pass for the ConvolutionalNode class on the GPU.
+    """
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    init = Python.import_module("torch.nn.init")
+    F = Python.import_module("torch.nn.functional")
+    np = Python.import_module("numpy")
+    math = Python.import_module("math")
+    random = Python.import_module("random")
+    os = Python.import_module("os")
+    pickle = Python.import_module("pickle")
+    sys = Python.import_module("sys")
+    
+    # Get test batch
+    testBatchPath = 'testing/UnitTests/TestFiles/cifar10_test_batch_pickle'
+    assert_true(os.path.exists(testBatchPath))
+    Python.add_to_path(".")
+    utils = Python.import_module("utils")
+    imgData = utils.unpickle_test_data(testBatchPath, 4)
+    batch = imgData.reshape(4, 3, 32, 32)
+    tensorData = torch.tensor(batch, dtype=torch.float32)
+        
+    torch.manual_seed(42)
+    np.random.seed(42)
+    random.seed(42)
+
+    uuid = Python.import_module("uuid")
+    var pytorchLayerId = uuid.uuid4()
+    node = Node(ConvolutionalNode(name='name', kernel_size=3, 
+                             maxNumInputChannels=6, 
+                             maxNumOutputChannels=16, 
+                             numOutputChannels=8,
+                             layer=0, pytorchLayerId=pytorchLayerId))
+                             
+    var device: PythonObject = torch.device("cpu")
+    var cuda_available = torch.cuda.is_available()
+    if cuda_available:
+        device = torch.device("cuda") 
+
+    node.to(device=device)
+    tensorData = tensorData.to(device)
+
+    node.initSubWeights(tensorData, 3, 8)
+    outSharedConv2d = node.forward(tensorData)
+    
+    for i in range(100000):
+        outSharedConv2d = node.forward(tensorData)
+    
+    # Testing forward with UnsafePointer
+    node = Node(ConvolutionalNode(name='name', kernel_size=3, 
+                         maxNumInputChannels=6, 
+                         maxNumOutputChannels=16, 
+                         numOutputChannels=8,
+                         layer=0, pytorchLayerId=pytorchLayerId))
+    var nodePtr = UnsafePointer[Node].alloc(1)
+    nodePtr.init_pointee_copy(node)
+    
+    nodePtr[].to(device=device)
+    tensorData = tensorData.to(device)
+
+    nodePtr[].initSubWeights(tensorData, 3, 8)
+    var outSharedConv2d2 = nodePtr[].forward(tensorData)
+    
+    for i in range(100000):
+        outSharedConv2d = nodePtr[].forward(tensorData)
+        
+    nodePtr.free()
 
 def test_printCovolutionalNode():
     """
@@ -620,3 +694,77 @@ def test_forwardLinearNode():
     node.node[LinearNode].initSubWeights(flattened_tensor, 3072, 8) 
     var shared_out = node.forward(flattened_tensor)
     assert_true(torch.allclose(fc1_out, shared_out)) 
+
+def test_forwardLinearNodeGPU():
+    """
+    Tests just calling the LinearNode struct forward function.
+    """
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    init = Python.import_module("torch.nn.init")
+    F = Python.import_module("torch.nn.functional")
+    np = Python.import_module("numpy")
+    math = Python.import_module("math")
+    random = Python.import_module("random")
+    os = Python.import_module("os")
+    pickle = Python.import_module("pickle")
+    sys = Python.import_module("sys")
+    
+    # Get test batch
+    testBatchPath = 'testing/UnitTests/TestFiles/cifar10_test_batch_pickle'
+    assert_true(os.path.exists(testBatchPath))
+    Python.add_to_path(".")
+    utils = Python.import_module("utils")
+    imgData = utils.unpickle_test_data(testBatchPath, 4)
+    batch = imgData.reshape(4, 3, 32, 32)
+    tensorData = torch.tensor(batch, dtype=torch.float32)
+    var flattened_tensor = tensorData.view(4, -1)  # This reshapes it to shape [4, 3072]
+    
+    torch.manual_seed(42)
+    np.random.seed(42)
+    random.seed(42)
+    
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4() 
+    node = Node(LinearNode(name='name', 
+              maxNumInFeatures=4000, 
+              maxNumOutFeatures=4000,
+              numOutFeatures=8, 
+              layer=1, pytorchLayerId=pytorchLayerId))
+    
+    var device: PythonObject = torch.device("cpu")
+    var cuda_available = torch.cuda.is_available()
+    if cuda_available:
+        device = torch.device("cuda") 
+
+    node.to(device=device)
+    flattened_tensor = flattened_tensor.to(device)
+    
+    node.initSubWeights(flattened_tensor, 3072, 8) 
+    var shared_out = node.forward(flattened_tensor)
+    
+    for i in range(100000):
+        shared_out = node.forward(flattened_tensor)
+        
+    var node2 = Node(LinearNode(name='name', 
+          maxNumInFeatures=4000, 
+          maxNumOutFeatures=4000,
+          numOutFeatures=8, 
+          layer=1, pytorchLayerId=pytorchLayerId))
+              
+    var nodePtr = UnsafePointer[Node].alloc(1)
+    nodePtr.init_pointee_copy(node2)
+    
+    nodePtr[].to(device=device)
+    flattened_tensor = flattened_tensor.to(device)
+    
+    # This breaks it for some reason. Call to 'init_pointee_copy()' must be triggering a copy for the sharedLinear struct
+    #node2.initSubWeights(flattened_tensor, 3072, 8) 
+    nodePtr[].initSubWeights(flattened_tensor, 3072, 8) 
+    shared_out = nodePtr[].forward(flattened_tensor)
+    
+    for i in range(100000):
+        shared_out = nodePtr[].forward(flattened_tensor)
+        
+    nodePtr.free()
+    

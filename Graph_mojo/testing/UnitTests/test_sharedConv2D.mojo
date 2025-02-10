@@ -89,7 +89,7 @@ def test_ForwardPass():
     outSharedConv2d = sharedConv2d.forward(tensorData)
     assert_true(torch.allclose(outConv2d, outSharedConv2d))   
 
-def test_ForwardPass_GPU():
+def test_ForwardPassGPU():
     """
     Tests the forward pass on GPU for the SharedConv2DTests class.
     """

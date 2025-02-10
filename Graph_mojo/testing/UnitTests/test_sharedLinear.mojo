@@ -94,7 +94,7 @@ def test_forward():
     var shared_out = sharedLinear.forward(flattened_tensor)
     assert_true(torch.allclose(fc1_out, shared_out)) 
     
-def test_forward_gpu():
+def test_forwardGPU():
     """
     Tests just calling the SharedLinear struct forward function.
     """

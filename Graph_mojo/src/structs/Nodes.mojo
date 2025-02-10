@@ -166,25 +166,6 @@ struct Node(NodeTrait):
             strRep = self.node[ActivationNode].__str__()       
         return strRep
         
-    def getNodeType(inout self) -> NodeType:
-        if self.node.isa[InputNode]():
-            return NodeType.INPUT
-        if self.node.isa[OutputNode]():
-            return NodeType.OUTPUT
-        if self.node.isa[ConvolutionalNode]():
-            return NodeType.CONVOLUTION
-        if self.node.isa[NormalizationNode]():
-            return NodeType.NORMALIZATION
-        if self.node.isa[PoolingNode]():
-            return NodeType.POOLING
-        if self.node.isa[FlattenNode]():
-            return NodeType.FLATTEN
-        if self.node.isa[LinearNode]():
-            return NodeType.LINEAR
-        if self.node.isa[ActivationNode]():
-            return NodeType.ACTIVATION
-        return NodeType.NONE
-        
     def forward(inout self, x: PythonObject) -> PythonObject:
         var out = x
         self.nodeType = self.getNodeType()
@@ -228,7 +209,45 @@ struct Node(NodeTrait):
         elif self.nodeType.value == NodeType.ACTIVATION.value:
             out = self.node[ActivationNode].getName()    
         return out
-    
+        
+    def getNodeType(inout self) -> NodeType:
+        if self.node.isa[InputNode]():
+            return NodeType.INPUT
+        if self.node.isa[OutputNode]():
+            return NodeType.OUTPUT
+        if self.node.isa[ConvolutionalNode]():
+            return NodeType.CONVOLUTION
+        if self.node.isa[NormalizationNode]():
+            return NodeType.NORMALIZATION
+        if self.node.isa[PoolingNode]():
+            return NodeType.POOLING
+        if self.node.isa[FlattenNode]():
+            return NodeType.FLATTEN
+        if self.node.isa[LinearNode]():
+            return NodeType.LINEAR
+        if self.node.isa[ActivationNode]():
+            return NodeType.ACTIVATION
+        return NodeType.NONE
+        
+    def initSubWeights(inout self, x: PythonObject, inChannels: Int, outChannels: Int):
+        if self.node.isa[ConvolutionalNode]():
+            self.node[ConvolutionalNode].initSubWeights(x, inChannels, outChannels)
+        elif self.node.isa[LinearNode]():
+            self.node[LinearNode].initSubWeights(x, inChannels, outChannels)    
+            
+    def to(inout self, device: PythonObject):
+        if self.nodeType.value == NodeType.CONVOLUTION.value:
+            out = self.node[ConvolutionalNode].to(device) 
+        #elif self.nodeType.value == NodeType.NORMALIZATION.value:
+        #    out = self.node[NormalizationNode].to(device) 
+        #elif self.nodeType.value == NodeType.POOLING.value:
+        #    out = self.node[PoolingNode].to(device) 
+        #elif self.nodeType.value == NodeType.FLATTEN.value:
+        #    out = self.node[FlattenNode].to(device) 
+        elif self.nodeType.value == NodeType.LINEAR.value:
+            out = self.node[LinearNode].to(device) 
+        #elif self.nodeType.value == NodeType.ACTIVATION.value:
+        #    out = self.node[ActivationNode].to(device)  
 
 @value
 struct InputNode(NodeTrait):
@@ -444,8 +463,7 @@ struct ConvolutionalNode(NodeTrait):
         self.pytorchLayer = pytorchLayer
            
     def to(inout self, device: PythonObject):
-        self.pytorchLayer = self.pytorchLayer.to(device)  # Ensure the convolution layer is also moved
-        return self 
+        self.pytorchLayer.to(device) 
         
 
 @value     
@@ -487,7 +505,4 @@ struct LinearNode(NodeTrait):
         self.pytorchLayer = pytorchLayer
              
     def to(inout self, device: PythonObject):
-        self.pytorchLayer = self.pytorchLayer.to(device)  # Ensure the convolution layer is also moved
-        return self 
-        
-        
+        self.pytorchLayer.to(device) 
