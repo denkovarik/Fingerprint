@@ -124,7 +124,7 @@ trait NodeTrait:
     fn __str__(inout self) -> String:
         pass
 
-    def forward(inout self, x: PythonObject) -> PythonObject:
+    fn forward(inout self, x: PythonObject) raises -> PythonObject:
         pass
         
     def getName(inout self) -> String:
@@ -169,7 +169,7 @@ struct Node(NodeTrait):
             strRep = self.node[ActivationNode].__str__()       
         return strRep
         
-    def forward(inout self, x: PythonObject) -> PythonObject:
+    fn forward(inout self, x: PythonObject) raises -> PythonObject:
         var out = x
         self.nodeType = self.getNodeType()
         
@@ -269,7 +269,7 @@ struct InputNode(NodeTrait):
     fn __str__(inout self) -> String:
         return 'Input()'
                
-    def forward(inout self, x: PythonObject) -> PythonObject:
+    fn forward(inout self, x: PythonObject) raises -> PythonObject:
         return x
         
     def getName(inout self) -> String:
@@ -291,7 +291,7 @@ struct OutputNode(NodeTrait):
     fn __str__(inout self) -> String:
         return 'Output()'
         
-    def forward(inout self, x: PythonObject) -> PythonObject:
+    fn forward(inout self, x: PythonObject) raises -> PythonObject:
         return x
         
     def getName(inout self) -> String:
@@ -328,7 +328,7 @@ struct NormalizationNode(NodeTrait):
             strRep = str(self.pytorchLayer)
         return strRep
             
-    def forward(inout self, x: PythonObject) -> PythonObject:
+    fn forward(inout self, x: PythonObject) raises -> PythonObject:
         if self.normalizationType == NormalizationType.NO_NORM:
             return x
         return self.pytorchLayer.forward(x)
@@ -367,7 +367,7 @@ struct PoolingNode(NodeTrait):
             strRep = str(self.pytorchLayer)
         return strRep
             
-    def forward(inout self, x: PythonObject) -> PythonObject:
+    fn forward(inout self, x: PythonObject) raises -> PythonObject:
         if self.poolingType.value == PoolingType.NO_POOLING.value:
             return x
         return self.pytorchLayer.forward(x)
@@ -403,7 +403,7 @@ struct ActivationNode(NodeTrait):
             strRep = str(self.pytorchLayer)
         return strRep
             
-    def forward(inout self, x: PythonObject) -> PythonObject:
+    fn forward(inout self, x: PythonObject) raises -> PythonObject:
         if self.activationType.value == ActivationType.LINEAR.value:
             return x
         return self.pytorchLayer.forward(x)
@@ -430,7 +430,7 @@ struct FlattenNode(NodeTrait):
     fn __str__(inout self) -> String:
         return str(self.pytorchLayer)
             
-    def forward(inout self, x: PythonObject) -> PythonObject:
+    fn forward(inout self, x: PythonObject) raises -> PythonObject:
         return self.pytorchLayer(x)   
         
     def getName(inout self) -> String:
