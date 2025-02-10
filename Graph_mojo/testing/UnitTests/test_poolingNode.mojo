@@ -56,6 +56,37 @@ def test_forwardMaxPooling():
     assert_false(inputTensor.shape == nodeMaxPoolingTestOutput.shape)
     assert_true(torch.allclose(maxPoolingModuleOuptput, nodeMaxPoolingTestOutput))
     
+def test_forwardMaxPoolingGPU():
+    """
+    Test forward propigation for the PoolingNode struct with no pooling set.
+    """
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4()
+
+    maxPooling = PoolingNode(name="name", 
+                             poolingType=PoolingType.MAX_POOLING)
+    
+    var inputTensor: PythonObject = torch.randn(1, 3, 8, 8)
+    var maxPoolingModule: PythonObject = nn.MaxPool2d(kernel_size=2, stride=2) 
+    
+    var device: PythonObject = torch.device("cpu")
+    var cuda_available = torch.cuda.is_available()
+    if cuda_available:
+        device = torch.device("cuda") 
+        
+    inputTensor = inputTensor.to(device)
+    maxPooling.to(device)
+    
+    var maxPoolingModuleOuptput = maxPoolingModule(inputTensor)
+    var nodeMaxPoolingTestOutput = maxPooling.forward(inputTensor)
+    assert_false(inputTensor.shape == nodeMaxPoolingTestOutput.shape)
+    assert_true(torch.allclose(maxPoolingModuleOuptput, nodeMaxPoolingTestOutput))
+    
+    #for i in range(1000000):
+    #    nodeMaxPoolingTestOutput = maxPooling.forward(inputTensor)
+    
 def test_toStringNoPooling():
     """
     Tests the to string overloaded function for NO_POOLING type.

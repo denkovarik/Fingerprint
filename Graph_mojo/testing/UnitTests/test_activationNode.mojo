@@ -52,6 +52,36 @@ def test_forwardReluActivation():
     assert_false(torch.allclose(inputTensor, nodeReluActivationTestOutput))
     assert_true(torch.allclose(reluModuleOuptput, nodeReluActivationTestOutput))
     
+def test_forwardReluActivationGPU():
+    """
+    Test forward propigation for the ActivationNode struct with relu activation set GPU.
+    """
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4()
+
+    reluActivation = ActivationNode(name='name', activationType=ActivationType.RELU)
+    
+    var inputTensor: PythonObject = torch.randn(1, 3, 8, 8)
+    var reluModule: PythonObject = nn.ReLU()
+    
+    var device: PythonObject = torch.device("cpu")
+    var cuda_available = torch.cuda.is_available()
+    if cuda_available:
+        device = torch.device("cuda") 
+    
+    inputTensor = inputTensor.to(device)
+    reluModule.to(device)
+    
+    var reluModuleOuptput = reluModule(inputTensor)
+    var nodeReluActivationTestOutput = reluActivation.forward(inputTensor)
+    assert_false(torch.allclose(inputTensor, nodeReluActivationTestOutput))
+    assert_true(torch.allclose(reluModuleOuptput, nodeReluActivationTestOutput))
+    
+    #for i in range(1000000):
+    #    nodeReluActivationTestOutput = reluActivation.forward(inputTensor)
+    
 def test_toStringLinearActivation():
     """
     Tests the to string overloaded function for LINEAR activation type.

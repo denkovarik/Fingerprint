@@ -35,6 +35,35 @@ def test_forward():
     assert_not_equal(inputTensor.shape, nodeFlattenTestOutput.shape)
     assert_equal(nodeFlattenTestOutput.shape, flattenLayerControlOut.shape)
     
+def test_forwardGPU():
+    """
+    Test forward propigation for the FlattenNode struct.
+    """
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    
+    node = FlattenNode(name='name')
+    flattenLayer = nn.Flatten()
+    
+    var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)    
+    
+    var device: PythonObject = torch.device("cpu")
+    var cuda_available = torch.cuda.is_available()
+    if cuda_available:
+        device = torch.device("cuda") 
+        
+    inputTensor = inputTensor.to(device)
+    node.to(device)
+    
+    var nodeFlattenTestOutput = node.forward(inputTensor)
+    var flattenLayerControlOut = flattenLayer(inputTensor)
+    
+    assert_not_equal(inputTensor.shape, nodeFlattenTestOutput.shape)
+    assert_equal(nodeFlattenTestOutput.shape, flattenLayerControlOut.shape)
+    
+    #for i in range(1000000):
+    #    nodeFlattenTestOutput = node.forward(inputTensor)
+    
 def test_toString():
     """
     Tests the to string overloaded function.

@@ -61,6 +61,36 @@ def test_forwardBatchNormalization():
     assert_false(torch.allclose(inputTensor, nodeBatchNormTestOutput))
     assert_true(torch.allclose(batchNormModuleOuptput, nodeBatchNormTestOutput))
     
+def test_forwardBatchNormalizationGPU():
+    """
+    Test forward propigation for the NormalizationNode struct with no normalization set.
+    """
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    uuid = Python.import_module("uuid")
+    pytorchLayerId = uuid.uuid4()
+
+    batchNorm = NormalizationNode(name="name", 
+                             normalizationType=NormalizationType.BATCH_NORM, 
+                             numFeatures=3, pytorchLayerId=pytorchLayerId)
+    
+    var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)
+    var batchNormModule: PythonObject = nn.BatchNorm2d(3) 
+    
+    var device: PythonObject = torch.device("cpu")
+    var cuda_available = torch.cuda.is_available()
+    if cuda_available:
+        device = torch.device("cuda") 
+        
+    inputTensor = inputTensor.to(device)
+    batchNorm.to(device)
+    
+    var nodeBatchNormTestOutput = batchNorm.forward(inputTensor)
+    assert_false(torch.allclose(inputTensor, nodeBatchNormTestOutput))
+    
+    #for i in range(100000):
+    #    nodeBatchNormTestOutput = batchNorm.forward(inputTensor)
+    
 def test_toStringNoNorm():
     """
     Tests the to string overloaded function for NO_NORM type.

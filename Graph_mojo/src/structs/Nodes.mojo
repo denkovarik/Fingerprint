@@ -129,6 +129,9 @@ trait NodeTrait:
         
     def getName(inout self) -> String:
         pass
+        
+    def to(inout self, device: PythonObject):
+        pass
     
 
 # Yankee Navy Assholes!
@@ -237,17 +240,17 @@ struct Node(NodeTrait):
             
     def to(inout self, device: PythonObject):
         if self.nodeType.value == NodeType.CONVOLUTION.value:
-            out = self.node[ConvolutionalNode].to(device) 
-        #elif self.nodeType.value == NodeType.NORMALIZATION.value:
-        #    out = self.node[NormalizationNode].to(device) 
-        #elif self.nodeType.value == NodeType.POOLING.value:
-        #    out = self.node[PoolingNode].to(device) 
-        #elif self.nodeType.value == NodeType.FLATTEN.value:
-        #    out = self.node[FlattenNode].to(device) 
+            self.node[ConvolutionalNode].to(device) 
+        elif self.nodeType.value == NodeType.NORMALIZATION.value:
+            self.node[NormalizationNode].to(device) 
+        elif self.nodeType.value == NodeType.POOLING.value:
+            self.node[PoolingNode].to(device) 
+        elif self.nodeType.value == NodeType.FLATTEN.value:
+            self.node[FlattenNode].to(device) 
         elif self.nodeType.value == NodeType.LINEAR.value:
-            out = self.node[LinearNode].to(device) 
-        #elif self.nodeType.value == NodeType.ACTIVATION.value:
-        #    out = self.node[ActivationNode].to(device)  
+            self.node[LinearNode].to(device) 
+        elif self.nodeType.value == NodeType.ACTIVATION.value:
+            self.node[ActivationNode].to(device)  
 
 @value
 struct InputNode(NodeTrait):
@@ -271,6 +274,9 @@ struct InputNode(NodeTrait):
         
     def getName(inout self) -> String:
         return self.name
+        
+    def to(inout self, device: PythonObject):
+        pass
      
 
 @value     
@@ -290,6 +296,9 @@ struct OutputNode(NodeTrait):
         
     def getName(inout self) -> String:
         return self.name
+        
+    def to(inout self, device: PythonObject):
+        pass
         
 
 @value  
@@ -326,6 +335,9 @@ struct NormalizationNode(NodeTrait):
         
     def getName(inout self) -> String:
         return self.name
+        
+    def to(inout self, device: PythonObject):
+        self.pytorchLayer.to(device) 
             
 
 @value      
@@ -363,6 +375,9 @@ struct PoolingNode(NodeTrait):
     def getName(inout self) -> String:
         return self.name
         
+    def to(inout self, device: PythonObject):
+        self.pytorchLayer.to(device) 
+        
 
 @value            
 struct ActivationNode(NodeTrait):
@@ -396,6 +411,9 @@ struct ActivationNode(NodeTrait):
     def getName(inout self) -> String:
         return self.name
         
+    def to(inout self, device: PythonObject):
+        self.pytorchLayer.to(device) 
+        
 
 @value
 struct FlattenNode(NodeTrait):
@@ -417,6 +435,9 @@ struct FlattenNode(NodeTrait):
         
     def getName(inout self) -> String:
         return self.name
+        
+    def to(inout self, device: PythonObject):
+        self.pytorchLayer.to(device) 
         
   
 @value   
