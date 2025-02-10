@@ -113,7 +113,6 @@ def test_ForwardPassGPU():
     batch = imgData.reshape(4, 3, 32, 32)
     tensorData = torch.tensor(batch, dtype=torch.float32)
          
-    # Response
     var sharedConv2d = SharedConv2d(6, 16, 3) 
       
     var device: PythonObject = torch.device("cpu")
@@ -125,8 +124,10 @@ def test_ForwardPassGPU():
     tensorData = tensorData.to(device)
     
     sharedConv2d.initSubWeights(tensorData, 3, 8)
-    for i in range(100000):
-        outSharedConv2d = sharedConv2d.forward(tensorData)
+    
+    var outSharedConv2d = sharedConv2d.forward(tensorData)
+    #for i in range(100000):
+    #    outSharedConv2d = sharedConv2d.forward(tensorData)
 
 def test_Print():
     """

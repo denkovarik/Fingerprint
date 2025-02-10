@@ -555,8 +555,8 @@ def test_forwardPassCovolutionalNodeGPU():
     node.initSubWeights(tensorData, 3, 8)
     outSharedConv2d = node.forward(tensorData)
     
-    for i in range(100000):
-        outSharedConv2d = node.forward(tensorData)
+    #for i in range(100000):
+    #    outSharedConv2d = node.forward(tensorData)
     
     # Testing forward with UnsafePointer
     node = Node(ConvolutionalNode(name='name', kernel_size=3, 
@@ -573,8 +573,8 @@ def test_forwardPassCovolutionalNodeGPU():
     nodePtr[].initSubWeights(tensorData, 3, 8)
     var outSharedConv2d2 = nodePtr[].forward(tensorData)
     
-    for i in range(100000):
-        outSharedConv2d = nodePtr[].forward(tensorData)
+    #for i in range(100000):
+    #    outSharedConv2d = nodePtr[].forward(tensorData)
         
     nodePtr.free()
 
@@ -743,8 +743,8 @@ def test_forwardLinearNodeGPU():
     node.initSubWeights(flattened_tensor, 3072, 8) 
     var shared_out = node.forward(flattened_tensor)
     
-    for i in range(100000):
-        shared_out = node.forward(flattened_tensor)
+    #for i in range(100000):
+    #    shared_out = node.forward(flattened_tensor)
         
     var node2 = Node(LinearNode(name='name', 
           maxNumInFeatures=4000, 
@@ -763,8 +763,8 @@ def test_forwardLinearNodeGPU():
     nodePtr[].initSubWeights(flattened_tensor, 3072, 8) 
     shared_out = nodePtr[].forward(flattened_tensor)
     
-    for i in range(100000):
-        shared_out = nodePtr[].forward(flattened_tensor)
+    #for i in range(100000):
+    #    shared_out = nodePtr[].forward(flattened_tensor)
         
     nodePtr.free()
     

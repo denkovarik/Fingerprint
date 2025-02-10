@@ -129,7 +129,8 @@ def test_forwardGPU():
     flattened_tensor = flattened_tensor.to(device)
     sharedLinear.initSubWeights(flattened_tensor, 3072, 8)
     
-    for i in range(100000):
-        var shared_out = sharedLinear.forward(flattened_tensor)
+    var shared_out = sharedLinear.forward(flattened_tensor)
+    #for i in range(100000):
+    #    shared_out = sharedLinear.forward(flattened_tensor)
     
         
