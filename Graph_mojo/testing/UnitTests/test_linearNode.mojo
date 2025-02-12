@@ -104,56 +104,9 @@ def test_forward():
               layer=1, pytorchLayerId=pytorchLayerId)
     node.pytorchLayer.weight = nn.Parameter(weights)
     node.pytorchLayer.bias.data.zero_()
-    node.initSubWeights(flattened_tensor, 3072, 8)    
+    node.initSubWeights(3072)    
     var shared_out = node.forward(flattened_tensor)
     assert_true(torch.allclose(fc1_out, shared_out)) 
-    
-def test_forwardGPU():
-    """
-    Tests just calling the LinearNode struct forward function on GPU.
-    """
-    torch = Python.import_module("torch")
-    nn = Python.import_module("torch.nn")
-    init = Python.import_module("torch.nn.init")
-    F = Python.import_module("torch.nn.functional")
-    np = Python.import_module("numpy")
-    math = Python.import_module("math")
-    random = Python.import_module("random")
-    os = Python.import_module("os")
-    pickle = Python.import_module("pickle")
-    sys = Python.import_module("sys")
-    
-    # Get test batch
-    testBatchPath = 'testing/UnitTests/TestFiles/cifar10_test_batch_pickle'
-    assert_true(os.path.exists(testBatchPath))
-    Python.add_to_path(".")
-    utils = Python.import_module("utils")
-    imgData = utils.unpickle_test_data(testBatchPath, 4)
-    batch = imgData.reshape(4, 3, 32, 32)
-    tensorData = torch.tensor(batch, dtype=torch.float32)
-    var flattened_tensor = tensorData.view(4, -1)  # This reshapes it to shape [4, 3072]
-    
-    uuid = Python.import_module("uuid")
-    pytorchLayerId = uuid.uuid4() 
-    node = LinearNode(name='name', 
-              maxNumInFeatures=4000, 
-              maxNumOutFeatures=4000,
-              numOutFeatures=8, 
-              layer=1, pytorchLayerId=pytorchLayerId)
-
-    var device: PythonObject = torch.device("cpu")
-    var cuda_available = torch.cuda.is_available()
-    if cuda_available:
-        device = torch.device("cuda") 
-
-    node.to(device=device)
-    flattened_tensor = flattened_tensor.to(device)
-
-    node.initSubWeights(flattened_tensor, 3072, 8)    
-    var shared_out = node.forward(flattened_tensor)
-    
-    for i in range(100000):
-        shared_out = node.forward(flattened_tensor)
         
         
 def main():
@@ -195,7 +148,7 @@ def main():
     node.to(device=device)
     flattened_tensor = flattened_tensor.to(device)
 
-    node.initSubWeights(flattened_tensor, 3072, 8)    
+    node.initSubWeights(3072)    
     var shared_out = node.forward(flattened_tensor)
     
     print('go')

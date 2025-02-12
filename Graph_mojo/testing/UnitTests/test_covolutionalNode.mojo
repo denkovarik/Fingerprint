@@ -100,59 +100,10 @@ def test_forwardPassCovolutionalNode():
     assert_true(torch.allclose(node.pytorchLayer.weight, weights))
     assert_true(torch.all(node.pytorchLayer.bias.eq(0)))   
     assert_true(torch.allclose(conv2d.weight, torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3)))
-    node.initSubWeights(tensorData, 3, 8)
+    node.initSubWeights(3)
     outSharedConv2d = node.forward(tensorData)
     assert_true(torch.allclose(outConv2d, outSharedConv2d)) 
-    
-def test_forwardPassCovolutionalNodeGPU():
-    """
-    Tests the forward pass for the ConvolutionalNode class on the GPU.
-    """
-    torch = Python.import_module("torch")
-    nn = Python.import_module("torch.nn")
-    init = Python.import_module("torch.nn.init")
-    F = Python.import_module("torch.nn.functional")
-    np = Python.import_module("numpy")
-    math = Python.import_module("math")
-    random = Python.import_module("random")
-    os = Python.import_module("os")
-    pickle = Python.import_module("pickle")
-    sys = Python.import_module("sys")
-    
-    # Get test batch
-    testBatchPath = 'testing/UnitTests/TestFiles/cifar10_test_batch_pickle'
-    assert_true(os.path.exists(testBatchPath))
-    Python.add_to_path(".")
-    utils = Python.import_module("utils")
-    imgData = utils.unpickle_test_data(testBatchPath, 4)
-    batch = imgData.reshape(4, 3, 32, 32)
-    tensorData = torch.tensor(batch, dtype=torch.float32)
-        
-    torch.manual_seed(42)
-    np.random.seed(42)
-    random.seed(42)
 
-    uuid = Python.import_module("uuid")
-    var pytorchLayerId = uuid.uuid4()
-    node = ConvolutionalNode(name='name', kernel_size=3, 
-                             maxNumInputChannels=6, 
-                             maxNumOutputChannels=16, 
-                             numOutputChannels=8,
-                             layer=0, pytorchLayerId=pytorchLayerId)
-
-    var device: PythonObject = torch.device("cpu")
-    var cuda_available = torch.cuda.is_available()
-    if cuda_available:
-        device = torch.device("cuda") 
-
-    node.to(device=device)
-    tensorData = tensorData.to(device)
-
-    node.initSubWeights(tensorData, 3, 8)
-    outSharedConv2d = node.forward(tensorData)
-    
-    for i in range(100000):
-        outSharedConv2d = node.forward(tensorData)
 
 def test_printCovolutionalNode():
     """

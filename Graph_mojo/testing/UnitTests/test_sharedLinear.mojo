@@ -90,7 +90,7 @@ def test_forward():
     var sharedLinear = SharedLinear(4000, 4000)
     sharedLinear.weight = nn.Parameter(weights)
     sharedLinear.bias.data.zero_() 
-    sharedLinear.initSubWeights(flattened_tensor, 3072, 8)
+    sharedLinear.initSubWeights(3072, 8)
     var shared_out = sharedLinear.forward(flattened_tensor)
     assert_true(torch.allclose(fc1_out, shared_out)) 
     
@@ -127,7 +127,7 @@ def test_forwardGPU():
     var sharedLinear = SharedLinear(4000, 4000)
     sharedLinear.to(device=device)
     flattened_tensor = flattened_tensor.to(device)
-    sharedLinear.initSubWeights(flattened_tensor, 3072, 8)
+    sharedLinear.initSubWeights(3072, 8)
     
     var shared_out = sharedLinear.forward(flattened_tensor)
     #for i in range(100000):

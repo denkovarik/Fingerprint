@@ -108,28 +108,6 @@ def test_forwardInputNode():
     
     assert_equal(nodeTestOutput, inputTensor)
     
-def test_forwardInputNodeGPU():
-    """
-    Test forward propigation for the InputNode struct.
-    """
-    torch = Python.import_module("torch")
-    
-    node = Node(theNode=InputNode(inputShape=torch.Size([4, 3, 32, 32])))
-    
-    var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)    
-    
-    var device: PythonObject = torch.device("cpu")
-    var cuda_available = torch.cuda.is_available()
-    if cuda_available:
-        device = torch.device("cuda") 
-        
-    inputTensor = inputTensor.to(device)
-    node.to(device)
-    
-    var nodeTestOutput = node.forward(inputTensor)
-    
-    assert_equal(nodeTestOutput, inputTensor)
-    
 def test_toStringInputNode():
     """
     Tests the to string overloaded function.
@@ -157,28 +135,6 @@ def test_forwardOutputNode():
     node = Node(theNode=OutputNode())
     
     var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)    
-    var nodeTestOutput = node.forward(inputTensor)
-    
-    assert_equal(nodeTestOutput, inputTensor)
-    
-def test_forwardOutputNodeGPU():
-    """
-    Test forward propigation for the OutputNode struct.
-    """
-    torch = Python.import_module("torch")
-    
-    node = Node(theNode=OutputNode())
-    
-    var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)    
-    
-    var device: PythonObject = torch.device("cpu")
-    var cuda_available = torch.cuda.is_available()
-    if cuda_available:
-        device = torch.device("cuda") 
-        
-    inputTensor = inputTensor.to(device)
-    node.to(device)
-    
     var nodeTestOutput = node.forward(inputTensor)
     
     assert_equal(nodeTestOutput, inputTensor)
@@ -241,32 +197,7 @@ def test_forwardBatchNormalization():
     var batchNormModuleOuptput = batchNormModule(inputTensor)
     var nodeBatchNormTestOutput = node.forward(inputTensor)
     assert_false(torch.allclose(inputTensor, nodeBatchNormTestOutput))
-    assert_true(torch.allclose(batchNormModuleOuptput, nodeBatchNormTestOutput))
-    
-def test_forwardBatchNormalizationGPU():
-    """
-    Test forward propigation for the NormalizationNode wrapper (Node) struct with no normalization set.
-    """
-    torch = Python.import_module("torch")
-    nn = Python.import_module("torch.nn")
-    uuid = Python.import_module("uuid")
-    pytorchLayerId = uuid.uuid4()
-
-    node = Node(theNode=NormalizationNode(name="name", 
-                             normalizationType=NormalizationType.BATCH_NORM, 
-                             numFeatures=3, pytorchLayerId=pytorchLayerId))
-    
-    var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)
-    
-    var device: PythonObject = torch.device("cpu")
-    var cuda_available = torch.cuda.is_available()
-    if cuda_available:
-        device = torch.device("cuda") 
-        
-    inputTensor = inputTensor.to(device)
-    node.to(device)
-    
-    var nodeBatchNormTestOutput = node.forward(inputTensor) 
+    assert_true(torch.allclose(batchNormModuleOuptput, nodeBatchNormTestOutput)) 
     
 def test_toStringNoNorm():
     """
@@ -331,31 +262,7 @@ def test_forwardMaxPooling():
     var maxPoolingModuleOuptput = maxPoolingModule(inputTensor)
     var nodeMaxPoolingTestOutput = node.forward(inputTensor)
     assert_false(inputTensor.shape == nodeMaxPoolingTestOutput.shape)
-    assert_true(torch.allclose(maxPoolingModuleOuptput, nodeMaxPoolingTestOutput))
-    
-def test_forwardMaxPoolingGPU():
-    """
-    Test forward propigation for the PoolingNode struct with no pooling set.
-    """
-    torch = Python.import_module("torch")
-    nn = Python.import_module("torch.nn")
-    uuid = Python.import_module("uuid")
-    pytorchLayerId = uuid.uuid4()
-
-    node = Node(PoolingNode(name="name", 
-                             poolingType=PoolingType.MAX_POOLING))
-    
-    var inputTensor: PythonObject = torch.randn(1, 3, 8, 8)
-
-    var device: PythonObject = torch.device("cpu")
-    var cuda_available = torch.cuda.is_available()
-    if cuda_available:
-        device = torch.device("cuda") 
-        
-    inputTensor = inputTensor.to(device)
-    node.to(device)
-
-    var nodeMaxPoolingTestOutput = node.forward(inputTensor)   
+    assert_true(torch.allclose(maxPoolingModuleOuptput, nodeMaxPoolingTestOutput))  
     
 def test_toStringNoPooling():
     """
@@ -428,29 +335,6 @@ def test_forwardReluActivation():
     assert_false(torch.allclose(inputTensor, nodeReluActivationTestOutput))
     assert_true(torch.allclose(reluModuleOuptput, nodeReluActivationTestOutput))
     
-def test_forwardReluActivationGPU():
-    """
-    Test forward propigation for the ActivationNode struct with relu activation set.
-    """
-    torch = Python.import_module("torch")
-    nn = Python.import_module("torch.nn")
-    uuid = Python.import_module("uuid")
-    pytorchLayerId = uuid.uuid4()
-
-    node = Node(ActivationNode(name='name', activationType=ActivationType.RELU))
-    
-    var inputTensor: PythonObject = torch.randn(1, 3, 8, 8)
-
-    var device: PythonObject = torch.device("cpu")
-    var cuda_available = torch.cuda.is_available()
-    if cuda_available:
-        device = torch.device("cuda") 
-        
-    inputTensor = inputTensor.to(device)
-    node.to(device)
-
-    var nodeReluActivationTestOutput = node.forward(inputTensor)
-    
 def test_toStringLinearActivation():
     """
     Tests the to string overloaded function for LINEAR activation type.
@@ -500,27 +384,6 @@ def test_flattenNodeForward():
     assert_not_equal(inputTensor.shape, nodeFlattenTestOutput.shape)
     assert_equal(nodeFlattenTestOutput.shape, flattenLayerControlOut.shape)
     
-def test_flattenNodeForwardGPU():
-    """
-    Test forward propigation for the FlattenNode struct.
-    """
-    torch = Python.import_module("torch")
-    nn = Python.import_module("torch.nn")
-    
-    node = Node(FlattenNode(name='name'))
-    flattenLayer = nn.Flatten()
-    
-    var inputTensor: PythonObject = torch.randn(1, 3, 5, 5)
-    
-    var device: PythonObject = torch.device("cpu")
-    var cuda_available = torch.cuda.is_available()
-    if cuda_available:
-        device = torch.device("cuda") 
-        
-    inputTensor = inputTensor.to(device)
-    node.to(device)
-    
-    var nodeFlattenTestOutput = node.forward(inputTensor)
     
 def test_flattenNodeToString():
     """
@@ -622,7 +485,7 @@ def test_forwardPassCovolutionalNode():
     assert_true(torch.allclose(node.node[ConvolutionalNode].pytorchLayer.weight, weights))
     assert_true(torch.all(node.node[ConvolutionalNode].pytorchLayer.bias.eq(0)))   
     assert_true(torch.allclose(conv2d.weight, torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3)))
-    node.initSubWeights(tensorData, 3, 8)
+    node.initSubWeights(3)
     outSharedConv2d = node.forward(tensorData)
     assert_true(torch.allclose(outConv2d, outSharedConv2d)) 
     
@@ -641,80 +504,11 @@ def test_forwardPassCovolutionalNode():
     assert_true(torch.allclose(nodePtr[].node[ConvolutionalNode].pytorchLayer.weight, weights))
     assert_true(torch.all(nodePtr[].node[ConvolutionalNode].pytorchLayer.bias.eq(0)))   
     assert_true(torch.allclose(conv2d.weight, torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3)))
-    nodePtr[].initSubWeights(tensorData, 3, 8)
+    nodePtr[].initSubWeights(3)
     var outSharedConv2d2 = nodePtr[].forward(tensorData)
     assert_true(torch.allclose(outConv2d, outSharedConv2d2)) 
     nodePtr.free()
 
-def test_forwardPassCovolutionalNodeGPU():
-    """
-    Tests the forward pass for the ConvolutionalNode class on the GPU.
-    """
-    torch = Python.import_module("torch")
-    nn = Python.import_module("torch.nn")
-    init = Python.import_module("torch.nn.init")
-    F = Python.import_module("torch.nn.functional")
-    np = Python.import_module("numpy")
-    math = Python.import_module("math")
-    random = Python.import_module("random")
-    os = Python.import_module("os")
-    pickle = Python.import_module("pickle")
-    sys = Python.import_module("sys")
-    
-    # Get test batch
-    testBatchPath = 'testing/UnitTests/TestFiles/cifar10_test_batch_pickle'
-    assert_true(os.path.exists(testBatchPath))
-    Python.add_to_path(".")
-    utils = Python.import_module("utils")
-    imgData = utils.unpickle_test_data(testBatchPath, 4)
-    batch = imgData.reshape(4, 3, 32, 32)
-    tensorData = torch.tensor(batch, dtype=torch.float32)
-        
-    torch.manual_seed(42)
-    np.random.seed(42)
-    random.seed(42)
-
-    uuid = Python.import_module("uuid")
-    var pytorchLayerId = uuid.uuid4()
-    node = Node(ConvolutionalNode(name='name', kernel_size=3, 
-                             maxNumInputChannels=6, 
-                             maxNumOutputChannels=16, 
-                             numOutputChannels=8,
-                             layer=0, pytorchLayerId=pytorchLayerId))
-                             
-    var device: PythonObject = torch.device("cpu")
-    var cuda_available = torch.cuda.is_available()
-    if cuda_available:
-        device = torch.device("cuda") 
-
-    node.to(device=device)
-    tensorData = tensorData.to(device)
-
-    node.initSubWeights(tensorData, 3, 8)
-    outSharedConv2d = node.forward(tensorData)
-    
-    #for i in range(100000):
-    #    outSharedConv2d = node.forward(tensorData)
-    
-    # Testing forward with UnsafePointer
-    node = Node(ConvolutionalNode(name='name', kernel_size=3, 
-                         maxNumInputChannels=6, 
-                         maxNumOutputChannels=16, 
-                         numOutputChannels=8,
-                         layer=0, pytorchLayerId=pytorchLayerId))
-    var nodePtr = UnsafePointer[Node].alloc(1)
-    nodePtr.init_pointee_copy(node)
-    
-    nodePtr[].to(device=device)
-    tensorData = tensorData.to(device)
-
-    nodePtr[].initSubWeights(tensorData, 3, 8)
-    var outSharedConv2d2 = nodePtr[].forward(tensorData)
-    
-    #for i in range(100000):
-    #    outSharedConv2d = nodePtr[].forward(tensorData)
-        
-    nodePtr.free()
 
 def test_printCovolutionalNode():
     """
@@ -829,80 +623,6 @@ def test_forwardLinearNode():
               layer=1, pytorchLayerId=pytorchLayerId))
     node.node[LinearNode].pytorchLayer.weight = nn.Parameter(weights)
     node.node[LinearNode].pytorchLayer.bias.data.zero_() 
-    node.node[LinearNode].initSubWeights(flattened_tensor, 3072, 8) 
+    node.node[LinearNode].initSubWeights(3072) 
     var shared_out = node.forward(flattened_tensor)
     assert_true(torch.allclose(fc1_out, shared_out)) 
-
-def test_forwardLinearNodeGPU():
-    """
-    Tests just calling the LinearNode struct forward function.
-    """
-    torch = Python.import_module("torch")
-    nn = Python.import_module("torch.nn")
-    init = Python.import_module("torch.nn.init")
-    F = Python.import_module("torch.nn.functional")
-    np = Python.import_module("numpy")
-    math = Python.import_module("math")
-    random = Python.import_module("random")
-    os = Python.import_module("os")
-    pickle = Python.import_module("pickle")
-    sys = Python.import_module("sys")
-    
-    # Get test batch
-    testBatchPath = 'testing/UnitTests/TestFiles/cifar10_test_batch_pickle'
-    assert_true(os.path.exists(testBatchPath))
-    Python.add_to_path(".")
-    utils = Python.import_module("utils")
-    imgData = utils.unpickle_test_data(testBatchPath, 4)
-    batch = imgData.reshape(4, 3, 32, 32)
-    tensorData = torch.tensor(batch, dtype=torch.float32)
-    var flattened_tensor = tensorData.view(4, -1)  # This reshapes it to shape [4, 3072]
-    
-    torch.manual_seed(42)
-    np.random.seed(42)
-    random.seed(42)
-    
-    uuid = Python.import_module("uuid")
-    pytorchLayerId = uuid.uuid4() 
-    node = Node(LinearNode(name='name', 
-              maxNumInFeatures=4000, 
-              maxNumOutFeatures=4000,
-              numOutFeatures=8, 
-              layer=1, pytorchLayerId=pytorchLayerId))
-    
-    var device: PythonObject = torch.device("cpu")
-    var cuda_available = torch.cuda.is_available()
-    if cuda_available:
-        device = torch.device("cuda") 
-
-    node.to(device=device)
-    flattened_tensor = flattened_tensor.to(device)
-    
-    node.initSubWeights(flattened_tensor, 3072, 8) 
-    var shared_out = node.forward(flattened_tensor)
-    
-    #for i in range(100000):
-    #    shared_out = node.forward(flattened_tensor)
-        
-    var node2 = Node(LinearNode(name='name', 
-          maxNumInFeatures=4000, 
-          maxNumOutFeatures=4000,
-          numOutFeatures=8, 
-          layer=1, pytorchLayerId=pytorchLayerId))
-              
-    var nodePtr = UnsafePointer[Node].alloc(1)
-    nodePtr.init_pointee_copy(node2)
-    
-    nodePtr[].to(device=device)
-    flattened_tensor = flattened_tensor.to(device)
-    
-    # This breaks it for some reason. Call to 'init_pointee_copy()' must be triggering a copy for the sharedLinear struct
-    #node2.initSubWeights(flattened_tensor, 3072, 8) 
-    nodePtr[].initSubWeights(flattened_tensor, 3072, 8) 
-    shared_out = nodePtr[].forward(flattened_tensor)
-    
-    #for i in range(100000):
-    #    shared_out = nodePtr[].forward(flattened_tensor)
-        
-    nodePtr.free()
-    

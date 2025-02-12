@@ -78,14 +78,14 @@ def test_ForwardPass():
     
     # Response
     var sharedConv2d = SharedConv2d(6, 16, 3)
-    sharedConv2d.initSubWeights(tensorData, 3, 8)
+    sharedConv2d.initSubWeights(3, 8)
     sharedConv2d.weight = nn.Parameter(weights)
     sharedConv2d.bias.data.zero_()    
     assert_true(sharedConv2d.kernel_size == 3)
     assert_true(torch.allclose(sharedConv2d.weight, weights))
     assert_true(torch.all(sharedConv2d.bias.eq(0)))   
     assert_true(torch.allclose(conv2d.weight, torch.narrow(torch.narrow(weights, 0, 0, 8), 1, 0, 3)))
-    sharedConv2d.initSubWeights(tensorData, 3, 8)
+    sharedConv2d.initSubWeights(3, 8)
     outSharedConv2d = sharedConv2d.forward(tensorData)
     assert_true(torch.allclose(outConv2d, outSharedConv2d))   
 
@@ -123,7 +123,7 @@ def test_ForwardPassGPU():
     sharedConv2d.to(device=device)
     tensorData = tensorData.to(device)
     
-    sharedConv2d.initSubWeights(tensorData, 3, 8)
+    sharedConv2d.initSubWeights(3, 8)
     
     var outSharedConv2d = sharedConv2d.forward(tensorData)
     #for i in range(100000):
@@ -171,7 +171,7 @@ def test_CalOutputSize():
     var calcOutputSize = SharedConv2d.calcOutSize(tensorData.shape, outChannels=8, kernel_size=3, stride=1, padding=0, dilation=1)
     # Forward prop
     var outConv2d = conv2d(tensorData)
-    sharedConv2d.initSubWeights(tensorData, 3, 8)
+    sharedConv2d.initSubWeights(3, 8)
     var outSharedConv2d = sharedConv2d.forward(tensorData)
     assert_true(calcOutputSize == outConv2d.shape)
     assert_true(calcOutputSize == outSharedConv2d.shape)
@@ -183,7 +183,7 @@ def test_CalOutputSize():
     calcOutputSize = SharedConv2d.calcOutSize(tensorData.shape, outChannels=16, kernel_size=5)
     # Forward prop
     outConv2d = conv2d(tensorData)
-    sharedConv2d.initSubWeights(tensorData, 3, 16)
+    sharedConv2d.initSubWeights(3, 16)
     outSharedConv2d = sharedConv2d.forward(tensorData)
     assert_true(calcOutputSize == outConv2d.shape)
     assert_true(calcOutputSize == outSharedConv2d.shape)
@@ -195,7 +195,7 @@ def test_CalOutputSize():
     calcOutputSize = SharedConv2d.calcOutSize(tensorData.shape, outChannels=8, kernel_size=3)
     # Forward prop
     outConv2d = conv2d(tensorData)
-    sharedConv2d.initSubWeights(tensorData, 3, 8)
+    sharedConv2d.initSubWeights(3, 8)
     outSharedConv2d = sharedConv2d.forward(tensorData)
     assert_true(calcOutputSize == outConv2d.shape)
     assert_true(calcOutputSize == outSharedConv2d.shape)
@@ -218,13 +218,13 @@ def test_CalOutputSize():
     var calcOutShape2 = SharedConv2d.calcOutSize(calcOutShape1, outChannels=16, kernel_size=5)
     var calcOutShape3 = SharedConv2d.calcOutSize(calcOutShape2, outChannels=32, kernel_size=5)
     # Forward Prop Shared Conv2d Layers
-    sharedConv2d1.initSubWeights(tensorData, 3, 8)
+    sharedConv2d1.initSubWeights(3, 8)
     var outSharedConv2d1 = sharedConv2d1.forward(tensorData)
     
-    sharedConv2d2.initSubWeights(outSharedConv2d1, 8, 16)
+    sharedConv2d2.initSubWeights(8, 16)
     var outSharedConv2d2 = sharedConv2d2.forward(outSharedConv2d1)
         
-    sharedConv2d3.initSubWeights(outSharedConv2d2, 16, 32)
+    sharedConv2d3.initSubWeights(16, 32)
     var outSharedConv2d3 = sharedConv2d3.forward(outSharedConv2d2)
     
     # Validate Shapes
@@ -266,7 +266,7 @@ def test_GetOutputSize():
     var calcOutputSize = sharedConv2d.getOutSize(tensorData.shape, outChannels=8)
     # Forward prop
     var outConv2d = conv2d(tensorData)
-    sharedConv2d.initSubWeights(tensorData, 3, 8)
+    sharedConv2d.initSubWeights(3, 8)
     var outSharedConv2d = sharedConv2d.forward(tensorData)
     assert_true(calcOutputSize == outConv2d.shape)
     assert_true(calcOutputSize == outSharedConv2d.shape)
@@ -278,7 +278,7 @@ def test_GetOutputSize():
     calcOutputSize = sharedConv2d.getOutSize(tensorData.shape, outChannels=16)
     # Forward prop
     outConv2d = conv2d(tensorData)
-    sharedConv2d.initSubWeights(tensorData, 3, 16)
+    sharedConv2d.initSubWeights(3, 16)
     outSharedConv2d = sharedConv2d.forward(tensorData)
     assert_true(calcOutputSize == outConv2d.shape)
     assert_true(calcOutputSize == outSharedConv2d.shape)
@@ -291,7 +291,7 @@ def test_GetOutputSize():
     calcOutputSize = sharedConv2d.getOutSize(tensorData.shape, outChannels=8)
     # Forward prop
     outConv2d = conv2d(tensorData)
-    sharedConv2d.initSubWeights(tensorData, 3, 8)
+    sharedConv2d.initSubWeights(3, 8)
     outSharedConv2d = sharedConv2d.forward(tensorData)
     assert_true(calcOutputSize == outConv2d.shape)
     assert_true(calcOutputSize == outSharedConv2d.shape)
@@ -314,13 +314,13 @@ def test_GetOutputSize():
     var calcOutShape2 = sharedConv2d2.getOutSize(calcOutShape1, outChannels=16)
     var calcOutShape3 = sharedConv2d3.getOutSize(calcOutShape2, outChannels=32)
     # Forward Prop Shared Conv2d Layers
-    sharedConv2d1.initSubWeights(tensorData, 3, 8)
+    sharedConv2d1.initSubWeights(3, 8)
     var outSharedConv2d1 = sharedConv2d1.forward(tensorData)
         
-    sharedConv2d2.initSubWeights(outSharedConv2d1, 8, 16)
+    sharedConv2d2.initSubWeights(8, 16)
     var outSharedConv2d2 = sharedConv2d2.forward(outSharedConv2d1)
         
-    sharedConv2d3.initSubWeights(outSharedConv2d2, 16, 32)
+    sharedConv2d3.initSubWeights(16, 32)
     var outSharedConv2d3 = sharedConv2d3.forward(outSharedConv2d2)
     # Validate Shapes
     assert_true(calcOutShape1 == outConv2d1.shape)
