@@ -139,7 +139,7 @@ struct GraphHandler:
                                                   layer=layer, 
                                                   pytorchLayerId=pytorchLayerId))
                 self.addNode(node)
-                var outShape = SharedConv2d.calcOutSize(inputShape, 8, 3)
+                var outShape = SharedConv2d.calcOutSize(inputShape, oc[], kernel[])
                 outShapes.append(outShape)
                 
         self.prevNodes = self.curNodes
@@ -167,16 +167,15 @@ struct GraphHandler:
         Returns:
             outputShape (PythonObject): The shape of the input tensor as a PyTorch Tensor.Size() object
         """
-        var outShape = inputShape
+        var outShape: PythonObject = inputShape
         var outShapes = List[PythonObject]()
         for i in range(self.numConvLayers):       
             self.layer = self.layer + 1
-            var outShape = self.addConvolutionalLayer(self.layer, inputShape)
+            outShape = self.addConvolutionalLayer(self.layer, outShape)
             self.addNormalizationLayer(outShape[1])                
             self.addActivationLayer()
             self.addPoolingLayer()
             outShapes.append(outShape)
-            inputShape = outShape
         return outShape
         
     def addFlattenLayer(inout self, inputShape: PythonObject) -> PythonObject:

@@ -33,21 +33,15 @@ struct SharedConv2d():
         self.inChannels = self.maxInChannels
         self.outChannels = self.maxOutChannels
 
-        # Initialize the weights and biases for the maximum configuration
-        self.weight = nn.Parameter(torch.Tensor(self.maxOutChannels, self.maxInChannels)).to(self.device)
-        self.bias = nn.Parameter(torch.Tensor(self.maxOutChannels)).to(self.device)
-        self.weightSub = self.weight.narrow(0, 0, self.outChannels).narrow(1, 0, self.inChannels).to(self.device)
-        self.biasSub = self.bias.narrow(0, 0, self.outChannels).to(self.device)
         self.stride = 1
         self.padding = 0
         self.dilation = 1
 
         # Initialize the weights and biases
-        self.weight = nn.Parameter(torch.Tensor(self.maxOutChannels, 
-                                                self.maxInChannels, 
-                                                self.kernel_size, 
-                                                self.kernel_size))
-        self.bias = nn.Parameter(torch.Tensor(self.maxOutChannels))
+        self.weight = torch.Tensor(self.maxOutChannels, self.maxInChannels, self.kernel_size, self.kernel_size).to(self.device)
+        self.bias = torch.Tensor(self.maxOutChannels).to(self.device)
+        self.weight = self.weight.pin_memory()
+        self.bias = self.bias.pin_memory()
 
         # Initialize weights using Kaiming (He) initialization
         init.kaiming_uniform_(self.weight, a=math.sqrt(5))  
@@ -58,13 +52,15 @@ struct SharedConv2d():
         bound = 1.0 / math.sqrt(fan_in)
         init.uniform_(self.bias, -bound, bound)
         
+        self.weightSub = nn.Parameter(self.weight.narrow(0, 0, self.outChannels).narrow(1, 0, self.inChannels))
+        self.biasSub = nn.Parameter(self.bias.narrow(0, 0, self.outChannels))
+                
     fn __str__(inout self) -> String:
         var strRep = "SharedConv2d(" + str(self.maxInChannels) + ", " + str(self.maxOutChannels) + ", kernel_size=" + str(self.kernel_size) + ")"
         return strRep
 
     fn forward(inout self, x: PythonObject) raises -> PythonObject:
-        var rslt = self.F.conv2d(x, self.weightSub, self.biasSub)
-        return rslt
+        return self.F.conv2d(x, self.weightSub, self.biasSub)
         
     def getOutSize(self, tensorShape: PythonObject, outChannels: Optional[Int] = Optional[Int](None)) -> PythonObject:
         """
@@ -86,12 +82,13 @@ struct SharedConv2d():
         var outputShape = SharedConv2d.calcOutSize(tensorShape, outputChannels, self.kernel_size, self.stride, self.padding, self.dilation)
         return outputShape      
         
-    def initSubWeights(inout self, x: PythonObject, inChannels: Int, outChannels: Int):
+    def initSubWeights(inout self, inChannels: Int, outChannels: Int):
+        nn = Python.import_module("torch.nn")
         self.inChannels = inChannels
         self.outChannels = outChannels
         # Dynamically select the subset of weights and biases
-        self.weightSub = self.weight.narrow(0, 0, self.outChannels).narrow(1, 0, self.inChannels).to(self.device)
-        self.biasSub = self.bias.narrow(0, 0, self.outChannels).to(self.device)
+        self.weightSub = nn.Parameter(self.weight.narrow(0, 0, self.outChannels).narrow(1, 0, self.inChannels))
+        self.biasSub = nn.Parameter(self.bias.narrow(0, 0, self.outChannels))
         
     def to(inout self, device: PythonObject):
         """
@@ -100,11 +97,12 @@ struct SharedConv2d():
         Args:
             device (PythonObject): PythonObject of the device to do computations on.
         """
+        nn = Python.import_module("torch.nn")
         self.device = device
-        self.weight.to(self.device)
-        self.bias.to(self.device)
-        self.weightSub.to(self.device)
-        self.biasSub.to(self.device)        
+        self.weight = self.weight.to(self.device)
+        self.bias = self.bias.to(self.device)       
+        self.weightSub = nn.Parameter(self.weight.narrow(0, 0, self.outChannels).narrow(1, 0, self.inChannels))
+        self.biasSub = nn.Parameter(self.bias.narrow(0, 0, self.outChannels))
 
     @staticmethod
     def calcOutSize(tensorShape: PythonObject, outChannels: Int, kernel_size: Int,  stride: Int = 1, padding: Int = 0, dilation: Int = 1) -> PythonObject:
