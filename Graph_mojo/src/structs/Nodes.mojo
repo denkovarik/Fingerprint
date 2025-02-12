@@ -170,7 +170,7 @@ struct Node(NodeTrait):
         return strRep
         
     fn forward(inout self, x: PythonObject) raises -> PythonObject:
-        var out = x
+        var out: PythonObject = x
         self.nodeType = self.getNodeType()
         
         if self.nodeType.value == NodeType.INPUT.value:
@@ -232,11 +232,13 @@ struct Node(NodeTrait):
             return NodeType.ACTIVATION
         return NodeType.NONE
         
-    def initSubWeights(inout self, x: PythonObject, inChannels: Int, outChannels: Int):
+    def initSubWeights(inout self, inChannels: Int):
         if self.node.isa[ConvolutionalNode]():
-            self.node[ConvolutionalNode].initSubWeights(x, inChannels, outChannels)
+            self.node[ConvolutionalNode].initSubWeights(inChannels)
+        elif self.node.isa[NormalizationNode]():
+            self.node[NormalizationNode].initSubWeights(inChannels)    
         elif self.node.isa[LinearNode]():
-            self.node[LinearNode].initSubWeights(x, inChannels, outChannels)    
+            self.node[LinearNode].initSubWeights(inChannels)   
             
     def to(inout self, device: PythonObject):
         if self.nodeType.value == NodeType.CONVOLUTION.value:
@@ -329,12 +331,17 @@ struct NormalizationNode(NodeTrait):
         return strRep
             
     fn forward(inout self, x: PythonObject) raises -> PythonObject:
-        if self.normalizationType == NormalizationType.NO_NORM:
-            return x
-        return self.pytorchLayer.forward(x)
+        if self.normalizationType == NormalizationType.BATCH_NORM:
+            return self.pytorchLayer(x)
+        return x
         
     def getName(inout self) -> String:
         return self.name
+        
+    def initSubWeights(inout self, inChannels: Int):
+        nn = Python.import_module("torch.nn")
+        self.numFeatures = inChannels
+        self.pytorchLayer = nn.BatchNorm2d(self.numFeatures)
         
     def to(inout self, device: PythonObject):
         self.pytorchLayer.to(device) 
@@ -376,7 +383,8 @@ struct PoolingNode(NodeTrait):
         return self.name
         
     def to(inout self, device: PythonObject):
-        self.pytorchLayer.to(device) 
+        if self.poolingType != PoolingType.NO_POOLING:
+            self.pytorchLayer.to(device) 
         
 
 @value            
@@ -412,7 +420,8 @@ struct ActivationNode(NodeTrait):
         return self.name
         
     def to(inout self, device: PythonObject):
-        self.pytorchLayer.to(device) 
+        if self.activationType != ActivationType.LINEAR:
+            self.pytorchLayer.to(device) 
         
 
 @value
@@ -471,8 +480,8 @@ struct ConvolutionalNode(NodeTrait):
         var strRep = self.pytorchLayer.__str__()
         return strRep
 
-    def initSubWeights(inout self, x: PythonObject, inChannels: Int, outChannels: Int):
-        self.pytorchLayer.initSubWeights(x, inChannels, outChannels)
+    def initSubWeights(inout self, inChannels: Int):
+        self.pytorchLayer.initSubWeights(inChannels, self.numOutputChannels)
 
     fn forward(inout self, x: PythonObject) raises -> PythonObject:
         return self.pytorchLayer.forward(x)
@@ -513,8 +522,8 @@ struct LinearNode(NodeTrait):
         var strRep = self.pytorchLayer.__str__()
         return self.displayName
         
-    def initSubWeights(inout self, x: PythonObject, inChannels: Int, outChannels: Int):
-        self.pytorchLayer.initSubWeights(x, inChannels, outChannels)
+    def initSubWeights(inout self, inChannels: Int):
+        self.pytorchLayer.initSubWeights(inChannels, self.numOutFeatures)
 
     fn forward(inout self, x: PythonObject) raises -> PythonObject:
         return self.pytorchLayer.forward(x)
