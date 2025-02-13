@@ -74,8 +74,8 @@ struct CustomCNN:
                 self.parameters.append(self.layers[i][].node[LinearNode].pytorchLayer.biasSub)
         return self.parameters
 
-    fn zero_grad(inout self):
-        for param in self.parameters.values():
+    fn zero_grad(inout self) raises:
+        for param in self.parameters:
             try:
                 param.grad.zero_()
             except AttributeError:
@@ -101,6 +101,7 @@ struct ENAS:
     def sampleArchitecture(inout self, sample: List[Int]):
         self.sampleGraph = self.graphHandler.sampleArchitecture(sample)
         self.sample = CustomCNN(self.sampleGraph, self.inputShape)
+        self.sample.initSubweights()
 
 
 
