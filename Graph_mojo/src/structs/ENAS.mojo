@@ -42,7 +42,6 @@ struct CustomCNN:
         
         for i in range(self.layers.__len__()):
             var inChannels: Int = randTense.shape[1]
-            print(self.layers[i][].getName())
             self.layers[i][].initSubWeights(inChannels)
             randTense = self.layers[i][].forward(randTense)            
             
@@ -61,15 +60,13 @@ struct CustomCNN:
         self.parameters = Python.list()
         for i in range(self.layers.__len__()):        
             if self.layers[i][].nodeType.value == NodeType.CONVOLUTION.value:
-                pass
                 self.parameters.append(self.layers[i][].node[ConvolutionalNode].pytorchLayer.weightSub)
                 self.parameters.append(self.layers[i][].node[ConvolutionalNode].pytorchLayer.biasSub)
             elif self.layers[i][].nodeType.value == NodeType.NORMALIZATION.value:
-                pass
-                self.parameters.append(self.layers[i][].node[NormalizationNode].pytorchLayer.weight)
-                self.parameters.append(self.layers[i][].node[NormalizationNode].pytorchLayer.bias)
+                if self.layers[i][].node[NormalizationNode].normalizationType.value == NormalizationType.BATCH_NORM.value:
+                    self.parameters.append(self.layers[i][].node[NormalizationNode].pytorchLayer.weight)
+                    self.parameters.append(self.layers[i][].node[NormalizationNode].pytorchLayer.bias)
             elif self.layers[i][].nodeType.value == NodeType.LINEAR.value:
-                pass
                 self.parameters.append(self.layers[i][].node[LinearNode].pytorchLayer.weightSub)
                 self.parameters.append(self.layers[i][].node[LinearNode].pytorchLayer.biasSub)
         return self.parameters

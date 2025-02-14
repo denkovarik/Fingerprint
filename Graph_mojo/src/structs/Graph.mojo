@@ -46,6 +46,7 @@ struct GraphHandler:
     var dfsStack: List[Int]
     var dfsStackKeys: List[String]
     var sampleArchitecturesEnd: Bool
+    var numGraphSubnetworks: Int
     
     fn __init__(inout self):
         self.ALLOWED_KERNEL_SIZES = Set[Int](3,5)
@@ -67,6 +68,7 @@ struct GraphHandler:
         self.dfsStackKeys = List[String]()
         self.sample = Graph()
         self.sampleArchitecturesEnd = True
+        self.numGraphSubnetworks = 0
         # Find the max number of features for convolutional layers
         for c in self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS:
             if c[] > self.MAX_NUMBER_OF_CONVOLUTION_CHANNELS:
@@ -337,7 +339,12 @@ struct GraphHandler:
         self.addOutputLayer()
         self.initDfsStack()
         self.sampleArchitecturesEnd = False
-        
+        # Count the number of subnetworks
+        self.numGraphSubnetworks = 1
+        while self.incSampleArchitecture() == True:
+            self.numGraphSubnetworks = self.numGraphSubnetworks + 1
+        self.initDfsStack()
+                
     def initDfsStack(inout self):
         """
         Initializes the stack used to iterate of DFS paths in Graph.
@@ -375,20 +382,6 @@ struct GraphHandler:
             self.dfsStack[curDepth] = self.dfsStack[curDepth] + 1
         self.sampleArchitecturesEnd = False
         return True
-        
-    def nextSampleArchitecture(inout self) -> Graph:
-        if self.sampleArchitecturesEnd == True:
-            self.initDfsStack()
-        
-        var dfsSample: List[Int]      
-        if self.incSampleArchitecture():  
-            dfsSample = self.dfsStack
-            sampleGraph = self.sampleArchitecture(dfsSample)
-            return sampleGraph
-        else:
-            dfsSample = self.dfsStack
-            sampleGraph = self.sampleArchitecture(dfsSample)
-            return sampleGraph
         
     def sampleArchitecture(inout self, sample: List[Int]) -> Graph:
         var nodeName: String = 'input'
