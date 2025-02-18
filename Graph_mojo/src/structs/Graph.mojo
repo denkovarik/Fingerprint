@@ -8,21 +8,25 @@ from structs.SharedConv2d import SharedConv2d
 from memory import UnsafePointer
 
 
+@value
 struct Graph:
     # Witness Me!
     var nodes: Dict[String, UnsafePointer[Node]]
     var edges: Dict[String, List[String]]
+    var sampleArch: List[Int]
     
     fn __init__(inout self):
         self.nodes = Dict[String, UnsafePointer[Node]]()
         self.edges = Dict[String, List[String]]()
+        self.sampleArch = List[Int]()
         
     fn __copyinit__(inout self, other: Self):
         self.nodes = other.nodes
         self.edges = other.edges
+        self.sampleArch = other.sampleArch
         
     def to(inout self, device: PythonObject):
-        for item in grph.graph.nodes.items():
+        for item in self.nodes.items():
             item[].value[].to(device)
 
 
@@ -344,6 +348,55 @@ struct GraphHandler:
         while self.incSampleArchitecture() == True:
             self.numGraphSubnetworks = self.numGraphSubnetworks + 1
         self.initDfsStack()
+        
+    def getRandomSampleArchitecture(inout self) -> Graph:
+        var random = Python.import_module("random")
+    
+        var nodeName: String = 'input'                
+        var sample = Graph()        
+        sample.nodes[nodeName] = self.graph.nodes[nodeName]   
+        var idx: Int = random.randint(0, len(self.graph.edges[nodeName]) - 1)
+        sample.edges[nodeName] = self.graph.edges[nodeName][idx]
+        nodeName = self.graph.edges[nodeName][idx]
+        sample.sampleArch.append(idx)
+ 
+        while nodeName != 'output':
+            sample.nodes[nodeName] = self.graph.nodes[nodeName]
+            var idx: Int = random.randint(0, len(self.graph.edges[nodeName]) - 1)
+            sample.edges[nodeName] = self.graph.edges[nodeName][idx]
+            nodeName = self.graph.edges[nodeName][idx]
+            sample.sampleArch.append(idx)
+        
+        sample.nodes[nodeName] = self.graph.nodes[nodeName]
+        sample.edges[nodeName] = List[String]()  
+        
+        return sample 
+        
+    def getSampleArchitecture(inout self, sampleArch: List[Int]) -> Graph:
+        var nodeName: String = 'input'
+        sample = Graph()        
+        sample.sampleArch = List[Int]()
+        sample.nodes[nodeName] = self.graph.nodes[nodeName]   
+        var idx = sampleArch[0] % len(self.graph.edges[nodeName])
+        sample.sampleArch.append(idx)
+        sample.edges[nodeName] = self.graph.edges[nodeName][idx]
+        nodeName = self.graph.edges[nodeName][idx]
+        var ind: Int = 1
+ 
+        while nodeName != 'output':
+            if ind >= len(sampleArch):
+                print("uh-oh")
+            sample.nodes[nodeName] = self.graph.nodes[nodeName]
+            var idx = sampleArch[ind] % len(self.graph.edges[nodeName])
+            sample.sampleArch.append(idx)
+            sample.edges[nodeName] = self.graph.edges[nodeName][idx]
+            nodeName = self.graph.edges[nodeName][idx]
+            ind += 1
+        
+        sample.nodes[nodeName] = self.graph.nodes[nodeName]
+        sample.edges[nodeName] = List[String]()
+
+        return sample
                 
     def initDfsStack(inout self):
         """
@@ -387,16 +440,18 @@ struct GraphHandler:
         var nodeName: String = 'input'
         self.sample = Graph()        
         self.sample.nodes[nodeName] = self.graph.nodes[nodeName]   
-        self.sample.edges[nodeName] = self.graph.edges[nodeName][sample[0]]
-        nodeName = self.graph.edges[nodeName][sample[0]]
+        var idx = sample[0] % len(self.graph.edges[nodeName])
+        self.sample.edges[nodeName] = self.graph.edges[nodeName][idx]
+        nodeName = self.graph.edges[nodeName][idx]
         var ind: Int = 1
  
         while nodeName != 'output':
             if ind >= len(sample):
                 print("uh-oh")
             self.sample.nodes[nodeName] = self.graph.nodes[nodeName]
-            self.sample.edges[nodeName] = self.graph.edges[nodeName][sample[ind]]
-            nodeName = self.graph.edges[nodeName][sample[ind]]
+            var idx = sample[ind] % len(self.graph.edges[nodeName])
+            self.sample.edges[nodeName] = self.graph.edges[nodeName][idx]
+            nodeName = self.graph.edges[nodeName][idx]
             ind += 1
         
         self.sample.nodes[nodeName] = self.graph.nodes[nodeName]
