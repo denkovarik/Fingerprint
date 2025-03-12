@@ -96,8 +96,8 @@ def main():
     var device: PythonObject = torch.device("cpu")
     var cuda_available = torch.cuda.is_available()
     if cuda_available:
-        device = torch.device("cuda:1") 
-    #print("Using device " + str(device))
+        device = torch.device("cuda") 
+    print("Using device " + str(device))
       
     # Load cifar10 dataset
     var trainloader = CIFAR10DataLoader(dataDir=dataDir, batchSize=batchSize, device=device, train=True, shuffle=True)
@@ -110,23 +110,9 @@ def main():
     var cnt = 0
     var incSampleArchitecture: Bool = True
     
-    print("Validation Accuracy, Model")    
+    print("Validation Accuracy, Model")   
     
-    # Iterate to the start
-    var startArch: List[Int] = List[Int](1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0)
-    #var stopArch: List[Int] = List[Int](1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0)
-    
-    var stop: Bool = False
-    while stop == False and enas.graphHandler.sampleArchitecturesEnd == False:
-        if enas.graphHandler.dfsStack == startArch:
-            stop = True
-        else:
-            incSampleArchitecture = enas.graphHandler.incSampleArchitecture()   
-    
-    while incSampleArchitecture:    
-        #if enas.graphHandler.dfsStack == stopArch:
-        #    break
-            
+    while incSampleArchitecture == True:             
         var sample: List[Int] = List[Int](enas.graphHandler.dfsStack)
         
         enas.sampleArchitecture(sample) 
@@ -134,10 +120,15 @@ def main():
                                       
         var criterion = nn.CrossEntropyLoss()    
         var optimizer = optim.Adam(enas.sample.registerParameters(), lr=0.001)
-        
-        var startTime = time.perf_counter()
-        for epoch in range(num_epochs):
+                
+        var highValAcc: Float64 = 0
+        var highValAccCnt: Int = 0
+        var improving: Bool = True
+        var epoch: Int = 0
+        var maxEpochs: Int = 200
+        while improving:
             var running_loss: PythonObject = 0.0
+            var cnt: Float64 = 0.0
             for i in range(trainloader.__len__()):
                 var images = trainloader.batchImages[i].to(device)
                 var labels = trainloader.batchLabels[i].to(device)
@@ -147,16 +138,27 @@ def main():
                 var loss: PythonObject = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
-        
+
                 running_loss = running_loss + loss.item()
             
             #print("Epoch " + str(epoch + 1) + " Loss: " + str(running_loss / trainloader.__len__()))
             
-        # Test
-        var accuracy: Float64 = testNetwork(model=enas.sample, testloader=testloader, device=device)            
+            # Test
+            var accuracy: Float64 = testNetwork(model=enas.sample, testloader=testloader, device=device)
+            #print("Validation Accuracy: " + str(accuracy) + "%")
+            
+            if accuracy > highValAcc:
+                highValAcc = accuracy
+                highValAccCnt = 0
+            else:
+                highValAccCnt = highValAccCnt + 1
+                
+            epoch = epoch + 1
+                
+            if highValAccCnt > 2 or epoch >= maxEpochs:
+                improving = False
         
-        #print(str(100.0 * cnt / enas.graphHandler.numGraphSubnetworks), end=",")
-        print(str(accuracy), end=",")
+        print(str(highValAcc), end="%,")
         
         
         print('"[', end="")
@@ -170,8 +172,7 @@ def main():
         cnt = cnt + 1
         
         #print("Training completed in " + str(endTime - startTime) + " seconds")
-        
-        
+              
         enas.sample.to(device=cpu)
         incSampleArchitecture = enas.graphHandler.incSampleArchitecture()
         
