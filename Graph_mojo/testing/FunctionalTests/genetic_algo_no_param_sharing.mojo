@@ -134,7 +134,7 @@ def main():
     
     var dataDir: String = "Datasets/CIFAR-10"
     var num_epochs: Int = 15
-    var batchSize: Int = 512
+    var batchSize: Int = 256
     var inputShape: PythonObject = torch.Size([batchSize, 3, 32, 32])
     
     # Construct the ENAS
@@ -164,13 +164,14 @@ def main():
     var testloader = CIFAR10DataLoader(dataDir=dataDir, batchSize=batchSize, device=device, train=False, shuffle=True)
            
     var startTime = time.perf_counter()
-    var maxEpochs: Int = 1
+    var maxEpochs: Int = 20
     
     var accuracies: List[Float64] = List[Float64]()
     var bestInd: Int = 0
     var generation: Int = 0
     
-    while True:
+
+    while generation < 100:
         var genbest: Float64 = 0.0
         var accuracies: List[Float64] = List[Float64]()
         
@@ -193,7 +194,7 @@ def main():
         print("]")
         
         # Trim population
-        var suvivors: List[Graph] = List[Graph]()
+        var survivors: List[Graph] = List[Graph]()
         var thres = popSize / 2
         var best: Float64 = 0.0
         var bestInd: Int = 0    
@@ -207,43 +208,61 @@ def main():
                     bestInd = i
             
             survivor = enas.graphHandler.getSampleArchitecture(population[bestInd].sampleArch)    
-            suvivors.append(survivor)
+            survivors.append(survivor)
                  
-            population.pop(bestInd)
-            accuracies.pop(bestInd)
+            var t1 = population.pop(bestInd)
+            var t2 = accuracies.pop(bestInd)
             thres = thres - 1.0
             
-        population = List[Graph](suvivors[0])        
+        population = List[Graph](survivors[0])        
         
         # Reproduce
         var i: Int = 0
-        var survivorsLen = len(suvivors)
-        # Mutate
-        while i < survivorsLen:
-            var ind: Int = random.randint(0, suvivors[i].sampleArch.__len__() - 1)
-            var dir: Int = random.randint(0, 1)
-            var mutantArch: List[Int] = List[Int]()
-            for j in range(suvivors[i].sampleArch.__len__()):
-                if j == ind:
-                    if dir == 0 and suvivors[i].sampleArch[j] > 0: 
-                        var mInd: Int = suvivors[i].sampleArch[j] - 1
-                        mutantArch.append(mInd)
-                    else: 
-                        var mInd: Int = suvivors[i].sampleArch[j] + 1
-                        mutantArch.append(mInd)
+        var j: Int = 0
+        var survivorsLen = len(survivors)
+        var dnaLen: Int = survivors[0].sampleArch.__len__()
+        var crossoverLen: Int = 8
+        var childArch: List[Int] = List[Int](0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+        
+        
+        while(population.__len__() < popSize):
+            # Crossover
+            var p: Int = random.randint(0, len(survivors) - 1)
+            while len(survivors[p].sampleArch) != 17:
+                p = random.randint(0, len(survivors) - 1)
+            var q: Int = random.randint(0, len(survivors) - 1)
+            while len(survivors[q].sampleArch) != 17:
+                while q == p:
+                    q = random.randint(0, survivors[i].sampleArch.__len__() - 1)
+                p = random.randint(0, len(survivors) - 1)
+            var mom: List[Int] = survivors[p].sampleArch
+            var dad: List[Int] = survivors[q].sampleArch
+            j = 0
+            while j < dnaLen:
+                if j < crossoverLen:
+                    childArch[j] = dad[j]
                 else:
-                    mutantArch.append(suvivors[i].sampleArch[j])
-            var mutant: Graph = enas.graphHandler.getSampleArchitecture(mutantArch)
-            population.append(mutant)
-            i = i + 1
+                    childArch[j] = mom[j]
+                j = j + 1
+        
+            # Mutate
+            var ind: Int = random.randint(0, survivors[i].sampleArch.__len__() - 1)
+            var dir: Int = random.randint(0, 1)
+            
+            if dir == 0 and survivors[i].sampleArch[j] > 0: 
+                childArch[ind] = childArch[ind] - 1
+            else: 
+                childArch[ind] = childArch[ind] - 1
+                    
+            var child: Graph = enas.graphHandler.getSampleArchitecture(childArch)
+            population.append(child)
+
 
         while(population.__len__() < popSize):
             sampleGraph = enas.graphHandler.getRandomSampleArchitecture()    
             population.append(sampleGraph)
                 
         generation = generation + 1
-        if generation % 10 == 0:
-            maxEpochs = maxEpochs + 1
     
     var endTime = time.perf_counter()
     
