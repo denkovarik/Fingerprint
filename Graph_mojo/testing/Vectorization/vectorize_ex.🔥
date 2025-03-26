@@ -1,0 +1,67 @@
+# Source: https://workshops.modular.com/3_hands_on/vectorization_parallelization_mojo/
+
+from tensor import Tensor, TensorShape, TensorSpec
+from math import trunc
+from memory import memset_zero
+from sys.info import simdwidthof, simdbitwidth
+from algorithm import vectorize, parallelize
+from utils.index import Index
+from random import rand, seed
+from python import Python
+import time
+
+alias dtype = DType.float32
+alias simd_width: Int = simdwidthof[dtype]()
+
+fn tensor_mean[dtype: DType](t: Tensor[dtype]) -> Tensor[dtype]:
+    var new_tensor = Tensor[dtype](t.dim(0),1)
+    for i in range(t.dim(0)):
+        for j in range(t.dim(1)):
+            new_tensor[i] += t[i,j]
+        new_tensor[i] /= t.dim(1)
+    return new_tensor
+
+fn tensor_mean_vectorize_parallelized[dtype: DType](t: Tensor[dtype]) -> Tensor[dtype]:
+    var new_tensor = Tensor[dtype](t.dim(0),1)
+    @parameter
+    fn parallel_reduce_rows(idx1: Int)->None:
+        @parameter
+        fn vectorize_reduce_row[simd_width: Int](idx2: Int) -> None:
+            new_tensor[idx1] += t.load[simd_width](idx1*t.dim(1)+idx2).reduce_add()
+        vectorize[vectorize_reduce_row,2*simd_width](t.dim(1))
+        new_tensor[idx1] /= t.dim(1)
+    parallelize[parallel_reduce_rows](t.dim(0),8)
+    return new_tensor
+
+
+def main():
+    print("SIMD bit width",simdbitwidth())
+    print("SIMD Width",simd_width)
+    
+    seed(42)
+    var t = Tensor[dtype].rand(TensorShape(3, 7))
+    
+    print(t)
+    
+    var time = Python.import_module("time")
+    
+    var tm1 = time.time()
+    var mean = tensor_mean(t)
+    var dur1 = time.time()-tm1
+    
+    print("")
+    print(mean)
+
+    var tm2 = time.time()
+    
+    # Wont work when tensor rows are >= simd_width (8)
+    var mean2 = tensor_mean_vectorize_parallelized[dtype](t)
+    
+    var dur2 = time.time()-tm2
+    
+    print("")
+    print(mean2)
+    
+    print("")
+    print("Mojo naive mean:",dur1,"seconds")
+    print("Mojo vecotorized mean:",dur2,"seconds")
