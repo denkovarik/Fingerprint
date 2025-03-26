@@ -1,0 +1,341 @@
+# Original Source: https://github.com/henrithomas/mojo-neural-net/tree/main
+
+from tensor import Tensor, TensorSpec, TensorShape
+from sys.info import simdwidthof, simdbitwidth
+from algorithm import parallelize, vectorize
+from utils.index import Index
+from random import randn, random_si64, seed
+from pathlib import path
+from math import exp
+from python import Python
+
+alias type = DType.float64
+alias simdwidth = simdwidthof[type]()
+alias mu: Float64 = 0.01
+alias beta1: Float64 = 0.9
+alias beta2: Float64 = 0.99
+alias epsilon: Float64 = 0.00000001
+alias mini_batch_size: Int = 50
+alias epochs: Int = 1
+alias error_target: Float32 = .1
+alias input_layer_size: Int = 16
+alias hidden_layer_size: Int = 52
+alias output_layer_size: Int = 26
+alias data_width: Int = 17
+alias data_size: Int = 20000
+alias training_size: Int = 16000
+alias validation_size: Int = 4000
+
+fn matmul_simple(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
+    var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0],t2.shape()[1]))
+
+    for i in range(t_mul.shape()[0]):
+        for j in range(t1.shape()[1]):
+            for k in range(t_mul.shape()[1]):
+                t_mul[Index(i, k)] += t1[Index(i,j)] * t2[Index(j,k)]
+                
+    return t_mul   
+
+fn transpose(t: Tensor[type]) -> Tensor[type]:
+    var t_transpose: Tensor[type] = Tensor[type](TensorShape(t.shape()[1], t.shape()[0]))
+    
+    for i in range(t.shape()[0]):
+        for j in range(t.shape()[1]):
+            t_transpose[Index(j,i)] = t[Index(i,j)]
+
+    return t_transpose
+    
+fn add_tensors_simple(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
+    var t_added: Tensor[type] = Tensor[type](t1.shape())
+    for i in range(t1.shape()[0]):
+        for j in range(t1.shape()[1]):
+            t_added[Index(i, j)] = t1[Index(i, j)] + t2[Index(i, j)]
+    return t_added
+
+fn matmul(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
+    var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0],t2.shape()[1]))
+
+    @parameter
+    fn calc_row(i: Int):
+        for j in range(t1.shape()[1]):
+            @parameter
+            fn dot[simd_width: Int](k: Int):
+                pass
+                #t_mul.simd_store[simd_width](
+                #    i * t_mul.shape()[1] + k, 
+                #    t_mul.simd_load[simd_width](i * t_mul.shape()[1] + k) + t1[Index(i,j)] * t2.simd_load[simd_width](j * t_mul.shape()[1] + k)
+                #)
+            #vectorize[simdwidth, dot](t_mul.shape()[1])
+
+    parallelize[calc_row](t_mul.shape()[0], t_mul.shape()[0])
+
+    return t_mul 
+
+fn dot(t1: Tensor[type], t2: Tensor[type]) -> Float64:
+    var vec_dot: Float64 = 0.0
+    var temp_vec: Tensor[type] = Tensor[type](t1.shape())
+    #var sum_vec: Tensor[type] = Tensor[type](simdwidth)
+    #var sum_simd = SIMD[type, simdwidth](0.0)
+
+    @parameter
+    fn compute_mul[simd_width: Int](idx: Int):
+        pass
+        #temp_vec.simd_store[simd_width](idx, t1.simd_load[simd_width](idx) * t2.simd_load[simd_width](idx))
+
+    #vectorize[simdwidth, compute_mul](t1.shape()[1])
+
+    for i in range(temp_vec.shape()[1]):
+        vec_dot += temp_vec[i]
+
+    return vec_dot
+
+# 1.0/(1.0 + exp(-x))
+fn sigmoid(z: Tensor[type]) -> Tensor[type]:
+    var activations: Tensor[type] = Tensor[type](z.shape())
+
+    @parameter
+    fn compute_exp[simd_width: Int](idx: Int):
+        activations.store[simd_width](idx, (1 / (1 + exp(-1 * z.load[simd_width](idx)))))
+    
+    vectorize[simdwidth, compute_exp](activations.num_elements())
+    
+    return activations
+
+# 1/sqrt(x + epsilon)
+fn inv_sqrt(z: Tensor[type]) -> Tensor[type]:
+    var second_moments: Tensor[type] = Tensor[type](z.shape())
+
+    @parameter
+    fn compute_rsqrt[simd_width: Int](idx: Int):
+        pass
+        #second_moments.simd_store[simd_width](idx, rsqrt[type, simd_width](epsilon + z.simd_load[simd_width](idx)))
+    
+    #vectorize[simdwidth, compute_rsqrt](second_moments.num_elements())
+    
+    return second_moments
+
+
+# sigmoid(z) * (1 - sigmoid(z))
+fn sigmoid_prime(a: Tensor[type]) raises -> Tensor[type]:
+    var sigma_prime: Tensor[type] = Tensor[type](a.shape()) 
+
+    #sigma_prime = a * (1 - a)
+
+    return sigma_prime
+
+fn sigmoid_prime_full(z: Tensor[type]) raises -> Tensor[type]:
+    var sigma_prime: Tensor[type] = Tensor[type](z.shape()) 
+    var sigmoid_z = sigmoid(z)
+
+    #sigma_prime = sigmoid_z * (1 - sigmoid_z)
+
+    return sigma_prime
+
+fn feed_forward():
+    return
+
+fn output_error(a_L: Tensor[type], expected: Tensor[type], a_L_prime: Tensor[type]) raises -> Tensor[type]:
+    var error_L: Tensor[type] = Tensor[type](a_L.shape())
+
+    #error_L = (a_L - expected) * a_L_prime
+
+    return error_L
+
+fn backpropagation(w: Tensor[type], error: Tensor[type], a_prime: Tensor[type]) raises -> Tensor[type]:
+    var error_l: Tensor[type] = Tensor[type](TensorShape(mini_batch_size, hidden_layer_size))
+    var w_transpose: Tensor[type] = transpose(w) 
+
+    #error_l = a_prime * matmul(error, w_transpose)
+
+    return error_l
+
+fn adamopt(mut d_L: Tensor[type], mut d_l: Tensor[type], mut d_L_m: Tensor[type], mut d_l_m: Tensor[type], mut d_L_v: Tensor[type], mut d_l_v: Tensor[type], epoch: Int) raises:
+    pass
+    #d_L_m = beta1 * d_L_m + (1-beta1) * d_L
+    #d_l_m = beta1 * d_l_m + (1-beta1) * d_l
+
+    #d_L_v = beta2 * d_L_v + (1-beta2) * d_L * d_L
+    #d_l_v = beta2 * d_l_v + (1-beta2) * d_l * d_l
+
+    #var d_L_mhat = d_L_m / (1 - pow(beta1, epoch+1))
+    #var d_l_mhat = d_l_m / (1 - pow(beta1, epoch+1))
+
+    #var d_L_vhat = d_L_v / (1 - pow(beta2, epoch+1))
+    #var d_l_vhat = d_l_v / (1 - pow(beta2, epoch+1))
+
+    #var L_update = d_L_mhat * inv_sqrt(d_L_vhat)
+    #var l_update = d_l_mhat * inv_sqrt(d_l_vhat)
+
+    #d_L = L_update
+    #d_l = l_update
+    # if epoch == 99:
+    #     print(d_L_mhat)
+    #     print(str(a_L))
+    #     print(str(L_update))
+
+fn update_weights(mut w: Tensor[type], error: Tensor[type], a_prev: Tensor[type]) raises:
+    var a_transpose: Tensor[type] = transpose(a_prev) 
+    
+    #w = w - mu * matmul(a_transpose, error)
+
+fn update_biases(mut b: Tensor[type], error: Tensor[type]) raises:
+    pass
+    #b = b - mu * error
+
+fn softmax(mut a: Tensor[type]):
+    var soft: Tensor[type] = Tensor[type](a.shape())
+
+    @parameter
+    fn soft_exp[simd_width: Int](idx: Int):
+        pass
+        #a.simd_store[simd_width](idx, exp[type, simd_width](a.simd_load[simd_width](idx)))
+
+    #vectorize[simdwidth, soft_exp](a.num_elements())
+
+    # @parameter
+    # fn softmax_tasks(row: Int):
+    #     var row_sum: Float64 = 0.0
+
+    #     for j in range(a.shape()[1]):
+    #         row_sum += a[Index(row,j)]    
+    #     for k in range(a.shape()[1]):
+    #         a[Index(row,k)] /= row_sum
+
+    # @parameter
+    # fn softmax_tasks_parallel():
+    #     parallelize[softmax_tasks](a.shape()[0], a.shape()[0])
+
+    for i in range(a.shape()[0]):
+        var row_sum: Float64 = 0.0
+
+        for j in range(a.shape()[1]):
+            row_sum += a[Index(i,j)]    
+        for k in range(a.shape()[1]):
+            a[Index(i,k)] /= row_sum 
+    
+fn get_inidices(mut indices: Tensor[DType.int64]):
+    for i in range(mini_batch_size):
+        indices[Index(0,i)] = random_si64(0,training_size)
+
+def get_data() -> Tensor[type]:
+    var data_input = Tensor[type](TensorSpec(type, data_size, data_width))
+    var np = Python.import_module("numpy")
+    
+    test = np.genfromtxt("letters-data-normalized.txt", np.float64)
+    print(test.shape, test[2])
+
+    for i in range(data_size):
+        for j in range(data_width):
+            data_input[Index(i,j)] = Float64(test[i][j])
+    return data_input 
+
+fn get_validation() -> Tensor[type]:
+    var check = Tensor[type](TensorSpec(type, output_layer_size, output_layer_size))
+
+    for i in range(check.shape()[0]):
+        for j in range(check.shape()[1]):
+            if(i == j):
+                check[Index(i,j)] = 0.999
+            else:
+                check[Index(i,j)] = 0.001
+    
+    return check
+
+fn set_batch_and_validation(indices: Tensor[DType.int64], data: Tensor[type], checker: Tensor[type], mut x: Tensor[type], mut v: Tensor[type]):
+    # indices num elements = mini_batch_size
+    var v_letter: Int 
+    for i in range(indices.num_elements()):
+        for j in range(input_layer_size):
+            x[Index(i,j)] = data[Index(indices[i], j + 1)]
+
+        for k in range(output_layer_size):
+            v_letter = Int(data[Index(indices[i],0)])
+            v[Index(i,k)] = checker[Index(v_letter,k)]
+
+    # print(str(x))
+    # print(str(v))
+
+
+# input activations
+# feed forward
+# output error
+# backpropagation of error
+# gradient descent to update weights
+fn main() raises:
+    seed()
+    print("learning rate: ", mu, " error target: ", error_target)
+    print("mini-batch size: ", mini_batch_size, " number of epochs: ", epochs)
+    print("input size: ", input_layer_size," hidden layer size: ", hidden_layer_size, " output size: ", output_layer_size)
+    print("\n\nloading data...")
+
+    var adam_optimize: Bool = True 
+    var epoch_error: Float64 = 0.0
+    var full_data: Tensor[type] = get_data()
+    var output_check: Tensor[type] = get_validation() 
+    
+    print("\n\nconfiguring network...")
+    var X_specs = TensorSpec(type, mini_batch_size, input_layer_size)
+    
+    var W_l_shape = TensorShape(input_layer_size, hidden_layer_size)
+    var W_L_shape = TensorShape(hidden_layer_size, output_layer_size)
+    
+    var a_l_specs = TensorSpec(type, mini_batch_size, hidden_layer_size)
+    var a_L_specs = TensorSpec(type, mini_batch_size, output_layer_size)
+    
+    var B_l_shape = TensorShape(mini_batch_size, hidden_layer_size)
+    var B_L_shape = TensorShape(mini_batch_size, output_layer_size)
+    
+    var batch_indices: Tensor[DType.int64] = Tensor[DType.int64](TensorShape(1, mini_batch_size)) 
+    var X: Tensor[type] = Tensor[type](X_specs)
+    var validation: Tensor[type] = Tensor[type](a_L_specs)
+    # get_inidices(batch_indices)
+    # print(batch_indices)
+    # set_batch_and_validation(batch_indices)
+    
+    var W_l: Tensor[type] = Tensor[type](W_l_shape).randn(W_l_shape, 0, 1)
+    var W_L: Tensor[type] = Tensor[type](W_L_shape).randn(W_L_shape, 0, 1)
+    var B_l: Tensor[type] = Tensor[type](B_l_shape).randn(B_l_shape, 0, 1)
+    var B_L: Tensor[type] = Tensor[type](B_L_shape).randn(B_L_shape, 0, 1)
+
+    # EMA means
+    var d_L_m = Tensor[type](a_L_specs)
+    var d_l_m = Tensor[type](a_l_specs)
+    
+    # EMA variances
+    var d_L_v = Tensor[type](a_L_specs)
+    var d_l_v = Tensor[type](a_l_specs)
+    
+    print("\n\ntraining...")
+    if adam_optimize: print("using adam optimization")
+    
+    #@unroll(mini_batch_size)
+    for i in range(epochs):
+        print("epoch ", (i + 1))
+    
+        get_inidices(batch_indices)
+        set_batch_and_validation(batch_indices, full_data, output_check, X, validation)
+        
+        var z_l = add_tensors_simple(matmul_simple(X, W_l), B_l)
+        var a_l = sigmoid(z_l)
+        #var a_l_prime = sigmoid_prime(a_l)
+        #
+        #var z_L = matmul(a_l, W_L) + B_L
+        #var a_L = sigmoid(z_L)
+        #var a_L_prime = sigmoid_prime(a_L)
+        #var d_L = output_error(a_L, validation, a_L_prime)
+        #var d_l = backpropagation(W_L, d_L, a_l_prime)
+        #
+        #if adam_optimize:
+        #    adamopt(d_L, d_l, d_L_m, d_l_m, d_L_v, d_l_v, i)
+        #
+        #update_weights(W_L, d_L, a_l)
+        #update_weights(W_l, d_l, X)
+        #update_biases(B_L, d_L)
+        #update_biases(B_l, d_l)
+        #
+        # calculate batch error
+        #softmax(a_L)
+        #
+        #seed()
+    
+    print("done")
