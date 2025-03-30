@@ -26,16 +26,7 @@ alias data_width: Int = 17
 alias data_size: Int = 20000
 alias training_size: Int = 16000
 alias validation_size: Int = 4000
-
-fn matmul_simple(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
-    var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0],t2.shape()[1]))
-
-    for i in range(t_mul.shape()[0]):
-        for j in range(t1.shape()[1]):
-            for k in range(t_mul.shape()[1]):
-                t_mul[Index(i, k)] += t1[Index(i,j)] * t2[Index(j,k)]
-                
-    return t_mul   
+  
 
 fn transpose(t: Tensor[type]) -> Tensor[type]:
     var t_transpose: Tensor[type] = Tensor[type](TensorShape(t.shape()[1], t.shape()[0]))
@@ -70,6 +61,16 @@ fn matmul(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
 
     parallelize[calc_row](t_mul.shape()[0], t_mul.shape()[0])
 
+    return t_mul 
+        
+fn matmul_simple(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
+    var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0],t2.shape()[1]))
+
+    for i in range(t_mul.shape()[0]):
+        for j in range(t1.shape()[1]):
+            for k in range(t_mul.shape()[1]):
+                t_mul[Index(i, k)] += t1[Index(i,j)] * t2[Index(j,k)]
+                
     return t_mul 
 
 fn dot(t1: Tensor[type], t2: Tensor[type]) -> Float64:
@@ -292,6 +293,27 @@ fn create_equivalent_mojo_tensor(numpy_array: PythonObject) raises -> Tensor[typ
                     mojo_tensor[Index(i,j,p,q)] = float(numpy_array[i,j,p,q])
     
     return mojo_tensor
+    
+fn create_equivalent_pytorch_tensor(mojo_tensor: Tensor[type]) raises -> PythonObject: 
+    torch = Python.import_module("torch")
+    
+    # Get Shape of Tensor
+    var tensor_shape: PythonObject = Python.list()
+    
+    for dim in range(mojo_tensor.rank()):
+        tensor_shape.append(mojo_tensor.shape()[dim])
+        
+    # Construct Tensor
+    var pytorch_tensor: PythonObject = torch.zeros(size=tensor_shape)
+
+    # Initialize pytorch tensor
+    for i in range(mojo_tensor.shape()[0]):
+        for j in range(mojo_tensor.shape()[1]):
+            for p in range(mojo_tensor.shape()[2]):
+                for q in range(mojo_tensor.shape()[3]):
+                    pytorch_tensor[i,j,p,q] = mojo_tensor[Index(i,j,p,q)]
+    
+    return pytorch_tensor
 
 
 fn mojo_tensor_equals_pytroch_tensor(mojo_tensor: Tensor[type], pytorch_tensor: PythonObject) raises -> Bool:
@@ -305,24 +327,28 @@ fn mojo_tensor_equals_pytroch_tensor(mojo_tensor: Tensor[type], pytorch_tensor: 
                 good = False     
         if good:
             var precision: Float64 = 0.0001
+            var mojo_tensor_comparision: PythonObject = pytorch_tensor.clone()
+            
+            
             for i in range(len(pytorch_tensor)):
                 for j in range(len(pytorch_tensor[i])):
                     for p in range(len(pytorch_tensor[i,j])):
                         for q in range(len(pytorch_tensor[i,j,p])):
                             if (Float64(float(pytorch_tensor[i,j,p,q].item())) > (mojo_tensor[Index(i,j,p,q)] + precision)) \
                             or (Float64(float(pytorch_tensor[i,j,p,q].item())) < (mojo_tensor[Index(i,j,p,q)] - precision)):
-                                #print(pytorch_tensor[i,j,p,q].item())
-                                #print(mojo_tensor[Index(i,j,p,q)])
+                                print(pytorch_tensor[i,j,p,q].item())
+                                print(mojo_tensor[Index(i,j,p,q)])
                                 return False  
     return True
     
-def test_sigmoid(numpy_array: PythonObject) -> Bool:
+def test_sigmoid() -> Bool:
     torch = Python.import_module("torch")
     nn = Python.import_module("torch.nn")
     np = Python.import_module("numpy")
     var sigmoid_pytorch = nn.Sigmoid()
 
     var tests_passed: Bool = False
+    var numpy_array = np.random.uniform(-10, 10, size=(8,3,64,64))
     var mojo_tensor = create_equivalent_mojo_tensor(numpy_array)  
     var pytorch_tensor: PythonObject = torch.tensor(numpy_array)
 
@@ -360,14 +386,10 @@ def test_sigmoid(numpy_array: PythonObject) -> Bool:
 def run_tests():
     torch = Python.import_module("torch")
     nn = Python.import_module("torch.nn")
-    np = Python.import_module("numpy")
-    var sigmoid = nn.Sigmoid()
-    
-    var numpy_array = np.random.uniform(-10, 10, size=(8,3,64,64))
     
     print("\nRunning Tests...")
     print("==================================================\n")
-    var sigmoid_good: Bool = test_sigmoid(numpy_array)
+    var sigmoid_good: Bool = test_sigmoid()
     
     if sigmoid_good:
         print("All Tests Passed 😎")
@@ -446,7 +468,7 @@ fn main() raises:
         var a_l = sigmoid(z_l)
         var a_l_prime = sigmoid_prime(a_l)
         
-        #var z_L = matmul(a_l, W_L) + B_L
+        var z_L = matmul(a_l, W_L) + B_L
         #var a_L = sigmoid(z_L)
         #var a_L_prime = sigmoid_prime(a_L)
         #var d_L = output_error(a_L, validation, a_L_prime)
