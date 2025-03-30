@@ -36,13 +36,6 @@ fn transpose(t: Tensor[type]) -> Tensor[type]:
             t_transpose[Index(j,i)] = t[Index(i,j)]
 
     return t_transpose
-    
-fn add_tensors_simple(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
-    var t_added: Tensor[type] = Tensor[type](t1.shape())
-    for i in range(t1.shape()[0]):
-        for j in range(t1.shape()[1]):
-            t_added[Index(i, j)] = t1[Index(i, j)] + t2[Index(i, j)]
-    return t_added
 
 fn matmul(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
     var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0],t2.shape()[1]))
@@ -464,11 +457,11 @@ fn main() raises:
         #get_inidices(batch_indices)
         set_batch_and_validation(batch_indices, full_data, output_check, X, validation)
         
-        var z_l = add_tensors_simple(matmul_simple(X, W_l), B_l)
+        var z_l = matmul_simple(X, W_l) + B_l
         var a_l = sigmoid(z_l)
         var a_l_prime = sigmoid_prime(a_l)
         
-        var z_L = matmul(a_l, W_L) + B_L
+        #var z_L = matmul(a_l, W_L) + B_L
         #var a_L = sigmoid(z_L)
         #var a_L_prime = sigmoid_prime(a_L)
         #var d_L = output_error(a_L, validation, a_L_prime)
