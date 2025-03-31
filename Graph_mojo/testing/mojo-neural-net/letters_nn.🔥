@@ -36,6 +36,9 @@ fn add_simple(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
     return t_added
     
 fn transpose(t: Tensor[type]) -> Tensor[type]:
+    # Assuming that only last 2 dimensions need to be transposed. 
+    # Also assuming only need to deal with 2D TensorShape
+    
     # Determine the shape of the transposed tensor
     var transposedShape = List[Int]()
     for dim in range(t.rank()):
@@ -44,14 +47,11 @@ fn transpose(t: Tensor[type]) -> Tensor[type]:
     transposedShape[-2] = t.shape()[-1]
     
     var t_transpose: Tensor[type] = Tensor[type](TensorShape(transposedShape))
-    
+
     for i in range(t.shape()[0]):
         for j in range(t.shape()[1]):
-            for p in range(t.shape()[2]):
-                for q in range(t.shape()[3]):
-                    t_transpose[Index(i,j,q,p)] = t[Index(i,j,p,q)]
+            t_transpose[Index(j,i)] = t[Index(i,j)]    
             
-
     return t_transpose
 
 fn matmul(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
@@ -74,13 +74,13 @@ fn matmul(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
     return t_mul 
         
 fn matmul_simple(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
-    var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0],t2.shape()[1]))
+    var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0],t2.shape()[-1]))
 
     for i in range(t_mul.shape()[0]):
         for j in range(t1.shape()[1]):
             for k in range(t_mul.shape()[1]):
-                t_mul[Index(i, k)] += t1[Index(i,j)] * t2[Index(j,k)]
-                
+                t_mul[Index(i,k)] += t1[Index(i,j)] * t2[Index(j,k)] 
+            
     return t_mul 
 
 fn dot(t1: Tensor[type], t2: Tensor[type]) -> Float64:
@@ -124,10 +124,8 @@ fn sigmoid(X: Tensor[type]) -> Tensor[type]:
         
     for i in range(X.shape()[0]):
         for j in range(X.shape()[1]):
-            for p in range(X.shape()[2]):
-                for q in range(X.shape()[3]):
-                    var e_x: Float64 = exp(X[Index(i,j,p,q)])
-                    rslt[Index(i,j,p,q)] = Float64(e_x / (1 + e_x))
+            var e_x: Float64 = exp(X[Index(i,j)])
+            rslt[Index(i,j)] = Float64(e_x / (1 + e_x))
     return rslt
 
 # 1/sqrt(x + epsilon)
@@ -298,9 +296,7 @@ fn create_equivalent_mojo_tensor(numpy_array: PythonObject) raises -> Tensor[typ
     # Initialize pytorch tensor
     for i in range(len(numpy_array)):
         for j in range(len(numpy_array[i])):
-            for p in range(len(numpy_array[i,j])):
-                for q in range(len(numpy_array[i,j,p])):
-                    mojo_tensor[Index(i,j,p,q)] = Float64(numpy_array[i,j,p,q])
+            mojo_tensor[Index(i,j)] = Float64(numpy_array[i,j])    
     
     return mojo_tensor
     
@@ -339,16 +335,13 @@ fn mojo_tensor_equals_pytroch_tensor(mojo_tensor: Tensor[type], pytorch_tensor: 
             var precision: Float64 = 0.0001
             var mojo_tensor_comparision: PythonObject = pytorch_tensor.clone()
             
-            
             for i in range(len(pytorch_tensor)):
                 for j in range(len(pytorch_tensor[i])):
-                    for p in range(len(pytorch_tensor[i,j])):
-                        for q in range(len(pytorch_tensor[i,j,p])):
-                            if (Float64(pytorch_tensor[i,j,p,q].item()) > (mojo_tensor[Index(i,j,p,q)] + precision)) or (Float64(pytorch_tensor[i,j,p,q].item()) < (mojo_tensor[Index(i,j,p,q)] - precision)):
-                                print(pytorch_tensor[i,j,p,q].item())
-                                print(mojo_tensor[Index(i,j,p,q)])
-                                return False  
-    return True
+                    if (Float64(pytorch_tensor[i,j].item()) > (mojo_tensor[Index(i,j)] + precision)) \
+                    or (Float64(pytorch_tensor[i,j].item()) < (mojo_tensor[Index(i,j)] - precision)):
+                        return False   
+
+    return good
     
 def test_sigmoid() -> Bool:
     torch = Python.import_module("torch")
@@ -357,7 +350,7 @@ def test_sigmoid() -> Bool:
     var sigmoid_pytorch = nn.Sigmoid()
 
     var tests_passed: Bool = False
-    var numpy_array = np.random.uniform(-10, 10, size=(8,3,64,64))
+    var numpy_array = np.random.uniform(-10, 10, size=(1024,128))
     var mojo_tensor = create_equivalent_mojo_tensor(numpy_array)  
     var pytorch_tensor: PythonObject = torch.tensor(numpy_array)
 
@@ -376,9 +369,6 @@ def test_sigmoid() -> Bool:
     
     var dur2 = time.time()-tm2
     print("Mojo Sigmoid:",dur2,"seconds")
-    
-    #print(pytorch_tensor)
-    #print(mojo_tensor)
 
     if mojo_tensor_equals_pytroch_tensor(mojo_tensor_sigmoided, pytorch_tensor) == True:
         tests_passed = True
@@ -399,16 +389,18 @@ def test_transpose() -> Bool:
     
     print("Running Transpose Tests...")
     print("--------------------------------------------------")
-        
-    var tests_passed: Bool = False
-    var numpy_array = np.random.uniform(-10, 10, size=(2,2,2,3))
-    var mojo_tensor = create_equivalent_mojo_tensor(numpy_array)  
-    var pytorch_tensor: PythonObject = torch.tensor(numpy_array)
     
-    var mojo_tensor_transposed = transpose(mojo_tensor)
-    pytorch_tensor_transposed = pytorch_tensor.transpose(-1, -2)
-            
-    if mojo_tensor_equals_pytroch_tensor(mojo_tensor_transposed, pytorch_tensor_transposed) == True:
+    var tests_passed: Bool = False
+    
+    # 2D Tensor Transpose
+    var numpy_array_2D = np.random.uniform(-10, 10, size=(8,3))
+    var mojo_tensor_2D = create_equivalent_mojo_tensor(numpy_array_2D)  
+    var pytorch_tensor_2D: PythonObject = torch.tensor(numpy_array_2D)
+    
+    var mojo_tensor_transposed_2D = transpose(mojo_tensor_2D)
+    pytorch_tensor_transposed_2D = pytorch_tensor_2D.transpose(-1, 0)
+                
+    if mojo_tensor_equals_pytroch_tensor(mojo_tensor_transposed_2D, pytorch_tensor_transposed_2D) == True:
         tests_passed = True
     
     if tests_passed:
@@ -418,7 +410,7 @@ def test_transpose() -> Bool:
         
     print("--------------------------------------------------\n")
     
-    return True
+    return tests_passed
     
 def test_matmul() -> Bool:
     torch = Python.import_module("torch")
@@ -429,17 +421,29 @@ def test_matmul() -> Bool:
     print("--------------------------------------------------")
         
     var tests_passed: Bool = False
-    var numpy_array = np.random.uniform(-10, 10, size=(8,3,64,64))
-    var mojo_tensor = create_equivalent_mojo_tensor(numpy_array)  
-    var pytorch_tensor: PythonObject = torch.tensor(numpy_array)
     
-    var tensor1: PythonObject = torch.randn(8, 3, 64, 64)
-    var tensor2: PythonObject = torch.randn(8, 3, 64, 64)
+    var numpy_array_2D_1 = np.random.uniform(-10, 10, size=(254,128))
+    var numpy_array_2D_2 = np.random.uniform(-10, 10, size=(128,254))
+    var mojo_tensor_2D_1 = create_equivalent_mojo_tensor(numpy_array_2D_1)  
+    var mojo_tensor_2D_2 = create_equivalent_mojo_tensor(numpy_array_2D_2) 
+    var pytorch_tensor_2D_1: PythonObject = torch.tensor(numpy_array_2D_1)
+    var pytorch_tensor_2D_2: PythonObject = torch.tensor(numpy_array_2D_2)
     
-    var pytorch_matmul: PythonObject = torch.matmul(tensor1, tensor2.transpose(-1, -2))
+    var time = Python.import_module("time")
+
+    var tm1 = time.time()  
+    pytorch_tensor_matmuled_2D = torch.matmul(pytorch_tensor_2D_1, pytorch_tensor_2D_2)
+    var dur1 = time.time()-tm1
+    print("Pytorch Sigmoid:",dur1,"seconds")
     
-    tests_passed = True
-    
+    var tm2 = time.time()
+    var mojo_tensor_matmuled_2D = matmul_simple(mojo_tensor_2D_1, mojo_tensor_2D_2)
+    var dur2 = time.time()-tm2
+    print("Mojo Sigmoid:",dur2,"seconds")
+                
+    if mojo_tensor_equals_pytroch_tensor(mojo_tensor_matmuled_2D, pytorch_tensor_matmuled_2D) == True:
+        tests_passed = True
+        
     if tests_passed:
         print("✅ Passed")
     else:
@@ -447,7 +451,7 @@ def test_matmul() -> Bool:
         
     print("--------------------------------------------------\n")
     
-    return True
+    return tests_passed
 
 def run_tests():
     torch = Python.import_module("torch")
