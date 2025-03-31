@@ -26,7 +26,7 @@ alias data_width: Int = 17
 alias data_size: Int = 20000
 alias training_size: Int = 16000
 alias validation_size: Int = 4000
-  
+
 
 fn add_simple(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
     var t_added: Tensor[type] = Tensor[type](t1.shape())
@@ -36,11 +36,21 @@ fn add_simple(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
     return t_added
     
 fn transpose(t: Tensor[type]) -> Tensor[type]:
-    var t_transpose: Tensor[type] = Tensor[type](TensorShape(t.shape()[1], t.shape()[0]))
+    # Determine the shape of the transposed tensor
+    var transposedShape = List[Int]()
+    for dim in range(t.rank()):
+        transposedShape.append(t.shape()[dim])   
+    transposedShape[-1] = t.shape()[-2]
+    transposedShape[-2] = t.shape()[-1]
+    
+    var t_transpose: Tensor[type] = Tensor[type](TensorShape(transposedShape))
     
     for i in range(t.shape()[0]):
         for j in range(t.shape()[1]):
-            t_transpose[Index(j,i)] = t[Index(i,j)]
+            for p in range(t.shape()[2]):
+                for q in range(t.shape()[3]):
+                    t_transpose[Index(i,j,q,p)] = t[Index(i,j,p,q)]
+            
 
     return t_transpose
 
@@ -395,25 +405,11 @@ def test_transpose() -> Bool:
     var mojo_tensor = create_equivalent_mojo_tensor(numpy_array)  
     var pytorch_tensor: PythonObject = torch.tensor(numpy_array)
     
-    print(pytorch_tensor.shape)
-    
-    var transposedShape = List[Int]()
-    
-    for dim in pytorch_tensor.shape:
-        transposedShape.append(dim)
-    
-    transposedShape[-1] = mojo_tensor.shape()[-2]
-    transposedShape[-2] = mojo_tensor.shape()[-1]
-    
-    var mojo_tensor_transposed = Tensor[type](TensorShape(transposedShape))
-    
-    print(mojo_tensor_transposed.shape())
-    
-    
+    var mojo_tensor_transposed = transpose(mojo_tensor)
     pytorch_tensor_transposed = pytorch_tensor.transpose(-1, -2)
-    print(pytorch_tensor_transposed.shape)
             
-    tests_passed = True
+    if mojo_tensor_equals_pytroch_tensor(mojo_tensor_transposed, pytorch_tensor_transposed) == True:
+        tests_passed = True
     
     if tests_passed:
         print("✅ Passed")
