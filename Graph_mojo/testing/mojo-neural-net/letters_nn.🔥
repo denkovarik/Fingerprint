@@ -28,6 +28,13 @@ alias training_size: Int = 16000
 alias validation_size: Int = 4000
   
 
+fn add_simple(t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
+    var t_added: Tensor[type] = Tensor[type](t1.shape())
+    for i in range(t1.shape()[0]):
+        for j in range(t1.shape()[1]):
+            t_added[Index(i, j)] = t1[Index(i, j)] + t2[Index(i, j)]
+    return t_added
+    
 fn transpose(t: Tensor[type]) -> Tensor[type]:
     var t_transpose: Tensor[type] = Tensor[type](TensorShape(t.shape()[1], t.shape()[0]))
     
@@ -128,20 +135,20 @@ fn inv_sqrt(z: Tensor[type]) -> Tensor[type]:
 
 
 # sigmoid(z) * (1 - sigmoid(z))
-fn sigmoid_prime(a: Tensor[type]) raises -> Tensor[type]:
-    var sigma_prime: Tensor[type] = Tensor[type](a.shape()) 
+#fn sigmoid_prime(a: Tensor[type]) raises -> Tensor[type]:
+#    var sigma_prime: Tensor[type] = Tensor[type](a.shape()) 
+#
+#    #sigma_prime = a * (1 - a)
+#
+#    return sigma_prime
 
-    #sigma_prime = a * (1 - a)
-
-    return sigma_prime
-
-fn sigmoid_prime_full(z: Tensor[type]) raises -> Tensor[type]:
-    var sigma_prime: Tensor[type] = Tensor[type](z.shape()) 
-    var sigmoid_z = sigmoid(z)
-
-    sigma_prime = sigmoid_z * (1 - sigmoid_z)
-
-    return sigma_prime
+#fn sigmoid_prime_full(z: Tensor[type]) raises -> Tensor[type]:
+#    var sigma_prime: Tensor[type] = Tensor[type](z.shape()) 
+#    var sigmoid_z = sigmoid(z)
+#
+#    sigma_prime = sigmoid_z * (1 - sigmoid_z)
+#
+#    return sigma_prime
 
 fn feed_forward():
     return
@@ -238,7 +245,7 @@ def get_data() -> Tensor[type]:
 
     for i in range(data_size):
         for j in range(data_width):
-            data_input[Index(i,j)] = Float64(float(test[i][j]))
+            data_input[Index(i,j)] = Float64(test[i][j])
     return data_input 
 
 fn get_validation() -> Tensor[type]:
@@ -261,7 +268,7 @@ fn set_batch_and_validation(indices: Tensor[DType.int64], data: Tensor[type], ch
             x[Index(i,j)] = data[Index(indices[i], j + 1)]
 
         for k in range(output_layer_size):
-            v_letter = int(data[Index(indices[i],0)])
+            v_letter = Int(data[Index(indices[i],0)])
             v[Index(i,k)] = checker[Index(v_letter,k)]
 
     # print(str(x))
@@ -283,7 +290,7 @@ fn create_equivalent_mojo_tensor(numpy_array: PythonObject) raises -> Tensor[typ
         for j in range(len(numpy_array[i])):
             for p in range(len(numpy_array[i,j])):
                 for q in range(len(numpy_array[i,j,p])):
-                    mojo_tensor[Index(i,j,p,q)] = float(numpy_array[i,j,p,q])
+                    mojo_tensor[Index(i,j,p,q)] = Float64(numpy_array[i,j,p,q])
     
     return mojo_tensor
     
@@ -327,8 +334,7 @@ fn mojo_tensor_equals_pytroch_tensor(mojo_tensor: Tensor[type], pytorch_tensor: 
                 for j in range(len(pytorch_tensor[i])):
                     for p in range(len(pytorch_tensor[i,j])):
                         for q in range(len(pytorch_tensor[i,j,p])):
-                            if (Float64(float(pytorch_tensor[i,j,p,q].item())) > (mojo_tensor[Index(i,j,p,q)] + precision)) \
-                            or (Float64(float(pytorch_tensor[i,j,p,q].item())) < (mojo_tensor[Index(i,j,p,q)] - precision)):
+                            if (Float64(pytorch_tensor[i,j,p,q].item()) > (mojo_tensor[Index(i,j,p,q)] + precision)) or (Float64(pytorch_tensor[i,j,p,q].item()) < (mojo_tensor[Index(i,j,p,q)] - precision)):
                                 print(pytorch_tensor[i,j,p,q].item())
                                 print(mojo_tensor[Index(i,j,p,q)])
                                 return False  
@@ -375,6 +381,77 @@ def test_sigmoid() -> Bool:
     print("--------------------------------------------------\n")
 
     return tests_passed
+    
+def test_transpose() -> Bool:
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    np = Python.import_module("numpy")
+    
+    print("Running Transpose Tests...")
+    print("--------------------------------------------------")
+        
+    var tests_passed: Bool = False
+    var numpy_array = np.random.uniform(-10, 10, size=(2,2,2,3))
+    var mojo_tensor = create_equivalent_mojo_tensor(numpy_array)  
+    var pytorch_tensor: PythonObject = torch.tensor(numpy_array)
+    
+    print(pytorch_tensor.shape)
+    
+    var transposedShape = List[Int]()
+    
+    for dim in pytorch_tensor.shape:
+        transposedShape.append(dim)
+    
+    transposedShape[-1] = mojo_tensor.shape()[-2]
+    transposedShape[-2] = mojo_tensor.shape()[-1]
+    
+    var mojo_tensor_transposed = Tensor[type](TensorShape(transposedShape))
+    
+    print(mojo_tensor_transposed.shape())
+    
+    
+    pytorch_tensor_transposed = pytorch_tensor.transpose(-1, -2)
+    print(pytorch_tensor_transposed.shape)
+            
+    tests_passed = True
+    
+    if tests_passed:
+        print("✅ Passed")
+    else:
+        print("❌ Failed")
+        
+    print("--------------------------------------------------\n")
+    
+    return True
+    
+def test_matmul() -> Bool:
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    np = Python.import_module("numpy")
+    
+    print("Running Matmul Tests...")
+    print("--------------------------------------------------")
+        
+    var tests_passed: Bool = False
+    var numpy_array = np.random.uniform(-10, 10, size=(8,3,64,64))
+    var mojo_tensor = create_equivalent_mojo_tensor(numpy_array)  
+    var pytorch_tensor: PythonObject = torch.tensor(numpy_array)
+    
+    var tensor1: PythonObject = torch.randn(8, 3, 64, 64)
+    var tensor2: PythonObject = torch.randn(8, 3, 64, 64)
+    
+    var pytorch_matmul: PythonObject = torch.matmul(tensor1, tensor2.transpose(-1, -2))
+    
+    tests_passed = True
+    
+    if tests_passed:
+        print("✅ Passed")
+    else:
+        print("❌ Failed")
+        
+    print("--------------------------------------------------\n")
+    
+    return True
 
 def run_tests():
     torch = Python.import_module("torch")
@@ -383,8 +460,10 @@ def run_tests():
     print("\nRunning Tests...")
     print("==================================================\n")
     var sigmoid_good: Bool = test_sigmoid()
+    var transpose_good: Bool = test_transpose()
+    var matmul_good: Bool = test_matmul()
     
-    if sigmoid_good:
+    if sigmoid_good and transpose_good and matmul_good:
         print("All Tests Passed 😎")
     else:
         print("Tests Failed")
@@ -457,9 +536,10 @@ fn main() raises:
         #get_inidices(batch_indices)
         set_batch_and_validation(batch_indices, full_data, output_check, X, validation)
         
-        var z_l = matmul_simple(X, W_l) + B_l
+        var z_l = add_simple(matmul_simple(X, W_l), B_l)
+        print(z_l.shape())
         var a_l = sigmoid(z_l)
-        var a_l_prime = sigmoid_prime(a_l)
+        #var a_l_prime = sigmoid_prime(a_l)
         
         #var z_L = matmul(a_l, W_L) + B_L
         #var a_L = sigmoid(z_L)
