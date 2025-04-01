@@ -1,0 +1,80 @@
+from python import Python, PythonObject
+from CustomNN import Custom_NN_Pytorch
+from Data_Loader import MNIST_Data_Loader_Pytorch
+
+        
+def testNetwork(model: Custom_NN_Pytorch, testloader: MNIST_Data_Loader_Pytorch, device: PythonObject) -> Float64:
+    var torch = Python.import_module("torch")
+
+    var correct: Int = 0
+    var total: Int = 0     
+
+    for i in range(testloader.__len__()):
+        var images: PythonObject = testloader.batchImages[i].to(device)
+        var target: PythonObject = testloader.batchLabels[i].to(device)
+        var output: PythonObject = model.forward(images)          
+        var torch_max = torch.max(output.data, 1)
+        var predicted = torch_max[1]
+        for j in range(len(predicted)):
+            if predicted[j] == target[j]:
+                correct = correct + 1
+            total = total + 1
+
+    var accuracy: Float64 = 100.0 * correct / total
+    return accuracy
+
+
+def main():
+    var nn = Python.import_module("torch.nn")
+    var optim = Python.import_module("torch.optim")
+    var torch = Python.import_module("torch")
+    var torchvision = Python.import_module("torchvision")
+    var transforms = Python.import_module("torchvision.transforms")   
+    var time = Python.import_module("time")
+    
+    var num_epochs: Int = 5
+    var batchSize: Int = 64
+    var inputShape: PythonObject = torch.Size([batchSize, 1, 28, 28])
+    var learning_rate = 0.01
+
+    var device: PythonObject = torch.device("cpu")
+    #var cuda_available = torch.cuda.is_available()
+    #if cuda_available:
+    #    device = torch.device("cuda") 
+    #print("Using device " + str(device))
+      
+    # Load MNIST dataset
+    var trainloader = MNIST_Data_Loader_Pytorch(batchSize=batchSize, device=device, train=True, shuffle=True)
+    var testloader = MNIST_Data_Loader_Pytorch(batchSize=batchSize, device=device, train=False, shuffle=True)
+
+    var model: Custom_NN_Pytorch = Custom_NN_Pytorch()
+
+    var criterion = nn.NLLLoss()  # Negative Log Likelihood Loss
+    var optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+           
+    var startTime = time.perf_counter()
+    for epoch in range(num_epochs):
+        var running_loss: PythonObject = 0.0
+        var cnt: Float64 = 0.0
+        for i in range(trainloader.__len__()):
+            var images = trainloader.batchImages[i].to(device)
+            var labels = trainloader.batchLabels[i].to(device)
+           
+            optimizer.zero_grad()
+            var outputs: PythonObject = model.forward(images)
+            var loss: PythonObject = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+    
+            running_loss = running_loss + loss.item()
+        
+        print("Epoch " + String(epoch + 1) + " Loss: " + String(running_loss / trainloader.__len__()))
+    
+    # Test
+    var accuracy: Float64 = testNetwork(model=model, testloader=testloader, device=device)
+    print("Validation Accuracy: " + String(accuracy) + "%")
+        
+    var endTime = time.perf_counter()
+    
+    print("Training completed in " + String(endTime - startTime) + " seconds")
+    
