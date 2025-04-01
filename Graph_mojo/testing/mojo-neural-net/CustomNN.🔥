@@ -1,0 +1,52 @@
+from python import Python, PythonObject
+from memory import UnsafePointer
+from collections import Dict
+
+
+@value
+struct Custom_NN_Pytorch:
+    var torch: PythonObject
+    var nn: PythonObject
+    var F: PythonObject
+    var model_parameters: PythonObject
+    var device: PythonObject
+    var flatten: PythonObject
+    var fc1: PythonObject
+    var fc2: PythonObject
+    var fc3: PythonObject
+
+    fn __init__(mut self) raises:
+        self.torch = Python.import_module("torch")
+        self.nn = Python.import_module("torch.nn")
+        self.F = Python.import_module("torch.nn.functional")
+        self.model_parameters = Python.list()
+        self.device = self.torch.device("cpu")
+        self.flatten = self.nn.Flatten()
+        self.fc1 = self.nn.Linear(28 * 28, 128) 
+        self.fc2 = self.nn.Linear(128, 64)
+        self.fc3 = self.nn.Linear(64, 10) 
+                
+    def forward(self, x: PythonObject) -> PythonObject:
+        var temp1: PythonObject = self.flatten(x)
+        var temp2: PythonObject = self.F.relu(self.fc1(temp1))
+        var temp3: PythonObject = self.F.relu(self.fc2(temp2))
+        var temp4: PythonObject = self.fc3(temp3)
+        var out: PythonObject = self.F.log_softmax(temp4, dim=1)
+        return out
+        
+    def parameters(mut self) -> PythonObject:
+        self.model_parameters = Python.list()
+        self.model_parameters.append(self.fc1.weight)
+        self.model_parameters.append(self.fc1.bias)
+        self.model_parameters.append(self.fc2.weight)
+        self.model_parameters.append(self.fc2.bias)
+        self.model_parameters.append(self.fc3.weight)
+        self.model_parameters.append(self.fc3.bias)
+        return self.model_parameters
+
+    fn zero_grad(inout self) raises:
+        for param in self.model_parameters:
+            try:
+                param.grad.zero_()
+            except AttributeError:
+                pass
