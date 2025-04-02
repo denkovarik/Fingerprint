@@ -1,0 +1,159 @@
+from tensor import Tensor, TensorSpec, TensorShape
+from sys.info import simdwidthof, simdbitwidth
+from algorithm import parallelize, vectorize
+from utils.index import Index
+from random import randn, random_si64, seed
+from pathlib import path
+from python import Python, PythonObject
+from math import exp
+
+alias type = DType.float64
+alias simdwidth = simdwidthof[type]()
+alias mu: Float64 = 0.01
+alias beta1: Float64 = 0.9
+alias beta2: Float64 = 0.99
+alias epsilon: Float64 = 0.00000001
+alias mini_batch_size: Int = 50
+alias epochs: Int = 1
+alias error_target: Float32 = .1
+alias input_layer_size: Int = 16
+alias hidden_layer_size: Int = 52
+alias output_layer_size: Int = 26
+alias data_width: Int = 17
+alias data_size: Int = 20000
+alias training_size: Int = 16000
+alias validation_size: Int = 4000
+
+
+struct NN_Utils:
+    fn __init__(mut self):
+        pass
+
+    fn add_simple(mut self, t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
+        var t_added: Tensor[type] = Tensor[type](t1.shape())
+        for i in range(t1.shape()[0]):
+            for j in range(t1.shape()[1]):
+                t_added[Index(i, j)] = t1[Index(i, j)] + t2[Index(i, j)]
+        return t_added
+        
+    fn transpose(mut self, t: Tensor[type]) -> Tensor[type]:
+        # Assuming that only last 2 dimensions need to be transposed. 
+        # Also assuming only need to deal with 2D TensorShape
+        
+        # Determine the shape of the transposed tensor
+        var transposedShape = List[Int]()
+        for dim in range(t.rank()):
+            transposedShape.append(t.shape()[dim])   
+        transposedShape[-1] = t.shape()[-2]
+        transposedShape[-2] = t.shape()[-1]
+        
+        var t_transpose: Tensor[type] = Tensor[type](TensorShape(transposedShape))
+
+        for i in range(t.shape()[0]):
+            for j in range(t.shape()[1]):
+                t_transpose[Index(j,i)] = t[Index(i,j)]    
+                
+        return t_transpose
+
+    fn matmul(mut self, t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
+        var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0],t2.shape()[1]))
+
+        @parameter
+        fn calc_row(i: Int):
+            for j in range(t1.shape()[1]):
+                @parameter
+                fn dot[simd_width: Int](k: Int):
+                    pass
+                    #t_mul.simd_store[simd_width](
+                    #    i * t_mul.shape()[1] + k, 
+                    #    t_mul.simd_load[simd_width](i * t_mul.shape()[1] + k) + t1[Index(i,j)] * t2.simd_load[simd_width](j * t_mul.shape()[1] + k)
+                    #)
+                #vectorize[simdwidth, dot](t_mul.shape()[1])
+
+        parallelize[calc_row](t_mul.shape()[0], t_mul.shape()[0])
+
+        return t_mul 
+            
+    fn matmul_simple(mut self, t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
+        var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0],t2.shape()[-1]))
+
+        for i in range(t_mul.shape()[0]):
+            for j in range(t1.shape()[1]):
+                for k in range(t_mul.shape()[1]):
+                    t_mul[Index(i,k)] += t1[Index(i,j)] * t2[Index(j,k)] 
+                
+        return t_mul 
+
+    fn dot(mut self, t1: Tensor[type], t2: Tensor[type]) -> Float64:
+        var vec_dot: Float64 = 0.0
+        var temp_vec: Tensor[type] = Tensor[type](t1.shape())
+        #var sum_vec: Tensor[type] = Tensor[type](simdwidth)
+        #var sum_simd = SIMD[type, simdwidth](0.0)
+
+        @parameter
+        fn compute_mul[simd_width: Int](idx: Int):
+            pass
+            #temp_vec.simd_store[simd_width](idx, t1.simd_load[simd_width](idx) * t2.simd_load[simd_width](idx))
+
+        #vectorize[simdwidth, compute_mul](t1.shape()[1])
+
+        for i in range(temp_vec.shape()[1]):
+            vec_dot += temp_vec[i]
+
+        return vec_dot
+
+    # 1.0/(1.0 + exp(-x))
+    #fn sigmoid(mut self, z: Tensor[type]) -> Tensor[type]:
+    #    var activations: Tensor[type] = Tensor[type](z.shape())
+    #
+    #    @parameter
+    #    fn compute_exp[simd_width: Int](idx: Int):
+    #        activations.store[simd_width](idx, (1 / (1 + exp(-1 * z.load[simd_width](idx)))))
+    #    
+    #    vectorize[simdwidth, compute_exp](activations.num_elements())
+    #    
+    #    return activations
+        
+    fn sigmoid(mut self, X: Tensor[type]) -> Tensor[type]:
+        """ Function `sigmoid`: apply sigmoid activation to Tensor.
+
+        Args:
+            X: Input matrix shape (m, n).
+        """
+        var rslt: Tensor[type] = Tensor[type](X.shape())
+        var rank = X.shape().rank()
+            
+        for i in range(X.shape()[0]):
+            for j in range(X.shape()[1]):
+                var e_x: Float64 = exp(X[Index(i,j)])
+                rslt[Index(i,j)] = Float64(e_x / (1 + e_x))
+        return rslt
+
+    # 1/sqrt(x + epsilon)
+    fn inv_sqrt(mut self, z: Tensor[type]) -> Tensor[type]:
+        var second_moments: Tensor[type] = Tensor[type](z.shape())
+
+        @parameter
+        fn compute_rsqrt[simd_width: Int](idx: Int):
+            pass
+            #second_moments.simd_store[simd_width](idx, rsqrt[type, simd_width](epsilon + z.simd_load[simd_width](idx)))
+        
+        #vectorize[simdwidth, compute_rsqrt](second_moments.num_elements())
+        
+        return second_moments
+
+    # sigmoid(z) * (1 - sigmoid(z))
+    #fn sigmoid_prime(mut self, a: Tensor[type]) raises -> Tensor[type]:
+    #    var sigma_prime: Tensor[type] = Tensor[type](a.shape()) 
+    #
+    #    #sigma_prime = a * (1 - a)
+    #
+    #    return sigma_prime
+
+    #fn sigmoid_prime_full(mut self, z: Tensor[type]) raises -> Tensor[type]:
+    #    var sigma_prime: Tensor[type] = Tensor[type](z.shape()) 
+    #    var sigmoid_z = sigmoid(z)
+    #
+    #    sigma_prime = sigmoid_z * (1 - sigmoid_z)
+    #
+    #    return sigma_prime
