@@ -1,0 +1,229 @@
+from testing import assert_equal, assert_true, assert_false
+from tensor import Tensor, TensorSpec, TensorShape
+from sys.info import simdwidthof, simdbitwidth
+from algorithm import parallelize, vectorize
+from utils.index import Index
+from random import randn, random_si64, seed
+from pathlib import path
+from python import Python, PythonObject
+from math import exp
+from NN_Utils import NN_Utils
+
+alias type = DType.float64
+alias simdwidth = simdwidthof[type]()
+alias mu: Float64 = 0.01
+alias beta1: Float64 = 0.9
+alias beta2: Float64 = 0.99
+alias epsilon: Float64 = 0.00000001
+alias mini_batch_size: Int = 50
+alias epochs: Int = 1
+alias error_target: Float32 = .1
+alias input_layer_size: Int = 16
+alias hidden_layer_size: Int = 52
+alias output_layer_size: Int = 26
+alias data_width: Int = 17
+alias data_size: Int = 20000
+alias training_size: Int = 16000
+alias validation_size: Int = 4000
+
+
+fn create_equivalent_mojo_tensor(numpy_array: PythonObject) raises -> Tensor[type]:
+    np = Python.import_module("numpy")
+    
+    # Get Shape of Tensor
+    var tensor_shape_list = List[Int]()
+    for d in numpy_array.shape:
+        tensor_shape_list.append(d)
+    
+    # Construct Tensor
+    var mojo_tensor = Tensor[type](TensorShape(tensor_shape_list))
+
+    # Initialize pytorch tensor
+    for i in range(len(numpy_array)):
+        for j in range(len(numpy_array[i])):
+            mojo_tensor[Index(i,j)] = Float64(numpy_array[i,j])    
+    
+    return mojo_tensor
+    
+fn create_equivalent_pytorch_tensor(mojo_tensor: Tensor[type]) raises -> PythonObject: 
+    torch = Python.import_module("torch")
+    
+    # Get Shape of Tensor
+    var tensor_shape: PythonObject = Python.list()
+    
+    for dim in range(mojo_tensor.rank()):
+        tensor_shape.append(mojo_tensor.shape()[dim])
+        
+    # Construct Tensor
+    var pytorch_tensor: PythonObject = torch.zeros(size=tensor_shape)
+
+    # Initialize pytorch tensor
+    for i in range(mojo_tensor.shape()[0]):
+        for j in range(mojo_tensor.shape()[1]):
+            for p in range(mojo_tensor.shape()[2]):
+                for q in range(mojo_tensor.shape()[3]):
+                    pytorch_tensor[i,j,p,q] = mojo_tensor[Index(i,j,p,q)]
+    
+    return pytorch_tensor
+
+fn mojo_tensor_equals_pytroch_tensor(mojo_tensor: Tensor[type], pytorch_tensor: PythonObject) raises -> Bool:
+    var good: Bool = False
+    
+    if len(pytorch_tensor.shape) == mojo_tensor.shape().rank():
+        good = True
+        var pytorch_tensor_shape: PythonObject = pytorch_tensor.shape
+        for d in range(len(pytorch_tensor.shape)):
+            if pytorch_tensor.shape[d] != mojo_tensor.shape()[d]:
+                good = False     
+        if good:
+            var precision: Float64 = 0.0001
+            var mojo_tensor_comparision: PythonObject = pytorch_tensor.clone()
+            
+            for i in range(len(pytorch_tensor)):
+                for j in range(len(pytorch_tensor[i])):
+                    if (Float64(pytorch_tensor[i,j].item()) > (mojo_tensor[Index(i,j)] + precision)) \
+                    or (Float64(pytorch_tensor[i,j].item()) < (mojo_tensor[Index(i,j)] - precision)):
+                        return False   
+
+    return good
+    
+    
+    
+def test_execution():
+    # Just tests running a mojo test
+    assert_equal(0, 0)    
+    
+def test_sigmoid():
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    np = Python.import_module("numpy")
+    var sigmoid_pytorch = nn.Sigmoid()
+
+    var tests_passed: Bool = False
+    var numpy_array = np.random.uniform(-10, 10, size=(1024,128))
+    var mojo_tensor = create_equivalent_mojo_tensor(numpy_array)  
+    var pytorch_tensor: PythonObject = torch.tensor(numpy_array)
+    
+    var nn_utils = NN_Utils()
+    
+    print("Running Sigmoid Tests...")
+    print("--------------------------------------------------")
+            
+    var time = Python.import_module("time")
+
+    var tm1 = time.time()        
+    pytorch_tensor = sigmoid_pytorch(pytorch_tensor)
+    var dur1 = time.time()-tm1
+    print("Pytorch Sigmoid:",dur1,"seconds")
+    
+    var tm2 = time.time() 
+    var mojo_tensor_sigmoided: Tensor[type] = nn_utils.sigmoid(mojo_tensor)
+    
+    var dur2 = time.time()-tm2
+    print("Mojo Sigmoid:",dur2,"seconds")
+
+    if mojo_tensor_equals_pytroch_tensor(mojo_tensor_sigmoided, pytorch_tensor) == True:
+        tests_passed = True
+                
+    if tests_passed:
+        print("✅ Passed")
+    else:
+        print("❌ Failed")
+        
+    print("--------------------------------------------------\n")
+
+    assert_true(tests_passed)
+    
+def test_transpose():
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    np = Python.import_module("numpy")
+    
+    print("Running Transpose Tests...")
+    print("--------------------------------------------------")
+    
+    var tests_passed: Bool = False
+    
+    # 2D Tensor Transpose
+    var numpy_array_2D = np.random.uniform(-10, 10, size=(8,3))
+    var mojo_tensor_2D = create_equivalent_mojo_tensor(numpy_array_2D)  
+    var pytorch_tensor_2D: PythonObject = torch.tensor(numpy_array_2D)
+    
+    var nn_utils = NN_Utils()
+    
+    var mojo_tensor_transposed_2D = nn_utils.transpose(mojo_tensor_2D)
+    pytorch_tensor_transposed_2D = pytorch_tensor_2D.transpose(-1, 0)
+                
+    if mojo_tensor_equals_pytroch_tensor(mojo_tensor_transposed_2D, pytorch_tensor_transposed_2D) == True:
+        tests_passed = True
+    
+    if tests_passed:
+        print("✅ Passed")
+    else:
+        print("❌ Failed")
+        
+    print("--------------------------------------------------\n")
+
+    assert_true(tests_passed)
+    
+def test_matmul():
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    np = Python.import_module("numpy")
+    
+    print("Running Matmul Tests...")
+    print("--------------------------------------------------")
+        
+    var tests_passed: Bool = False
+    
+    var numpy_array_2D_1 = np.random.uniform(-10, 10, size=(254,128))
+    var numpy_array_2D_2 = np.random.uniform(-10, 10, size=(128,254))
+    var mojo_tensor_2D_1 = create_equivalent_mojo_tensor(numpy_array_2D_1)  
+    var mojo_tensor_2D_2 = create_equivalent_mojo_tensor(numpy_array_2D_2) 
+    var pytorch_tensor_2D_1: PythonObject = torch.tensor(numpy_array_2D_1)
+    var pytorch_tensor_2D_2: PythonObject = torch.tensor(numpy_array_2D_2)
+    
+    var nn_utils = NN_Utils()
+    
+    var time = Python.import_module("time")
+
+    var tm1 = time.time()  
+    pytorch_tensor_matmuled_2D = torch.matmul(pytorch_tensor_2D_1, pytorch_tensor_2D_2)
+    var dur1 = time.time()-tm1
+    print("Pytorch Sigmoid:",dur1,"seconds")
+    
+    var tm2 = time.time()
+    var mojo_tensor_matmuled_2D = nn_utils.matmul_simple(mojo_tensor_2D_1, mojo_tensor_2D_2)
+    var dur2 = time.time()-tm2
+    print("Mojo Sigmoid:",dur2,"seconds")
+                
+    if mojo_tensor_equals_pytroch_tensor(mojo_tensor_matmuled_2D, pytorch_tensor_matmuled_2D) == True:
+        tests_passed = True
+        
+    if tests_passed:
+        print("✅ Passed")
+    else:
+        print("❌ Failed")
+        
+    print("--------------------------------------------------\n")
+
+    assert_true(tests_passed)
+    
+    
+def run_tests():
+    torch = Python.import_module("torch")
+    nn = Python.import_module("torch.nn")
+    
+    print("\nRunning Tests...")
+    print("==================================================\n")
+    test_sigmoid()
+    test_transpose()
+    test_matmul()
+        
+    print("==================================================\n")
+    
+    
+fn main() raises:
+    seed()
+    
+    run_tests()  
