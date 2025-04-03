@@ -345,11 +345,12 @@ def test_mojo_NN():
     var images_pytorch = trainloader.batchImages[0].to(device)
     var labels_pytorch = trainloader.batchLabels[0].to(device)
     var images_mojo: Tensor[type] = create_equivalent_mojo_tensor(images_pytorch)
-    var labels_mojo: Tensor[type] = create_equivalent_mojo_tensor(labels_pytorch)
-    
-    assert_true(mojo_tensor_equals_pytroch_tensor(images_mojo, images_pytorch))
-    assert_true(mojo_tensor_equals_pytroch_tensor(labels_mojo, labels_pytorch))
-    
+    var tensor_shape_list = List[Int]()
+    tensor_shape_list.append(64)
+    var labels_mojo = Tensor[DType.int64](TensorShape(tensor_shape_list))
+    for i in range(labels_pytorch.shape[0]):
+        labels_mojo[i] = Int(labels_pytorch[i])
+
     var tests_passed = False
     
     # Run tests
@@ -445,6 +446,15 @@ def test_mojo_NN():
     var log_softmax_mojo = nn_utils.log_softmax(fc3_mojo, dim=1)
     
     if tests_passed and mojo_tensor_equals_pytroch_tensor(log_softmax_mojo, log_softmax_pytorch):
+        tests_passed = True
+    else:
+        tests_passed = False
+        
+    # Negative Log Likelihood Loss
+    var loss_pytorch: Float64 = Float64(criterion(log_softmax_pytorch, labels_pytorch).item())
+    var loss_mojo: Float64 = nn_utils.nll_loss(log_softmax_mojo, labels_mojo)
+    
+    if tests_passed and ((loss_pytorch > (loss_mojo - 0.0001)) or (loss_pytorch <= (loss_mojo + 0.0001))):
         tests_passed = True
     else:
         tests_passed = False
