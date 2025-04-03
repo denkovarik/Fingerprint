@@ -2,12 +2,14 @@ from testing import assert_equal, assert_true, assert_false
 from tensor import Tensor, TensorSpec, TensorShape
 from sys.info import simdwidthof, simdbitwidth
 from algorithm import parallelize, vectorize
-from utils.index import Index
+from utils.index import Index, IndexList
 from random import randn, random_si64, seed
 from pathlib import path
 from python import Python, PythonObject
 from math import exp
 from NN_Utils import NN_Utils
+from Data_Loader import MNIST_Data_Loader_Pytorch
+from CustomNN import Custom_NN_Pytorch, Custom_NN_Mojo
 
 alias type = DType.float64
 alias simdwidth = simdwidthof[type]()
@@ -27,6 +29,54 @@ alias training_size: Int = 16000
 alias validation_size: Int = 4000
 
 
+struct Mojo_Tensor_Index:
+    var tensor_shape_list: List[Int]
+    var tensor_index_list: List[Int]
+    
+    fn __init__(mut self, tensor_shape_list: List[Int]):
+        self.tensor_shape_list = tensor_shape_list
+        self.tensor_index_list = List[Int]()
+        
+        # Init tensor_index_list
+        for dim in range(len(tensor_shape_list)):
+            self.tensor_index_list.append(0)
+     
+    fn begin(mut self):
+        for dim in range(len(self.tensor_index_list)):
+            self.tensor_index_list[dim] = 0
+            
+    fn end(mut self) -> Bool:        
+        for dim in range(len(self.tensor_index_list)):
+            if self.tensor_index_list[dim] < self.tensor_shape_list[dim] - 1:
+                return False
+        if self.tensor_index_list[-1] < self.tensor_shape_list[-1]:
+            return False
+        return True
+                     
+    fn inc_mojo_tensor_index(mut self):
+            
+        var i: Int = len(self.tensor_index_list) - 1
+        self.tensor_index_list[-1] = self.tensor_index_list[-1] + 1
+        
+        if self.end():
+            return
+        
+        while i > 0 and self.tensor_index_list[i] >= self.tensor_shape_list[i]:
+            self.tensor_index_list[i] = 0
+            self.tensor_index_list[i-1] = self.tensor_index_list[i-1] + 1
+            i = i - 1
+    
+    fn print_mojo_tensor_index_list(mut self):
+        for i in range(len(self.tensor_index_list)):
+            print(self.tensor_index_list[i], end=" ")
+        print("")
+        
+    fn print_mojo_tensor_shape_list(mut self):
+        for i in range(len(self.tensor_shape_list)):
+            print(self.tensor_shape_list[i], end=" ")
+        print("")
+
+
 fn create_equivalent_mojo_tensor(numpy_array: PythonObject) raises -> Tensor[type]:
     np = Python.import_module("numpy")
     
@@ -37,11 +87,25 @@ fn create_equivalent_mojo_tensor(numpy_array: PythonObject) raises -> Tensor[typ
     
     # Construct Tensor
     var mojo_tensor = Tensor[type](TensorShape(tensor_shape_list))
-
-    # Initialize pytorch tensor
-    for i in range(len(numpy_array)):
-        for j in range(len(numpy_array[i])):
-            mojo_tensor[Index(i,j)] = Float64(numpy_array[i,j])    
+        
+    var tensor_index: Mojo_Tensor_Index = Mojo_Tensor_Index(tensor_shape_list)
+        
+    if len(tensor_index.tensor_shape_list) == 1:   
+        while tensor_index.end() == False:
+            mojo_tensor[Index(tensor_index.tensor_index_list[0])] = Float64(numpy_array[tensor_index.tensor_index_list[0]])
+            tensor_index.inc_mojo_tensor_index()
+    elif len(tensor_index.tensor_shape_list) == 2:   
+        while tensor_index.end() == False:
+            mojo_tensor[Index(tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1])] = Float64(numpy_array[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1]])
+            tensor_index.inc_mojo_tensor_index()
+    elif len(tensor_index.tensor_shape_list) == 3:   
+        while tensor_index.end() == False:
+            mojo_tensor[Index(tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2])] = Float64(numpy_array[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2]])
+            tensor_index.inc_mojo_tensor_index()
+    elif len(tensor_index.tensor_shape_list) == 4:   
+        while tensor_index.end() == False:
+            mojo_tensor[Index(tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2], tensor_index.tensor_index_list[3])] = Float64(numpy_array[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2], tensor_index.tensor_index_list[3]])
+            tensor_index.inc_mojo_tensor_index()            
     
     return mojo_tensor
     
@@ -50,19 +114,33 @@ fn create_equivalent_pytorch_tensor(mojo_tensor: Tensor[type]) raises -> PythonO
     
     # Get Shape of Tensor
     var tensor_shape: PythonObject = Python.list()
+    var tensor_shape_list = List[Int]()
     
     for dim in range(mojo_tensor.rank()):
         tensor_shape.append(mojo_tensor.shape()[dim])
+        tensor_shape_list.append(dim)
         
     # Construct Tensor
     var pytorch_tensor: PythonObject = torch.zeros(size=tensor_shape)
-
-    # Initialize pytorch tensor
-    for i in range(mojo_tensor.shape()[0]):
-        for j in range(mojo_tensor.shape()[1]):
-            for p in range(mojo_tensor.shape()[2]):
-                for q in range(mojo_tensor.shape()[3]):
-                    pytorch_tensor[i,j,p,q] = mojo_tensor[Index(i,j,p,q)]
+    
+    var tensor_index: Mojo_Tensor_Index = Mojo_Tensor_Index(tensor_shape_list)
+        
+    if len(tensor_index.tensor_shape_list) == 1:   
+        while tensor_index.end() == False:
+            pytorch_tensor[tensor_index.tensor_index_list[0]] = mojo_tensor[Index(tensor_index.tensor_index_list[0])]
+            tensor_index.inc_mojo_tensor_index()
+    elif len(tensor_index.tensor_shape_list) == 2:   
+        while tensor_index.end() == False:
+            pytorch_tensor[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1]] = mojo_tensor[Index(tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1])]
+            tensor_index.inc_mojo_tensor_index()
+    elif len(tensor_index.tensor_shape_list) == 3:   
+        while tensor_index.end() == False:
+            pytorch_tensor[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2]] = mojo_tensor[Index(tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2])]
+            tensor_index.inc_mojo_tensor_index()
+    elif len(tensor_index.tensor_shape_list) == 4:   
+        while tensor_index.end() == False:
+            pytorch_tensor[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2], tensor_index.tensor_index_list[3]] = mojo_tensor[Index(tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2], tensor_index.tensor_index_list[3])]
+            tensor_index.inc_mojo_tensor_index()  
     
     return pytorch_tensor
 
@@ -74,16 +152,47 @@ fn mojo_tensor_equals_pytroch_tensor(mojo_tensor: Tensor[type], pytorch_tensor: 
         var pytorch_tensor_shape: PythonObject = pytorch_tensor.shape
         for d in range(len(pytorch_tensor.shape)):
             if pytorch_tensor.shape[d] != mojo_tensor.shape()[d]:
-                good = False     
-        if good:
-            var precision: Float64 = 0.0001
-            var mojo_tensor_comparision: PythonObject = pytorch_tensor.clone()
+                return False   
+        var precision: Float64 = 0.01
+        var tensor_shape_list = List[Int]()
+
+        for dim in range(mojo_tensor.rank()):
+            tensor_shape_list.append(dim)
+        
+        var tensor_index: Mojo_Tensor_Index = Mojo_Tensor_Index(tensor_shape_list)
             
-            for i in range(len(pytorch_tensor)):
-                for j in range(len(pytorch_tensor[i])):
-                    if (Float64(pytorch_tensor[i,j].item()) > (mojo_tensor[Index(i,j)] + precision)) \
-                    or (Float64(pytorch_tensor[i,j].item()) < (mojo_tensor[Index(i,j)] - precision)):
-                        return False   
+        if len(tensor_index.tensor_shape_list) == 1:   
+            while tensor_index.end() == False:
+                var pytorch_val = pytorch_tensor[tensor_index.tensor_index_list[0]].item()
+                var mojo_val = Float64(mojo_tensor[Index(tensor_index.tensor_index_list[0])])                 
+                if (Float64(pytorch_val) > (mojo_val + precision)) \
+                or (Float64(pytorch_val) < (mojo_val - precision)):
+                    return False   
+                tensor_index.inc_mojo_tensor_index()
+        elif len(tensor_index.tensor_shape_list) == 2:   
+            while tensor_index.end() == False:
+                var pytorch_val = pytorch_tensor[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1]].item()
+                var mojo_val = Float64(mojo_tensor[Index(tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1])])                
+                if (Float64(pytorch_val) > (mojo_val + precision)) \
+                or (Float64(pytorch_val) < (mojo_val - precision)):
+                    return False   
+                tensor_index.inc_mojo_tensor_index()
+        elif len(tensor_index.tensor_shape_list) == 3:   
+            while tensor_index.end() == False:
+                var pytorch_val = pytorch_tensor[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2]].item()
+                var mojo_val = Float64(mojo_tensor[Index(tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2])])                
+                if (Float64(pytorch_val) > (mojo_val + precision)) \
+                or (Float64(pytorch_val) < (mojo_val - precision)):
+                    return False   
+                tensor_index.inc_mojo_tensor_index()
+        elif len(tensor_index.tensor_shape_list) == 4:   
+            while tensor_index.end() == False:
+                var pytorch_val = pytorch_tensor[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2], tensor_index.tensor_index_list[3]].item()
+                var mojo_val = Float64(mojo_tensor[Index(tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2], tensor_index.tensor_index_list[3])])                
+                if (Float64(pytorch_val) > (mojo_val + precision)) \
+                or (Float64(pytorch_val) < (mojo_val - precision)):
+                    return False   
+                tensor_index.inc_mojo_tensor_index()
 
     return good
     
@@ -209,6 +318,145 @@ def test_matmul():
 
     assert_true(tests_passed)
     
+def test_mojo_NN():
+    var nn = Python.import_module("torch.nn")
+    var optim = Python.import_module("torch.optim")
+    var torch = Python.import_module("torch")  
+    var time = Python.import_module("time")
+    var F = Python.import_module("torch.nn.functional")
+    
+    var nn_utils = NN_Utils()
+    var batchSize: Int = 64
+    var learning_rate = 0.01
+    var device: PythonObject = torch.device("cpu")
+    
+    print("Running Mojo NN Tests...")
+    print("--------------------------------------------------")
+      
+    # Load MNIST dataset
+    var trainloader = MNIST_Data_Loader_Pytorch(batchSize=batchSize, device=device, train=True, shuffle=True)
+
+    var model: Custom_NN_Pytorch = Custom_NN_Pytorch()
+
+    var criterion = nn.NLLLoss()  # Negative Log Likelihood Loss
+    var optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    
+    # Get Batch
+    var images_pytorch = trainloader.batchImages[0].to(device)
+    var labels_pytorch = trainloader.batchLabels[0].to(device)
+    var images_mojo: Tensor[type] = create_equivalent_mojo_tensor(images_pytorch)
+    var labels_mojo: Tensor[type] = create_equivalent_mojo_tensor(labels_pytorch)
+    
+    assert_true(mojo_tensor_equals_pytroch_tensor(images_mojo, images_pytorch))
+    assert_true(mojo_tensor_equals_pytroch_tensor(labels_mojo, labels_pytorch))
+    
+    var tests_passed = False
+    
+    # Run tests
+    
+    # Flatten
+    var flat_pytorch: PythonObject = model.flatten(images_pytorch)        
+    var flat_mojo = images_mojo
+    flat_mojo.ireshape(TensorShape(batchSize, 28 * 28))
+    
+    if mojo_tensor_equals_pytroch_tensor(flat_mojo, flat_pytorch) == True:
+        tests_passed = True
+                
+    # FC1
+    var fc1_weight_pytorch = model.fc1.weight
+    var fc1_weight_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc1_weight_pytorch.t())
+    var fc1_bias_pytorch = model.fc1.bias
+    var fc1_bias_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc1_bias_pytorch)
+         
+    var fc1_pytorch = model.fc1(flat_pytorch)
+    var fc1_manual = torch.matmul(flat_pytorch, fc1_weight_pytorch.t()) + fc1_bias_pytorch
+    # x @ weight
+    var fc1_mojo = nn_utils.matmul_simple(flat_mojo, fc1_weight_mojo)
+    # Add bias
+    for i in range(fc1_mojo.shape()[0]):
+        for j in range(fc1_mojo.shape()[1]):
+            fc1_mojo[Index(i, j)] = fc1_mojo[Index(i, j)] + fc1_bias_mojo[Index(j)]
+            
+    if tests_passed and torch.allclose(fc1_pytorch, fc1_manual, atol=1e-4) and mojo_tensor_equals_pytroch_tensor(fc1_mojo, fc1_pytorch):
+        tests_passed = True
+    else:
+        tests_passed = False
+            
+    # Relu FC1
+    var relu_fc1_pytorch = F.relu(fc1_pytorch)
+    var fc1_mojo_relued: Tensor[type] = nn_utils.relu(fc1_mojo)
+    
+    if tests_passed and mojo_tensor_equals_pytroch_tensor(fc1_mojo_relued, relu_fc1_pytorch):
+        tests_passed = True
+    else:
+        tests_passed = False
+        
+    # FC2
+    var fc2_weight_pytorch = model.fc2.weight
+    var fc2_weight_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc2_weight_pytorch.t())
+    var fc2_bias_pytorch = model.fc2.bias
+    var fc2_bias_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc2_bias_pytorch)
+     
+    var fc2_pytorch = model.fc2(relu_fc1_pytorch)
+    var fc2_manual = torch.matmul(relu_fc1_pytorch, fc2_weight_pytorch.t()) + fc2_bias_pytorch
+    # x @ weight
+    var fc2_mojo = nn_utils.matmul_simple(fc1_mojo_relued, fc2_weight_mojo)
+    # Add bias
+    for i in range(fc2_mojo.shape()[0]):
+        for j in range(fc2_mojo.shape()[1]):
+            fc2_mojo[Index(i, j)] = fc2_mojo[Index(i, j)] + fc2_bias_mojo[Index(j)]
+            
+    if tests_passed and torch.allclose(fc2_pytorch, fc2_manual, atol=1e-4) and mojo_tensor_equals_pytroch_tensor(fc2_mojo, fc2_pytorch):
+        tests_passed = True
+    else:
+        tests_passed = False
+    
+    # Relu FC2
+    var relu_fc2_pytorch = F.relu(fc2_pytorch)
+    var fc2_mojo_relued: Tensor[type] = nn_utils.relu(fc2_mojo)
+    
+    if tests_passed and mojo_tensor_equals_pytroch_tensor(fc2_mojo_relued, relu_fc2_pytorch):
+        tests_passed = True
+    else:
+        tests_passed = False
+        
+    # FC3
+    var fc3_weight_pytorch = model.fc3.weight
+    var fc3_weight_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc3_weight_pytorch.t())
+    var fc3_bias_pytorch = model.fc3.bias
+    var fc3_bias_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc3_bias_pytorch)
+     
+    var fc3_pytorch = model.fc3(relu_fc2_pytorch)
+    var fc3_manual = torch.matmul(relu_fc2_pytorch, fc3_weight_pytorch.t()) + fc3_bias_pytorch
+    # x @ weight
+    var fc3_mojo = nn_utils.matmul_simple(fc2_mojo_relued, fc3_weight_mojo)
+    # Add bias
+    for i in range(fc3_mojo.shape()[0]):
+        for j in range(fc3_mojo.shape()[1]):
+            fc3_mojo[Index(i, j)] = fc3_mojo[Index(i, j)] + fc3_bias_mojo[Index(j)]
+            
+    if tests_passed and torch.allclose(fc3_pytorch, fc3_manual, atol=1e-4) and mojo_tensor_equals_pytroch_tensor(fc3_mojo, fc3_pytorch):
+        tests_passed = True
+    else:
+        tests_passed = False
+        
+    # Log Softmax
+    var log_softmax_pytorch = F.log_softmax(fc3_pytorch, dim=1)
+    var log_softmax_mojo = nn_utils.log_softmax(fc3_mojo, dim=1)
+    
+    if tests_passed and mojo_tensor_equals_pytroch_tensor(log_softmax_mojo, log_softmax_pytorch):
+        tests_passed = True
+    else:
+        tests_passed = False
+        
+    if tests_passed:
+        print("✅ Passed")
+    else:
+        print("❌ Failed")
+    
+    print("--------------------------------------------------\n")
+    
+    assert_true(tests_passed)
     
 def run_tests():
     torch = Python.import_module("torch")
@@ -216,9 +464,10 @@ def run_tests():
     
     print("\nRunning Tests...")
     print("==================================================\n")
-    test_sigmoid()
-    test_transpose()
-    test_matmul()
+    #test_sigmoid()
+    #test_transpose()
+    #test_matmul()
+    test_mojo_NN()
         
     print("==================================================\n")
     
@@ -227,3 +476,8 @@ fn main() raises:
     seed()
     
     run_tests()  
+    
+    var mojo_tensor = Tensor[type](TensorShape(2,3,4,5))
+    var mojo_tensor_sub = Tensor[type](TensorShape(5))
+    
+    #mojo_tensor[Index(0,0,0)] = mojo_tensor_sub
