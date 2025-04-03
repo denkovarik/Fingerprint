@@ -1,6 +1,10 @@
 from python import Python, PythonObject
+from tensor import Tensor, TensorSpec, TensorShape
 from memory import UnsafePointer
 from collections import Dict
+
+
+alias type = DType.float64
 
 
 @value
@@ -50,3 +54,17 @@ struct Custom_NN_Pytorch:
                 param.grad.zero_()
             except AttributeError:
                 pass
+                
+
+@value        
+struct Custom_NN_Mojo:
+    var fc1_weight_mojo: Tensor[type]
+    var fc1_bias_mojo: Tensor[type]
+    var fc2_weight_mojo: Tensor[type]
+    var fc2_bias_mojo: Tensor[type]
+    
+    fn __init__(mut self) raises:
+        self.fc1_weight_mojo = Tensor[type](TensorShape(784, 128))
+        self.fc1_bias_mojo = Tensor[type](TensorShape(128))
+        self.fc2_weight_mojo = Tensor[type](TensorShape(784, 128))
+        self.fc2_bias_mojo = Tensor[type](TensorShape(128))
