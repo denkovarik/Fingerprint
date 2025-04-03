@@ -208,3 +208,24 @@ struct NN_Utils:
                     rslt[Index(i,j)] = -1000000000.0
         
         return rslt
+             
+    fn nll_loss(mut self, logits: Tensor[type], targets: Tensor[DType.int64]) -> Float64:
+        """
+        Computes the negative log likelihood loss.
+
+        Args:
+            logits: Tensor of shape (batch_size, num_classes) representing the log probabilities.
+            targets: Tensor of shape (batch_size,) representing the true labels.
+
+        Returns:
+            The total loss for the batch.
+        """
+        var batch_size = logits.shape()[0]
+        var total_loss: Float64 = 0.0
+        
+        for i in range(batch_size):
+            var target_class = targets[i]
+            var log_prob = logits[Index(i, target_class)]
+            total_loss -= log_prob
+
+        return total_loss / batch_size
