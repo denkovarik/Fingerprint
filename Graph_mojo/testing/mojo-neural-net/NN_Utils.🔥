@@ -5,7 +5,7 @@ from utils.index import Index
 from random import randn, random_si64, seed
 from pathlib import path
 from python import Python, PythonObject
-from math import exp
+from math import exp, log
 
 alias type = DType.float64
 alias simdwidth = simdwidthof[type]()
@@ -113,6 +113,23 @@ struct NN_Utils:
     #    vectorize[simdwidth, compute_exp](activations.num_elements())
     #    
     #    return activations
+    
+    fn relu(mut self, X: Tensor[type]) -> Tensor[type]:
+        """ Function `relu`: apply relu activation to Tensor.
+
+        Args:
+            X: Input matrix shape (m, n).
+        """
+        var rslt: Tensor[type] = Tensor[type](X.shape())
+        var rank = X.shape().rank()
+            
+        for i in range(X.shape()[0]):
+            for j in range(X.shape()[1]):
+                if X[Index(i,j)] > 0:
+                    rslt[Index(i,j)] = X[Index(i,j)]
+                else:
+                    rslt[Index(i,j)] = 0.0
+        return rslt
         
     fn sigmoid(mut self, X: Tensor[type]) -> Tensor[type]:
         """ Function `sigmoid`: apply sigmoid activation to Tensor.
@@ -128,20 +145,7 @@ struct NN_Utils:
                 var e_x: Float64 = exp(X[Index(i,j)])
                 rslt[Index(i,j)] = Float64(e_x / (1 + e_x))
         return rslt
-
-    # 1/sqrt(x + epsilon)
-    fn inv_sqrt(mut self, z: Tensor[type]) -> Tensor[type]:
-        var second_moments: Tensor[type] = Tensor[type](z.shape())
-
-        @parameter
-        fn compute_rsqrt[simd_width: Int](idx: Int):
-            pass
-            #second_moments.simd_store[simd_width](idx, rsqrt[type, simd_width](epsilon + z.simd_load[simd_width](idx)))
         
-        #vectorize[simdwidth, compute_rsqrt](second_moments.num_elements())
-        
-        return second_moments
-
     # sigmoid(z) * (1 - sigmoid(z))
     #fn sigmoid_prime(mut self, a: Tensor[type]) raises -> Tensor[type]:
     #    var sigma_prime: Tensor[type] = Tensor[type](a.shape()) 
@@ -157,3 +161,50 @@ struct NN_Utils:
     #    sigma_prime = sigmoid_z * (1 - sigmoid_z)
     #
     #    return sigma_prime
+
+    # 1/sqrt(x + epsilon)
+    fn inv_sqrt(mut self, z: Tensor[type]) -> Tensor[type]:
+        var second_moments: Tensor[type] = Tensor[type](z.shape())
+
+        @parameter
+        fn compute_rsqrt[simd_width: Int](idx: Int):
+            pass
+            #second_moments.simd_store[simd_width](idx, rsqrt[type, simd_width](epsilon + z.simd_load[simd_width](idx)))
+        
+        #vectorize[simdwidth, compute_rsqrt](second_moments.num_elements())
+        
+        return second_moments
+    
+    fn log_softmax(mut self, X: Tensor[type], dim: Int) -> Tensor[type]:
+        var rslt: Tensor[type] = Tensor[type](X.shape())
+        
+        # Subtract the max value for numerical stability
+        var exp_values = Tensor[type](X.shape())
+        for i in range(X.shape()[0]):
+            var max_val = X[Index(i,0)]
+            for j in range(X.shape()[1]):
+                if X[Index(i,j)] > max_val:
+                    max_val = X[Index(i,j)]
+            for j in range(X.shape()[1]):
+                # Assuming 2D tensor, adjust for higher dimensions if needed
+                exp_values[Index(i,j)] = exp(X[Index(i,j)] - max_val) 
+        
+        # Softmax
+        for i in range(X.shape()[0]):
+            # Find sum of exponentials
+            var sum_exp: Float64 = 0.0
+            for j in range(X.shape()[1]):
+                sum_exp = sum_exp + exp_values[Index(i,j)]
+        
+            for j in range(X.shape()[1]):
+                rslt[Index(i,j)] = exp_values[Index(i,j)] / sum_exp
+        
+        # Log Softmax
+        for i in range(rslt.shape()[0]):
+            for j in range(rslt.shape()[1]):
+                if rslt[Index(i,j)] > 0:  # Avoid log(0) which is undefined
+                    rslt[Index(i,j)] = log(rslt[Index(i,j)])
+                else:
+                    rslt[Index(i,j)] = -1000000000.0
+        
+        return rslt
