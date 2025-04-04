@@ -355,6 +355,9 @@ def test_mojo_NN():
     
     # Run tests
     
+    # Zero out gradients
+    optimizer.zero_grad()
+    
     # Flatten
     var flat_pytorch: PythonObject = model.flatten(images_pytorch)        
     var flat_mojo = images_mojo
@@ -423,14 +426,14 @@ def test_mojo_NN():
         
     # FC3
     var fc3_weight_pytorch = model.fc3.weight
-    var fc3_weight_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc3_weight_pytorch.t())
+    var fc3_weight_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc3_weight_pytorch)
     var fc3_bias_pytorch = model.fc3.bias
     var fc3_bias_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc3_bias_pytorch)
      
     var fc3_pytorch = model.fc3(relu_fc2_pytorch)
     var fc3_manual = torch.matmul(relu_fc2_pytorch, fc3_weight_pytorch.t()) + fc3_bias_pytorch
     # x @ weight
-    var fc3_mojo = nn_utils.matmul_simple(fc2_mojo_relued, fc3_weight_mojo)
+    var fc3_mojo = nn_utils.matmul_simple(fc2_mojo_relued, nn_utils.transpose(fc3_weight_mojo))
     # Add bias
     for i in range(fc3_mojo.shape()[0]):
         for j in range(fc3_mojo.shape()[1]):
@@ -444,17 +447,67 @@ def test_mojo_NN():
     # Log Softmax
     var log_softmax_pytorch = F.log_softmax(fc3_pytorch, dim=1)
     var log_softmax_mojo = nn_utils.log_softmax(fc3_mojo, dim=1)
-    
+        
     if tests_passed and mojo_tensor_equals_pytroch_tensor(log_softmax_mojo, log_softmax_pytorch):
         tests_passed = True
     else:
         tests_passed = False
         
     # Negative Log Likelihood Loss
-    var loss_pytorch: Float64 = Float64(criterion(log_softmax_pytorch, labels_pytorch).item())
+    var loss_pytorch = criterion(log_softmax_pytorch, labels_pytorch)
     var loss_mojo: Float64 = nn_utils.nll_loss(log_softmax_mojo, labels_mojo)
     
-    if tests_passed and ((loss_pytorch > (loss_mojo - 0.0001)) or (loss_pytorch <= (loss_mojo + 0.0001))):
+    if tests_passed and ((Float64(loss_pytorch.item()) > (loss_mojo - 0.0001)) or (Float64(loss_pytorch.item()) <= (loss_mojo + 0.0001))):
+        tests_passed = True
+    else:
+        tests_passed = False
+        
+        
+    # Backward
+    loss_pytorch.backward()
+    
+    # Gradient of loss with respect to the output of fc3 (logits)
+    logits = fc3_pytorch
+    logits_mojo = fc3_mojo
+
+    # Gradient of NLLLoss w.r.t logits
+    softmax = torch.exp(log_softmax_pytorch)
+    var softmax_mojo = Tensor[type](log_softmax_mojo.shape())
+    for i in range(softmax_mojo.shape()[0]):
+        for j in range(softmax_mojo.shape()[1]):
+            softmax_mojo[Index(i,j)] = exp(log_softmax_mojo[Index(i,j)])
+            
+    grad_output = softmax.clone()
+    for i in range(batchSize):
+        grad_output[i, labels_pytorch[i]] -= 1
+        
+    var grad_output_mojo: Tensor[type] = softmax_mojo.copy()
+    for i in range(batchSize):
+        grad_output_mojo[Index(i, labels_mojo[i])] = (grad_output_mojo[Index(i, labels_mojo[i])] - 1) #/ batchSize
+        
+    # If loss was averaged, divide by batchSize
+    grad_output /= batchSize
+        
+    for i in range(grad_output_mojo.shape()[0]):
+        for j in range(grad_output_mojo.shape()[1]):
+            grad_output_mojo[Index(i,j)] /= batchSize
+
+    # This is the gradient of the loss w.r.t. logits
+    # Gradient for the weights is the outer product of the log_softmax gradient and the input x
+    weight_grad_manual = torch.matmul(relu_fc2_pytorch.T, grad_output).T
+    var weight_grad_mojo = nn_utils.transpose(nn_utils.matmul_simple(nn_utils.transpose(fc2_mojo_relued), grad_output_mojo))
+    
+    # Now compute bias gradient: sum across samples (axis=0)
+    bias_grad_manual = torch.sum(grad_output, dim=0)
+    var bias_grad_mojo: Tensor[type] = Tensor[type](TensorShape(grad_output_mojo.shape()[1]))
+    for i in range(bias_grad_mojo.shape()[0]):
+        bias_grad_mojo[i] = 0.0
+    for i in range(grad_output_mojo.shape()[0]):
+        for j in range(grad_output_mojo.shape()[1]):
+            bias_grad_mojo[j] += grad_output_mojo[Index(i, j)]
+                
+    if tests_passed and torch.allclose(model.fc3.weight.grad, weight_grad_manual, atol=1e-4) and torch.allclose(model.fc3.bias.grad, bias_grad_manual, atol=1e-4) \
+    and mojo_tensor_equals_pytroch_tensor(weight_grad_mojo, weight_grad_manual) and mojo_tensor_equals_pytroch_tensor(bias_grad_mojo, bias_grad_manual):
         tests_passed = True
     else:
         tests_passed = False
@@ -483,7 +536,7 @@ def run_tests():
     
     
 fn main() raises:
-    seed()
+    seed(42)
     
     run_tests()  
     
