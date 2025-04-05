@@ -153,7 +153,7 @@ fn mojo_tensor_equals_pytroch_tensor(mojo_tensor: Tensor[type], pytorch_tensor: 
         for d in range(len(pytorch_tensor.shape)):
             if pytorch_tensor.shape[d] != mojo_tensor.shape()[d]:
                 return False   
-        var precision: Float64 = 0.01
+        var precision: Float64 = 0.0001
         var tensor_shape_list = List[Int]()
 
         for dim in range(mojo_tensor.rank()):
@@ -163,7 +163,7 @@ fn mojo_tensor_equals_pytroch_tensor(mojo_tensor: Tensor[type], pytorch_tensor: 
             
         if len(tensor_index.tensor_shape_list) == 1:   
             while tensor_index.end() == False:
-                var pytorch_val = pytorch_tensor[tensor_index.tensor_index_list[0]].item()
+                var pytorch_val = Float64(pytorch_tensor[tensor_index.tensor_index_list[0]].item())
                 var mojo_val = Float64(mojo_tensor[Index(tensor_index.tensor_index_list[0])])                 
                 if (Float64(pytorch_val) > (mojo_val + precision)) \
                 or (Float64(pytorch_val) < (mojo_val - precision)):
@@ -171,7 +171,7 @@ fn mojo_tensor_equals_pytroch_tensor(mojo_tensor: Tensor[type], pytorch_tensor: 
                 tensor_index.inc_mojo_tensor_index()
         elif len(tensor_index.tensor_shape_list) == 2:   
             while tensor_index.end() == False:
-                var pytorch_val = pytorch_tensor[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1]].item()
+                var pytorch_val = Float64(pytorch_tensor[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1]].item())
                 var mojo_val = Float64(mojo_tensor[Index(tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1])])                
                 if (Float64(pytorch_val) > (mojo_val + precision)) \
                 or (Float64(pytorch_val) < (mojo_val - precision)):
@@ -179,7 +179,7 @@ fn mojo_tensor_equals_pytroch_tensor(mojo_tensor: Tensor[type], pytorch_tensor: 
                 tensor_index.inc_mojo_tensor_index()
         elif len(tensor_index.tensor_shape_list) == 3:   
             while tensor_index.end() == False:
-                var pytorch_val = pytorch_tensor[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2]].item()
+                var pytorch_val = Float64(pytorch_tensor[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2]].item())
                 var mojo_val = Float64(mojo_tensor[Index(tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2])])                
                 if (Float64(pytorch_val) > (mojo_val + precision)) \
                 or (Float64(pytorch_val) < (mojo_val - precision)):
@@ -187,7 +187,7 @@ fn mojo_tensor_equals_pytroch_tensor(mojo_tensor: Tensor[type], pytorch_tensor: 
                 tensor_index.inc_mojo_tensor_index()
         elif len(tensor_index.tensor_shape_list) == 4:   
             while tensor_index.end() == False:
-                var pytorch_val = pytorch_tensor[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2], tensor_index.tensor_index_list[3]].item()
+                var pytorch_val = Float64(pytorch_tensor[tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2], tensor_index.tensor_index_list[3]].item())
                 var mojo_val = Float64(mojo_tensor[Index(tensor_index.tensor_index_list[0], tensor_index.tensor_index_list[1], tensor_index.tensor_index_list[2], tensor_index.tensor_index_list[3])])                
                 if (Float64(pytorch_val) > (mojo_val + precision)) \
                 or (Float64(pytorch_val) < (mojo_val - precision)):
@@ -397,14 +397,14 @@ def test_mojo_NN():
         
     # FC2
     var fc2_weight_pytorch = model.fc2.weight
-    var fc2_weight_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc2_weight_pytorch.t())
+    var fc2_weight_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc2_weight_pytorch)
     var fc2_bias_pytorch = model.fc2.bias
     var fc2_bias_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc2_bias_pytorch)
      
     var fc2_pytorch = model.fc2(relu_fc1_pytorch)
     var fc2_manual = torch.matmul(relu_fc1_pytorch, fc2_weight_pytorch.t()) + fc2_bias_pytorch
     # x @ weight
-    var fc2_mojo = nn_utils.matmul_simple(fc1_mojo_relued, fc2_weight_mojo)
+    var fc2_mojo = nn_utils.matmul_simple(fc1_mojo_relued, nn_utils.transpose(fc2_weight_mojo))
     # Add bias
     for i in range(fc2_mojo.shape()[0]):
         for j in range(fc2_mojo.shape()[1]):
@@ -483,7 +483,7 @@ def test_mojo_NN():
         
     var grad_output_mojo: Tensor[type] = softmax_mojo.copy()
     for i in range(batchSize):
-        grad_output_mojo[Index(i, labels_mojo[i])] = (grad_output_mojo[Index(i, labels_mojo[i])] - 1) #/ batchSize
+        grad_output_mojo[Index(i, labels_mojo[i])] = (grad_output_mojo[Index(i, labels_mojo[i])] - 1) 
         
     # If loss was averaged, divide by batchSize
     grad_output /= batchSize
@@ -507,7 +507,70 @@ def test_mojo_NN():
             bias_grad_mojo[j] += grad_output_mojo[Index(i, j)]
                 
     if tests_passed and torch.allclose(model.fc3.weight.grad, weight_grad_manual, atol=1e-4) and torch.allclose(model.fc3.bias.grad, bias_grad_manual, atol=1e-4) \
-    and mojo_tensor_equals_pytroch_tensor(weight_grad_mojo, weight_grad_manual) and mojo_tensor_equals_pytroch_tensor(bias_grad_mojo, bias_grad_manual):
+    and mojo_tensor_equals_pytroch_tensor(weight_grad_mojo, model.fc3.weight.grad) and mojo_tensor_equals_pytroch_tensor(bias_grad_mojo, model.fc3.bias.grad):
+        tests_passed = True
+    else:
+        tests_passed = False
+        
+    # relu(fc2)
+    
+    # grad of loss w.r.t. fc2 output
+    grad_fc2_output_pytorch = torch.matmul(grad_output, model.fc3.weight) 
+    var grad_fc2_output_mojo = nn_utils.matmul_simple(grad_output_mojo, fc3_weight_mojo)
+    
+    # backprop through ReLU after fc2
+    relu_mask_fc2_pytorch = (fc2_pytorch > 0).float()
+    grad_fc2_output_pytorch *= relu_mask_fc2_pytorch
+    
+    for i in range(grad_fc2_output_mojo.shape()[0]):
+        for j in range(grad_fc2_output_mojo.shape()[1]):
+            if ~(fc2_mojo[Index(i,j)] > 0.0):
+                grad_fc2_output_mojo[Index(i,j)] = 0.0
+                
+    # grad w.r.t. fc2 weights
+    weight_grad_fc2_manual_pytorch = torch.matmul(relu_fc1_pytorch.T, grad_fc2_output_pytorch).T
+    var weight_grad_fc2_mojo = nn_utils.transpose(nn_utils.matmul_simple(nn_utils.transpose(fc1_mojo_relued), grad_fc2_output_mojo))
+        
+    bias_grad_fc2_manual_pytorch = torch.sum(grad_fc2_output_pytorch, dim=0)  
+    var bias_grad_fc2_manual_mojo: Tensor[type] = Tensor[type](grad_fc2_output_mojo.shape()[0])
+    
+    for i in range(grad_fc2_output_mojo.shape()[1]):
+        bias_grad_fc2_manual_mojo[i] = 0
+        for j in range(grad_fc2_output_mojo.shape()[0]):
+            bias_grad_fc2_manual_mojo[i] = bias_grad_fc2_manual_mojo[i] + grad_fc2_output_mojo[Index(j,i)]
+    
+    if tests_passed and model.fc2.weight.grad.shape == weight_grad_fc2_manual_pytorch.shape \
+    and torch.allclose(model.fc2.weight.grad, weight_grad_fc2_manual_pytorch, atol=1e-4) and torch.allclose(model.fc2.bias.grad, bias_grad_fc2_manual_pytorch, atol=1e-4) \
+    and mojo_tensor_equals_pytroch_tensor(weight_grad_fc2_mojo, model.fc2.weight.grad) and mojo_tensor_equals_pytroch_tensor(bias_grad_fc2_manual_mojo, model.fc2.bias.grad):
+        tests_passed = True
+    else:
+        tests_passed = False
+        
+    # relu(fc1)
+    grad_fc1_output_pytorch = torch.matmul(grad_fc2_output_pytorch, model.fc2.weight)
+    var grad_fc1_output_mojo = nn_utils.matmul_simple(grad_fc2_output_mojo, fc2_weight_mojo)
+
+    relu_mask_fc1_pytorch = (fc1_pytorch > 0).float()
+    grad_fc1_output_pytorch *= relu_mask_fc1_pytorch
+
+    for i in range(grad_fc1_output_mojo.shape()[0]):
+        for j in range(grad_fc1_output_mojo.shape()[1]):
+            if ~(fc1_mojo[Index(i,j)] > 0.0):
+                grad_fc1_output_mojo[Index(i,j)] = 0.0
+                     
+    weight_grad_fc1_manual_pytorch = torch.matmul(flat_pytorch.T, grad_fc1_output_pytorch).T
+    var weight_grad_fc1_mojo = nn_utils.transpose(nn_utils.matmul_simple(nn_utils.transpose(flat_mojo), grad_fc1_output_mojo))
+    
+    bias_grad_fc1_manual_pytorch = torch.sum(grad_fc1_output_pytorch, dim=0)
+    var bias_grad_fc1_mojo: Tensor[type] = Tensor[type](grad_fc1_output_mojo.shape()[1])
+    for i in range(grad_fc1_output_mojo.shape()[1]):
+        bias_grad_fc1_mojo[i] = 0
+        for j in range(grad_fc1_output_mojo.shape()[0]):
+            bias_grad_fc1_mojo[i] += grad_fc1_output_mojo[Index(j,i)]
+
+    if tests_passed and model.fc1.weight.grad.shape == weight_grad_fc1_manual_pytorch.shape \
+    and torch.allclose(model.fc1.weight.grad, weight_grad_fc1_manual_pytorch, atol=1e-4) and torch.allclose(model.fc1.bias.grad, bias_grad_fc1_manual_pytorch, atol=1e-4) \
+    and mojo_tensor_equals_pytroch_tensor(weight_grad_fc1_mojo, model.fc1.weight.grad) and mojo_tensor_equals_pytroch_tensor(bias_grad_fc1_mojo, model.fc1.bias.grad):
         tests_passed = True
     else:
         tests_passed = False
