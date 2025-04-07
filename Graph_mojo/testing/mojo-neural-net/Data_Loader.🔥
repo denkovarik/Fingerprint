@@ -1,4 +1,8 @@
 from python import Python, PythonObject
+from tensor import Tensor, TensorSpec, TensorShape
+from utils.index import Index, IndexList
+
+alias type = DType.float64
 
 
 @value
@@ -48,6 +52,76 @@ struct MNIST_Data_Loader_Pytorch:
             labels = labels.pin_memory()
             self.batchImages.append(images)
             self.batchLabels.append(labels)
+            
+    fn __len__(mut self) -> Int:
+        return self.dataLoaderLength
+        
+        
+@value
+struct MNIST_Data_Loader_Mojo:
+    var batchSize: Int
+    var transform: PythonObject
+    var dataset: PythonObject
+    var dataloader: PythonObject
+    var device: PythonObject
+    var batchImages: List[PythonObject]
+    var batchImages_mojo: List[Tensor[type]]
+    var batchLabels: List[PythonObject]
+    var train: Bool
+    var shuffle: Bool
+    var dataLoaderLength: Int
+    
+    fn __init__(mut self, batchSize: Int, device: PythonObject, train: Bool, shuffle: Bool) raises:
+        var nn = Python.import_module("torch.nn")
+        var optim = Python.import_module("torch.optim")
+        var torch = Python.import_module("torch")
+        var torchvision = Python.import_module("torchvision")
+        var transforms = Python.import_module("torchvision.transforms")
+        
+        self.batchSize = batchSize
+        self.device = device
+        self.batchImages = List[PythonObject]()
+        self.batchImages_mojo = List[Tensor[type]]()
+        self.batchLabels = List[PythonObject]()
+        self.batchImages_mojo = List[Tensor[type]]()
+        self.train = train
+        self.shuffle = shuffle
+    
+        # Define transformations
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
+        
+        # Load or download the dataset
+        self.dataset = torchvision.datasets.MNIST(root='data',train=train, download=True, transform=self.transform)
+                
+        self.dataloader = torch.utils.data.DataLoader(self.dataset, batch_size=self.batchSize, shuffle=shuffle)
+        self.dataLoaderLength = len(self.dataloader)
+        
+        batchNum = 1
+     
+        # Precompile all of the batches to avoid doing this in training loop
+        for batch in self.dataloader:
+            print("Batch: " + String(batchNum))
+            batchNum = batchNum + 1
+            var images: PythonObject = batch[0]
+            
+            var images_mojo: Tensor[type] = Tensor[type](TensorShape(64, 1, 28, 28))   
+            for i in range(images_mojo.shape()[0]):
+                for j in range(images_mojo.shape()[1]):
+                    for p in range(images_mojo.shape()[2]):
+                        for q in range(images_mojo.shape()[3]):
+                            images_mojo[Index(i,j,p,q)] = Float64(batch[0][i,j,p,q].item())                         
+            
+            var labels: PythonObject = batch[1]            
+            images = images.pin_memory()
+            labels = labels.pin_memory()
+            self.batchImages.append(images)
+            self.batchImages_mojo.append(images_mojo)
+            self.batchLabels.append(labels)
+            
+        print("done")
             
     fn __len__(mut self) -> Int:
         return self.dataLoaderLength
