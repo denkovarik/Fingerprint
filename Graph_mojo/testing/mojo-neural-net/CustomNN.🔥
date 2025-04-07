@@ -30,7 +30,7 @@ struct Custom_NN_Pytorch:
         self.fc2 = self.nn.Linear(128, 64)
         self.fc3 = self.nn.Linear(64, 10) 
                 
-    def forward(self, x: PythonObject) -> PythonObject:
+    def forward(mut self, x: PythonObject) -> PythonObject:
         var temp1: PythonObject = self.flatten(x)
         var temp2: PythonObject = self.F.relu(self.fc1(temp1))
         var temp3: PythonObject = self.F.relu(self.fc2(temp2))
@@ -48,7 +48,7 @@ struct Custom_NN_Pytorch:
         self.model_parameters.append(self.fc3.bias)
         return self.model_parameters
 
-    fn zero_grad(inout self) raises:
+    fn zero_grad(mut self) raises:
         for param in self.model_parameters:
             try:
                 param.grad.zero_()
