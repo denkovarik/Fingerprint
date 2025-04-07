@@ -367,15 +367,15 @@ def test_mojo_NN():
         tests_passed = True
                 
     # FC1
-    var fc1_weight_pytorch = model.fc1.weight
-    var fc1_weight_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc1_weight_pytorch.t())
-    var fc1_bias_pytorch = model.fc1.bias
+    var fc1_weight_pytorch = model.fc1.weight.clone()
+    var fc1_weight_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc1_weight_pytorch)
+    var fc1_bias_pytorch = model.fc1.bias.clone()
     var fc1_bias_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc1_bias_pytorch)
          
     var fc1_pytorch = model.fc1(flat_pytorch)
     var fc1_manual = torch.matmul(flat_pytorch, fc1_weight_pytorch.t()) + fc1_bias_pytorch
     # x @ weight
-    var fc1_mojo = nn_utils.matmul_simple(flat_mojo, fc1_weight_mojo)
+    var fc1_mojo = nn_utils.matmul_simple(flat_mojo, nn_utils.transpose(fc1_weight_mojo))
     # Add bias
     for i in range(fc1_mojo.shape()[0]):
         for j in range(fc1_mojo.shape()[1]):
@@ -396,9 +396,9 @@ def test_mojo_NN():
         tests_passed = False
         
     # FC2
-    var fc2_weight_pytorch = model.fc2.weight
+    var fc2_weight_pytorch = model.fc2.weight.clone()
     var fc2_weight_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc2_weight_pytorch)
-    var fc2_bias_pytorch = model.fc2.bias
+    var fc2_bias_pytorch = model.fc2.bias.clone()
     var fc2_bias_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc2_bias_pytorch)
      
     var fc2_pytorch = model.fc2(relu_fc1_pytorch)
@@ -425,9 +425,9 @@ def test_mojo_NN():
         tests_passed = False
         
     # FC3
-    var fc3_weight_pytorch = model.fc3.weight
+    var fc3_weight_pytorch = model.fc3.weight.clone()
     var fc3_weight_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc3_weight_pytorch)
-    var fc3_bias_pytorch = model.fc3.bias
+    var fc3_bias_pytorch = model.fc3.bias.clone()
     var fc3_bias_mojo: Tensor[type] = create_equivalent_mojo_tensor(fc3_bias_pytorch)
      
     var fc3_pytorch = model.fc3(relu_fc2_pytorch)
@@ -494,20 +494,20 @@ def test_mojo_NN():
 
     # This is the gradient of the loss w.r.t. logits
     # Gradient for the weights is the outer product of the log_softmax gradient and the input x
-    weight_grad_manual = torch.matmul(relu_fc2_pytorch.T, grad_output).T
-    var weight_grad_mojo = nn_utils.transpose(nn_utils.matmul_simple(nn_utils.transpose(fc2_mojo_relued), grad_output_mojo))
+    weight_grad_fc3_manual_pytorch = torch.matmul(relu_fc2_pytorch.T, grad_output).T
+    var fc3_weight_grad_mojo = nn_utils.transpose(nn_utils.matmul_simple(nn_utils.transpose(fc2_mojo_relued), grad_output_mojo))
     
     # Now compute bias gradient: sum across samples (axis=0)
-    bias_grad_manual = torch.sum(grad_output, dim=0)
-    var bias_grad_mojo: Tensor[type] = Tensor[type](TensorShape(grad_output_mojo.shape()[1]))
-    for i in range(bias_grad_mojo.shape()[0]):
-        bias_grad_mojo[i] = 0.0
+    bias_grad_fc3_manual_pytorch = torch.sum(grad_output, dim=0)
+    var bias_grad_fc3_mojo: Tensor[type] = Tensor[type](TensorShape(grad_output_mojo.shape()[1]))
+    for i in range(bias_grad_fc3_mojo.shape()[0]):
+        bias_grad_fc3_mojo[i] = 0.0
     for i in range(grad_output_mojo.shape()[0]):
         for j in range(grad_output_mojo.shape()[1]):
-            bias_grad_mojo[j] += grad_output_mojo[Index(i, j)]
+            bias_grad_fc3_mojo[j] += grad_output_mojo[Index(i, j)]
                 
-    if tests_passed and torch.allclose(model.fc3.weight.grad, weight_grad_manual, atol=1e-4) and torch.allclose(model.fc3.bias.grad, bias_grad_manual, atol=1e-4) \
-    and mojo_tensor_equals_pytroch_tensor(weight_grad_mojo, model.fc3.weight.grad) and mojo_tensor_equals_pytroch_tensor(bias_grad_mojo, model.fc3.bias.grad):
+    if tests_passed and torch.allclose(model.fc3.weight.grad, weight_grad_fc3_manual_pytorch, atol=1e-4) and torch.allclose(model.fc3.bias.grad, bias_grad_fc3_manual_pytorch, atol=1e-4) \
+    and mojo_tensor_equals_pytroch_tensor(fc3_weight_grad_mojo, model.fc3.weight.grad) and mojo_tensor_equals_pytroch_tensor(bias_grad_fc3_mojo, model.fc3.bias.grad):
         tests_passed = True
     else:
         tests_passed = False
@@ -570,6 +570,83 @@ def test_mojo_NN():
 
     if tests_passed and model.fc1.weight.grad.shape == weight_grad_fc1_manual_pytorch.shape \
     and torch.allclose(model.fc1.weight.grad, weight_grad_fc1_manual_pytorch, atol=1e-4) and torch.allclose(model.fc1.bias.grad, bias_grad_fc1_manual_pytorch, atol=1e-4) \
+    and mojo_tensor_equals_pytroch_tensor(weight_grad_fc1_mojo, model.fc1.weight.grad) and mojo_tensor_equals_pytroch_tensor(bias_grad_fc1_mojo, model.fc1.bias.grad):
+        tests_passed = True
+    else:
+        tests_passed = False
+   
+    # Step
+    optimizer.step()
+    
+    # FC3 weight update
+    fc3_weight_pytorch = fc3_weight_pytorch - learning_rate * weight_grad_fc3_manual_pytorch
+    for i in range(fc3_weight_mojo.shape()[0]):
+        for j in range(fc3_weight_mojo.shape()[1]):
+            fc3_weight_mojo[Index(i,j)] = fc3_weight_mojo[Index(i,j)] - learning_rate * fc3_weight_grad_mojo[Index(i,j)]
+    # FC3 bias update
+    fc3_bias_pytorch   = fc3_bias_pytorch - learning_rate * bias_grad_fc3_manual_pytorch
+    for i in range(fc3_bias_mojo.shape()[0]):
+        fc3_bias_mojo[i] = fc3_bias_mojo[i] - learning_rate * bias_grad_fc3_mojo[i]
+    
+    # FC2 weight update
+    fc2_weight_pytorch = fc2_weight_pytorch - learning_rate * weight_grad_fc2_manual_pytorch
+    for i in range(fc2_weight_mojo.shape()[0]):
+        for j in range(fc2_weight_mojo.shape()[1]):
+            fc2_weight_mojo[Index(i,j)] = fc2_weight_mojo[Index(i,j)] - learning_rate * weight_grad_fc2_mojo[Index(i,j)]
+    # FC2 bias update
+    fc2_bias_pytorch   = fc2_bias_pytorch - learning_rate * bias_grad_fc2_manual_pytorch
+    for i in range(fc2_bias_mojo.shape()[0]):
+        fc2_bias_mojo[i] = fc2_bias_mojo[i] - learning_rate * bias_grad_fc2_manual_mojo[i]
+
+    # FC1 weight update
+    fc1_weight_pytorch = fc1_weight_pytorch - learning_rate * weight_grad_fc1_manual_pytorch
+    for i in range(fc1_weight_mojo.shape()[0]):
+        for j in range(fc1_weight_mojo.shape()[1]):
+            fc1_weight_mojo[Index(i,j)] = fc1_weight_mojo[Index(i,j)] - learning_rate * weight_grad_fc1_mojo[Index(i,j)]
+    # FC1 bias update
+    fc1_bias_pytorch   = fc1_bias_pytorch - learning_rate * bias_grad_fc1_manual_pytorch
+    for i in range(fc1_bias_mojo.shape()[0]):
+        fc1_bias_mojo[i] = fc1_bias_mojo[i] - learning_rate * bias_grad_fc1_mojo[i]
+    
+    
+    if tests_passed and model.fc1.weight.grad.shape == weight_grad_fc1_manual_pytorch.shape \
+    and torch.allclose(model.fc3.weight, fc3_weight_pytorch, atol=1e-4) and torch.allclose(model.fc3.bias, fc3_bias_pytorch, atol=1e-4) \
+    and torch.allclose(model.fc2.weight, fc2_weight_pytorch, atol=1e-4) and torch.allclose(model.fc2.bias, fc2_bias_pytorch, atol=1e-4) \
+    and torch.allclose(model.fc1.weight, fc1_weight_pytorch, atol=1e-4) and torch.allclose(model.fc1.bias, fc1_bias_pytorch, atol=1e-4) \
+    and mojo_tensor_equals_pytroch_tensor(fc3_weight_mojo, model.fc3.weight) and mojo_tensor_equals_pytroch_tensor(fc3_bias_mojo, model.fc3.bias) \
+    and mojo_tensor_equals_pytroch_tensor(fc2_weight_mojo, model.fc2.weight) and mojo_tensor_equals_pytroch_tensor(fc2_bias_mojo, model.fc2.bias) \
+    and mojo_tensor_equals_pytroch_tensor(fc1_weight_mojo, model.fc1.weight) and mojo_tensor_equals_pytroch_tensor(fc1_bias_mojo, model.fc1.bias):
+        tests_passed = True
+    else:
+        tests_passed = False
+
+    # Zero out gradients
+    model.zero_grad()   
+    # FC3 Weight
+    for i in range(fc3_weight_grad_mojo.shape()[0]):
+        for j in range(fc3_weight_grad_mojo.shape()[1]):
+            fc3_weight_grad_mojo[Index(i,j)] = 0.0
+    # FC3 Bias
+    for i in range(bias_grad_fc3_mojo.shape()[0]):
+        bias_grad_fc3_mojo[i] = 0.0
+    # FC2 Weight
+    for i in range(weight_grad_fc2_mojo.shape()[0]):
+        for j in range(weight_grad_fc2_mojo.shape()[1]):
+            weight_grad_fc2_mojo[Index(i,j)] = 0.0
+    # FC2 Bias
+    for i in range(bias_grad_fc2_manual_mojo.shape()[0]):
+        bias_grad_fc2_manual_mojo[i] = 0.0
+    # FC1 Weight
+    for i in range(weight_grad_fc1_mojo.shape()[0]):
+        for j in range(weight_grad_fc1_mojo.shape()[1]):
+            weight_grad_fc1_mojo[Index(i,j)] = 0.0
+    # FC1 Bias
+    for i in range(bias_grad_fc1_mojo.shape()[0]):
+        bias_grad_fc1_mojo[i] = 0.0
+            
+    if tests_passed \
+    and mojo_tensor_equals_pytroch_tensor(fc3_weight_grad_mojo, model.fc3.weight.grad) and mojo_tensor_equals_pytroch_tensor(bias_grad_fc3_mojo, model.fc3.bias.grad) \
+    and mojo_tensor_equals_pytroch_tensor(weight_grad_fc2_mojo, model.fc2.weight.grad) and mojo_tensor_equals_pytroch_tensor(bias_grad_fc2_manual_mojo, model.fc2.bias.grad) \
     and mojo_tensor_equals_pytroch_tensor(weight_grad_fc1_mojo, model.fc1.weight.grad) and mojo_tensor_equals_pytroch_tensor(bias_grad_fc1_mojo, model.fc1.bias.grad):
         tests_passed = True
     else:
