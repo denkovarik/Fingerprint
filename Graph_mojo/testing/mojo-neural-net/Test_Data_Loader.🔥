@@ -1,0 +1,49 @@
+from python import Python, PythonObject
+from tensor import Tensor, TensorSpec, TensorShape
+from utils.index import Index, IndexList
+from bridge.numpy import ndarray_to_tensor
+
+alias type = DType.float64
+
+
+def main():
+    var nn = Python.import_module("torch.nn")
+    var optim = Python.import_module("torch.optim")
+    var torch = Python.import_module("torch")
+    var torchvision = Python.import_module("torchvision")
+    var transforms = Python.import_module("torchvision.transforms")
+    
+    # Define transformations
+    mean_np = (0.1307,)
+    std_np = (0.3081,)
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(0.1307, 0.3081)
+    ])
+
+    # Load or download the dataset
+    dataset = torchvision.datasets.MNIST(root='data',train=True, download=True, transform=transform)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=8, shuffle=False)
+    
+    print("Dataset downloaded and loaded into torchvision data structure")
+    
+    print("Loading dataset into Mojo Tensor")
+ 
+    var time = Python.import_module("time")
+    var tm1 = time.time() 
+ 
+    batchNum = 1
+ 
+    # Precompile all of the batches to avoid doing this in training loop
+    for batch in dataloader:
+        print("Batch: " + String(batchNum))
+        batchNum = batchNum + 1
+        var images: PythonObject = batch[0]
+        
+        var images_mojo: Tensor[type] = Tensor[type](TensorShape(8, 1, 28, 28))   
+        
+        np_array = images.numpy()        
+        images_mojo = ndarray_to_tensor[DType.float64](np_array)
+                
+    var dur1 = time.time()-tm1
+    print("Images loaded in ",dur1," seconds")
