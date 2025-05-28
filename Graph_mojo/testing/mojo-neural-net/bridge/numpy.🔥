@@ -1,0 +1,82 @@
+# Source: https://gitlab.com/hylkedonker/bridge
+#
+# This code was obtained from the Hylke Cornelis Donker/bridge repository on GitHub. 
+# This package acts as a bridge between Mojo native types and those from the Python world.
+# I had trouble installing this package on my machine, so I ended up just copying the relevant code from this repo.
+
+
+from layout import Layout, LayoutTensor, RuntimeTuple, RuntimeLayout
+from layout.int_tuple import UNKNOWN_VALUE
+from memory.pointer import Pointer
+from memory.unsafe_pointer import UnsafePointer
+from python import Python, PythonObject
+from tensor import Tensor, TensorShape, TensorSpec
+from utils.index import Index
+
+
+# Layouts with compile time constant order.
+alias layout_0 = Layout.row_major()
+alias layout_1 = Layout.row_major(UNKNOWN_VALUE)
+alias layout_2 = Layout.row_major(UNKNOWN_VALUE, UNKNOWN_VALUE)
+alias layout_3 = Layout.row_major(UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE)
+alias layout_4 = Layout.row_major(UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE, UNKNOWN_VALUE)
+alias layout = (layout_0, layout_1, layout_2, layout_3, layout_4)
+
+
+
+def _integer_list(iterable: PythonObject) -> List[Int]:
+    """Convert iterable PythonObject of intergers to integer list."""
+    var out = List[Int]()
+    for item in iterable:
+        out.append(Int(item))
+    return out
+
+
+def _tensor_shape_to_pylist(shape: TensorShape) -> PythonObject:
+    """Convert TensorShape to python integer list (for np.reshape)."""
+    out_list = Python.evaluate("[]")
+    for i in range(shape.rank()):
+        out_list.append(shape[i])
+    return out_list
+
+
+fn ndarray_to_tensor[
+    T: DType = DType.float64
+](array_numpy: PythonObject) raises -> Tensor[T]:
+    """Convert NumPy float array to a mojo tensor of same shape.
+
+    Args:
+        array_numpy: Numpy ndarray to convert to mojo tensor.
+
+    Parameters:
+        T: Data type of the tensor.
+
+    Returns: A mojo tensor shaped like `array_numpy`.
+    """
+    # Flatten input to a vector and allocate memory for the tensor.
+    var np_flat = array_numpy.flatten()
+    var n_elements = len(np_flat)
+    var out_spec = TensorSpec(T, n_elements)
+    var out_flat = Tensor[T](out_spec)
+
+    # Copy elements in vector (=flat) representation to the new flat tensor.
+    for i in range(n_elements):
+        out_flat[Index(i)] = Float64(np_flat[i]).cast[T]()
+
+    # Reshape flat tensor to same shape as `array_numpy`.
+    var out_shape = _integer_list(array_numpy.shape)
+    var out = out_flat.reshape(TensorShape(out_shape))
+    return out
+
+
+def main():
+    print("Hello, World!")
+    
+    var np = Python.import_module("numpy")
+    np_array = np.arange(6.0).reshape(2,3)
+    print(np_array.shape)
+
+    #var mojo_tensor : Tensor[DType.float64] = Tensor[DType.float64](TensorShape(2,3))
+    
+    # Convert to old-style `Tensor`.
+    var mojo_oldtensor = ndarray_to_tensor[DType.float64](np_array)
