@@ -1,0 +1,40 @@
+from python import Python, PythonObject
+from tensor import Tensor, TensorSpec, TensorShape
+from utils.index import Index, IndexList
+from memory.memory import memcpy
+
+
+alias type = DType.float64
+
+
+# Source: https://github.com/basalt-org/basalt/blob/main/basalt/utils/tensor_creation_utils.mojo
+fn to_tensor(np_array: PythonObject) raises -> Tensor[type]:
+    var shape = List[Int]()
+    for i in range(np_array.ndim):
+        shape.append(Int(Float64(np_array.shape[i])))
+    if np_array.ndim == 0:
+        # When the numpy array is a scalar, you need or the reshape to a size 1 ndarray or do this, if not the memcpy gets a memory error (Maybe because it is a register value?).
+        var tensor = Tensor[type](TensorShape(1))
+        tensor[0] = Float64(np_array).cast[type]()
+        return tensor^
+
+    var tensor = Tensor[type](TensorShape(shape))
+    
+    var np_array_2: PythonObject
+    try:
+        var np = Python.import_module("numpy")
+        # copy is also necessary for ops like slices to make them contiguous instead of references.
+        np_array_2 = np.float64(np_array.copy())
+    except e:
+        np_array_2 = np_array.copy()
+        print("Error in to_tensor", e)
+
+    var pointer_d = np_array_2.__array_interface__["data"][0].unsafe_get_as_pointer[type]()
+    
+    
+    memcpy(tensor._ptr, pointer_d, tensor.num_elements())
+
+    _ = np_array_2
+    _ = np_array
+
+    return tensor^

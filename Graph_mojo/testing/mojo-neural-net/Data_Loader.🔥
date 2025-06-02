@@ -1,6 +1,8 @@
 from python import Python, PythonObject
 from tensor import Tensor, TensorSpec, TensorShape
 from utils.index import Index, IndexList
+from memory.memory import memcpy
+from structs.Utils import to_tensor
 
 alias type = DType.float64
 
@@ -102,17 +104,13 @@ struct MNIST_Data_Loader_Mojo:
         batchNum = 1
      
         # Precompile all of the batches to avoid doing this in training loop
+        print("Loading dataset into Mojo Tensor")
         for batch in self.dataloader:
-            print("Batch: " + String(batchNum))
             batchNum = batchNum + 1
             var images: PythonObject = batch[0]
             
-            var images_mojo: Tensor[type] = Tensor[type](TensorShape(64, 1, 28, 28))   
-            for i in range(images_mojo.shape()[0]):
-                for j in range(images_mojo.shape()[1]):
-                    for p in range(images_mojo.shape()[2]):
-                        for q in range(images_mojo.shape()[3]):
-                            images_mojo[Index(i,j,p,q)] = Float64(batch[0][i,j,p,q].item())                         
+            var images_mojo: Tensor[type] = Tensor[type](TensorShape(self.batchSize, 1, 28, 28))                
+            images_mojo = to_tensor(images.numpy())                        
             
             var labels: PythonObject = batch[1]            
             images = images.pin_memory()
@@ -133,5 +131,5 @@ def main():
     var device: PythonObject = torch.device("cpu")
 
     # Load cifar10 dataset
-    var trainloader = MNIST_Data_Loader_Pytorch(batchSize=batchSize, device=device, train=True, shuffle=True)
-    #var testloader = MNIST_Data_Loader_Pytorch(batchSize=batchSize, device=device, train=False, shuffle=True)
+    var trainloader = MNIST_Data_Loader_Mojo(batchSize=batchSize, device=device, train=True, shuffle=True)
+    #var testloader = MNIST_Data_Loader_Mojo(batchSize=batchSize, device=device, train=False, shuffle=True)

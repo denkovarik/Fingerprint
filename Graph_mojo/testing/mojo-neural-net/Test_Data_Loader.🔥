@@ -2,6 +2,9 @@ from python import Python, PythonObject
 from tensor import Tensor, TensorSpec, TensorShape
 from utils.index import Index, IndexList
 from bridge.numpy import ndarray_to_tensor
+from memory import UnsafePointer
+from memory.memory import memcpy
+from structs.Utils import to_tensor
 
 alias type = DType.float64
 
@@ -12,6 +15,7 @@ def main():
     var torch = Python.import_module("torch")
     var torchvision = Python.import_module("torchvision")
     var transforms = Python.import_module("torchvision.transforms")
+    var np = Python.import_module('numpy')
     
     # Define transformations
     mean_np = (0.1307,)
@@ -42,8 +46,8 @@ def main():
         
         var images_mojo: Tensor[type] = Tensor[type](TensorShape(8, 1, 28, 28))   
         
-        np_array = images.numpy()        
-        images_mojo = ndarray_to_tensor[DType.float64](np_array)
+        np_array = images.numpy()              
+        images_mojo = to_tensor(np_array)
                 
     var dur1 = time.time()-tm1
     print("Images loaded in ",dur1," seconds")
