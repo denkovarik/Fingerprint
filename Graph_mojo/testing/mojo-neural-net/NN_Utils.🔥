@@ -54,6 +54,16 @@ struct NN_Utils:
                 t_transpose[Index(j,i)] = t[Index(i,j)]    
                 
         return t_transpose
+        
+    fn add_bias(mut self, mut weight: Tensor[type], bias: Tensor[type]) -> Tensor[type]:                       
+        @parameter
+        fn calc_row(i: Int):
+            for j in range(weight.shape()[1]):
+                weight[Index(i, j)] = weight[Index(i, j)] + bias[Index(j)]
+                
+        parallelize[calc_row](weight.shape()[0])
+        
+        return weight;
 
     fn matmul(mut self, t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
         var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0], t2.shape()[1]))
@@ -170,8 +180,8 @@ struct NN_Utils:
         #vectorize[simdwidth, compute_rsqrt](second_moments.num_elements())
         
         return second_moments
-    
-    fn log_softmax(mut self, X: Tensor[type], dim: Int) -> Tensor[type]:
+  
+    fn softmax(mut self, X: Tensor[type], dim: Int) -> Tensor[type]:
         var rslt: Tensor[type] = Tensor[type](X.shape())
         
         # Subtract the max value for numerical stability
@@ -194,6 +204,13 @@ struct NN_Utils:
         
             for j in range(X.shape()[1]):
                 rslt[Index(i,j)] = exp_values[Index(i,j)] / sum_exp
+        
+        return rslt
+  
+    fn log_softmax(mut self, X: Tensor[type], dim: Int) -> Tensor[type]:
+        var rslt: Tensor[type] = Tensor[type](X.shape())
+        
+        rslt = self.softmax(X, dim)
         
         # Log Softmax
         for i in range(rslt.shape()[0]):
