@@ -66,9 +66,8 @@ struct MNIST_Data_Loader_Mojo:
     var dataset: PythonObject
     var dataloader: PythonObject
     var device: PythonObject
-    var batchImages: List[PythonObject]
-    var batchImages_mojo: List[Tensor[type]]
-    var batchLabels: List[PythonObject]
+    var batchImages: List[Tensor[type]]
+    var batchLabels: List[Tensor[DType.int64]]
     var train: Bool
     var shuffle: Bool
     var dataLoaderLength: Int
@@ -82,10 +81,8 @@ struct MNIST_Data_Loader_Mojo:
         
         self.batchSize = batchSize
         self.device = device
-        self.batchImages = List[PythonObject]()
-        self.batchImages_mojo = List[Tensor[type]]()
-        self.batchLabels = List[PythonObject]()
-        self.batchImages_mojo = List[Tensor[type]]()
+        self.batchImages = List[Tensor[type]]()
+        self.batchLabels = List[Tensor[DType.int64]]()
         self.train = train
         self.shuffle = shuffle
     
@@ -110,14 +107,17 @@ struct MNIST_Data_Loader_Mojo:
             var images: PythonObject = batch[0]
             
             var images_mojo: Tensor[type] = Tensor[type](TensorShape(self.batchSize, 1, 28, 28))                
-            images_mojo = to_tensor(images.numpy())                        
+            images_mojo = to_tensor(images.numpy())  
             
-            var labels: PythonObject = batch[1]            
-            images = images.pin_memory()
-            labels = labels.pin_memory()
-            self.batchImages.append(images)
-            self.batchImages_mojo.append(images_mojo)
-            self.batchLabels.append(labels)
+            var labels: PythonObject = batch[1]   
+            var tensor_shape_list = List[Int]()
+            tensor_shape_list.append(labels.shape[0])
+            var labels_mojo = Tensor[DType.int64](TensorShape(tensor_shape_list))
+            for i in range(labels.shape[0]):
+                labels_mojo[i] = Int(labels[i])
+
+            self.batchImages.append(images_mojo)
+            self.batchLabels.append(labels_mojo)
             
         print("done")
             
