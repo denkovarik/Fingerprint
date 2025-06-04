@@ -20,14 +20,14 @@ fn tensor_add[dtype: DType](mut t1: Tensor[dtype], t2: Tensor[dtype]) -> Tensor[
             
     return t1
     
-fn tensor_add_parallelized_vectorized[dtype: DType](mut t1: Tensor[dtype], t2: Tensor[dtype]) -> Tensor[dtype]:
+fn tensor_add_parallelized_vectorized[dtype: DType](t1: Tensor[dtype], t2: Tensor[dtype]) -> Tensor[dtype]:
     @parameter
     fn parallelize_rows(idx: Int) -> None:
         @parameter
         fn vectorized_add[simd_width: Int](idx2: Int) -> None:
-            #var vec1 = t1._ptr.load[width=simd_width](idx * t1.dim(1) + idx2)
-            #var vec2 = t2._ptr.load[width=simd_width](idx * t2.dim(1) + idx2)
-            t1._ptr.store(idx * t1.dim(1) + idx2, t1._ptr.load[width=simd_width](idx * t1.dim(1) + idx2) + t2._ptr.load[width=simd_width](idx * t2.dim(1) + idx2))
+            var vec1 = t1._ptr.load[width=simd_width](idx * t1.dim(1) + idx2)
+            var vec2 = t2._ptr.load[width=simd_width](idx * t2.dim(1) + idx2)
+            t1._ptr.store(idx * t1.dim(1) + idx2, vec1 + vec2)
         
         vectorize[vectorized_add, simd_width](t1.dim(1))
 
