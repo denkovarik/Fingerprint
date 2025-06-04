@@ -107,18 +107,6 @@ struct NN_Utils:
             vec_dot += temp_vec[i]
 
         return vec_dot
-
-    # 1.0/(1.0 + exp(-x))
-    #fn sigmoid(mut self, z: Tensor[type]) -> Tensor[type]:
-    #    var activations: Tensor[type] = Tensor[type](z.shape())
-    #
-    #    @parameter
-    #    fn compute_exp[simd_width: Int](idx: Int):
-    #        activations.store[simd_width](idx, (1 / (1 + exp(-1 * z.load[simd_width](idx)))))
-    #    
-    #    vectorize[simdwidth, compute_exp](activations.num_elements())
-    #    
-    #    return activations
     
     fn relu(mut self, X: Tensor[type]) -> Tensor[type]:
         """ Function `relu`: apply relu activation to Tensor.
@@ -151,22 +139,6 @@ struct NN_Utils:
                 var e_x: Float64 = exp(X[Index(i,j)])
                 rslt[Index(i,j)] = Float64(e_x / (1 + e_x))
         return rslt
-        
-    # sigmoid(z) * (1 - sigmoid(z))
-    #fn sigmoid_prime(mut self, a: Tensor[type]) raises -> Tensor[type]:
-    #    var sigma_prime: Tensor[type] = Tensor[type](a.shape()) 
-    #
-    #    #sigma_prime = a * (1 - a)
-    #
-    #    return sigma_prime
-
-    #fn sigmoid_prime_full(mut self, z: Tensor[type]) raises -> Tensor[type]:
-    #    var sigma_prime: Tensor[type] = Tensor[type](z.shape()) 
-    #    var sigmoid_z = sigmoid(z)
-    #
-    #    sigma_prime = sigmoid_z * (1 - sigmoid_z)
-    #
-    #    return sigma_prime
 
     # 1/sqrt(x + epsilon)
     fn inv_sqrt(mut self, z: Tensor[type]) -> Tensor[type]:
