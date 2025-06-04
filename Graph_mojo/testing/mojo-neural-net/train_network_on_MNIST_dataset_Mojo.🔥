@@ -14,6 +14,8 @@ from math import exp
 from NN_Utils import NN_Utils
 from Data_Loader import MNIST_Data_Loader_Pytorch
 from CustomNN import Custom_NN_Pytorch, Custom_NN_Mojo
+from NN_Utils import NN_Utils
+from test_utils import create_equivalent_mojo_tensor
 
 alias type = DType.float64
 alias simdwidth = simdwidthof[type]()
@@ -34,25 +36,32 @@ alias validation_size: Int = 4000
      
         
         
-#def testNetwork(model: Custom_NN_Pytorch, testloader: MNIST_Data_Loader_Pytorch, device: PythonObject) -> Float64:
-#    var torch = Python.import_module("torch")
-#
-#    var correct: Int = 0
-#    var total: Int = 0     
-#
-#    for i in range(testloader.__len__()):
-#        var images: PythonObject = testloader.batchImages[i].to(device)
-#        var target: PythonObject = testloader.batchLabels[i].to(device)
-#        var output: PythonObject = model.forward(images)          
-#        var torch_max = torch.max(output.data, 1)
-#        var predicted = torch_max[1]
-#        for j in range(len(predicted)):
-#            if predicted[j] == target[j]:
-#                correct = correct + 1
-#            total = total + 1
-#
-#    var accuracy: Float64 = 100.0 * correct / total
-#    return accuracy
+def testNetwork(model: Custom_NN_Mojo, testloader: MNIST_Data_Loader_Mojo) -> Float64:
+    var torch = Python.import_module("torch")
+
+    var correct: Int = 0
+    var total: Int = 0     
+
+    for i in range(testloader.__len__()):
+        var images = testloader.batchImages[i]
+        var target = testloader.batchLabels[i]
+        var output = model.forward(images)    
+        
+        var predicted: Tensor[DType.int64] = Tensor[DType.int64](TensorShape(output.shape()[0]))      
+        for i in range(output.shape()[0]):
+            var maxInd: Int = 0
+            for j in range(output.shape()[1]):
+                if output[Index(i,j)] > output[Index(i,maxInd)]:
+                    maxInd = j
+            predicted[Index(i)] = maxInd
+            
+        for j in range(predicted.shape()[0]):
+            if predicted[Index(j)] == target[Index(j)]:
+                correct = correct + 1
+            total = total + 1
+
+    var accuracy: Float64 = 100.0 * correct / total
+    return accuracy
 
 
 def main():
@@ -63,6 +72,8 @@ def main():
     var transforms = Python.import_module("torchvision.transforms")   
     var time = Python.import_module("time")
     var plt = Python.import_module("matplotlib.pyplot")
+    
+    var nn_utils = NN_Utils()
     
     var num_epochs: Int = 5
     var batchSize: Int = 64
@@ -79,51 +90,58 @@ def main():
     var train_acc: PythonObject = Python.list()
     var epochs: PythonObject = Python.list()
     
+    var model: Custom_NN_Mojo = Custom_NN_Mojo() 
+    
+    print("\nTraining Network")
     var startTime = time.perf_counter()
     for epoch in range(num_epochs):
-        #print("Epoch: " + String(epoch))
-        var running_loss: PythonObject = 0.0
+        var running_loss: Float64 = 0.0
         var cnt: Float64 = 0.0
         for i in range(trainloader.__len__()):
-            #print(String(i) + " of " + String(trainloader.__len__()))
-            var images = trainloader.batchImages[i].to(device)
-            var labels = trainloader.batchLabels[i].to(device)
-
-           
-            #optimizer.zero_grad()
-            #var outputs: PythonObject = model.forward(images)
-            #var loss: PythonObject = criterion(outputs, labels)
-            #loss.backward()
-            #optimizer.step()
-    
-            #running_loss = running_loss + loss.item()
+            var images = trainloader.batchImages[i]
+            var labels = trainloader.batchLabels[i]
             
+            # Foward
+            var log_softmax_mojo = model.forward(images)
+   
+            # Loss
+            var loss_mojo: Float64 = model.loss(labels)
+    
+            # Backward
+            model.backward()
+            
+            # Step
+            model.step()
+    
+            running_loss = running_loss + loss_mojo
+
         # Test
-        #var accuracy: Float64 = testNetwork(model=model, testloader=testloader, device=device)
-        #print("Epoch " + String(epoch + 1) + " Loss: " + String(running_loss / trainloader.__len__()) + ", Validation Accuracy: " + String(accuracy) + "%")
+        var accuracy: Float64 = testNetwork(model=model, testloader=testloader)
+        #print("Epoch " + String(epoch + 1) + " Loss: " + String(running_loss / trainloader.__len__()))
+        print("Epoch " + String(epoch + 1) + " Loss: " + String(running_loss / trainloader.__len__()) + ", Validation Accuracy: " + String(accuracy) + "%")
         
-        #train_losses.append(running_loss / trainloader.__len__())
-        #train_acc.append(accuracy)
-        #epochs.append(epoch+1)
+        train_losses.append(running_loss / trainloader.__len__())
+        train_acc.append(accuracy)
+        epochs.append(epoch+1)
         
     var endTime = time.perf_counter()
      
     print("Training completed in " + String(endTime - startTime) + " seconds")
       
     # Plot training loss and accuracy
-    #plt.figure(figsize=(10, 5))
-    #plt.subplot(1, 2, 1)
-    #plt.plot(epochs, train_losses, label='Training Loss')
-    #plt.title('Training Loss')
-    #plt.xlabel('Epoch')
-    #plt.ylabel('Loss')
-    #plt.legend()
+    plt.figure(figsize=(10, 5))
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, train_losses, label='Training Loss')
+    plt.title('Training Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
 
-    #plt.subplot(1, 2, 2)
-    #plt.plot(epochs, train_acc, label='Validation Accuracy')
-    #plt.title('Validation Accuracy')
-    #plt.xlabel('Epoch')
-    #plt.ylabel('Accuracy (%)')
-    #plt.legend()
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, train_acc, label='Validation Accuracy')
+    plt.title('Validation Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy (%)')
+    plt.legend()
 
-    #plt.show()
+    plt.show()
