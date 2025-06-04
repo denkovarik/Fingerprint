@@ -56,23 +56,19 @@ struct NN_Utils:
         return t_transpose
 
     fn matmul(mut self, t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
-        var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0],t2.shape()[1]))
+        var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0], t2.shape()[1]))
 
         @parameter
         fn calc_row(i: Int):
-            for j in range(t1.shape()[1]):
-                @parameter
-                fn dot[simd_width: Int](k: Int):
-                    pass
-                    #t_mul.simd_store[simd_width](
-                    #    i * t_mul.shape()[1] + k, 
-                    #    t_mul.simd_load[simd_width](i * t_mul.shape()[1] + k) + t1[Index(i,j)] * t2.simd_load[simd_width](j * t_mul.shape()[1] + k)
-                    #)
-                #vectorize[simdwidth, dot](t_mul.shape()[1])
+            for j in range(t2.shape()[1]):
+                var sum = 0.0
+                for k in range(t1.shape()[1]):
+                    sum += t1[Index(i, k)] * t2[Index(k, j)]
+                t_mul[Index(i, j)] = sum
 
-        parallelize[calc_row](t_mul.shape()[0], t_mul.shape()[0])
+        parallelize[calc_row](t_mul.shape()[0])
 
-        return t_mul 
+        return t_mul
             
     fn matmul_simple(mut self, t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
         var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0],t2.shape()[-1]))
