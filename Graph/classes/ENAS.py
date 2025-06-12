@@ -38,9 +38,10 @@ class ENAS:
             if curNode.pytorchLayerId is not None:
                 pytorchLayerId = curNode.pytorchLayerId
                 if curNode.pytorchLayerId not in self.pytorchLayers:
-                    self.pytorchLayers[pytorchLayerId] = curNode.constructLayer()
+                    layer = curNode.constructLayer()
+                    self.pytorchLayers[pytorchLayerId] = layer
                 # Now set the shared layer in the node
-                curNode.setSharedLayer(self.pytorchLayers[pytorchLayerId])
+                curNode.setSharedLayer(layer)
 
     
     def readGraph(self, filepath):
@@ -67,8 +68,13 @@ class ENAS:
     
         with record_function("Node.getLayers"):
             for i in range(len(nodes)-1):
-                layers.append(nodes[i].getLayer(out.shape))
-                out = layers[-1](out)
+                layer = nodes[i].getLayer(out.shape)
+                if layer is not None:
+                    #if isinstance(layer, ConvolutionalNode) or isinstance(layer, LinearNode):
+                    #    layer.pytorchLayer.weight = nn.Parameter(layer.pytorchLayer.weight.clone())
+                    #    layer.pytorchLayer.bias = nn.Parameter(layer.pytorchLayer.bias.clone())
+                    layers.append(layer)
+                    out = layers[-1](out)
          
         # Construct the CustomCNN instance with the nodes
         with record_function("CustomCNN"):
@@ -85,13 +91,11 @@ class CustomCNN(nn.Module):
             for j, param in enumerate(layer.parameters()):
                 self.register_parameter(f'param_{i}_{j}', param)
         
-        
     def to(self, device):
         super().to(device)
         for layer in self.layers:
             layer.to(device)
         return self
-
 
     def forward(self, x):
         for layer in self.layers:
