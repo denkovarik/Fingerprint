@@ -119,7 +119,7 @@ sample = [1, 3, 1, 1, 1, 7, 1, 1, 1, 0, 4, 0, 4, 0, 0, 0, 0]
 enas.sampleArchitecture(sample)
 
 # Render the graph
-renderGraph(enas.graph, os.path.join(currentdir, 'Temp'))
+renderGraph(enas.graphHandler, os.path.join(currentdir, 'Temp'))
 
 train_images, train_labels, test_images, test_labels = load_cifar10(data_dir=os.path.join(currentdir, 'Datasets/CIFAR-10'), batch_size=256)
 
