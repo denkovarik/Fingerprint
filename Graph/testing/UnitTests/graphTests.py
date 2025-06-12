@@ -6,7 +6,7 @@ parentdir = os.path.dirname(currentdir)
 graphdir = os.path.dirname(parentdir)
 sys.path.insert(0, graphdir)
 from classes.Nodes import *
-from classes.Graph import Graph
+from classes.Graph import Graph, GraphHandler
 from utils import *
 import torch
 import torch.nn as nn
@@ -32,7 +32,7 @@ class graphTests(unittest.TestCase):
 
         :param self: an instance of the graphTests class.
         """
-        graph = Graph()
+        graph = GraphHandler()
         graph.construct(inputShape=torch.Size([4, 3, 32, 32]))
 
         exp = ['Input(numChannels=3)', 'No Normalization', 'Batch Normalization', '3x3 Conv(oc=4)', 
@@ -48,7 +48,7 @@ class graphTests(unittest.TestCase):
                'Linear(of=64)', 'Linear(of=128)', 'Linear(of=256)', 'No Activation', 
                'Relu Activation', 'Linear(of=10)', 'No Activation', 'Relu Activation', 'Output']
         test = []
-        for node in graph.bfs(graph.graph['input']['node']):
+        for node in graph.bfs(graph.graph.graph['input']['node']):
             test.append(str(node))
 
         self.assertTrue(test == exp)

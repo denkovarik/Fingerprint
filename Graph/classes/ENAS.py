@@ -16,25 +16,25 @@ from torch.profiler import profile, ProfilerActivity, record_function
 from utils import ensureFilepathExists
 from classes.SharedConv2d import SharedConv2d
 from classes.SharedLinear import SharedLinear
-from classes.Graph import Graph
+from classes.Graph import Graph, GraphHandler
 
 
 class ENAS:
     def __init__(self, inputShape):
-        self.graph = Graph()
+        self.graphHandler = GraphHandler()
         self.inputShape = inputShape
         self.pytorchLayers = {}
         self.sample = None
 
 
     def construct(self):
-        self.graph.construct(inputShape=self.inputShape)
+        self.graphHandler.construct(inputShape=self.inputShape)
         self.mapPytorchLayers()
     
 
     def mapPytorchLayers(self):
         maxLinearSize = 0
-        for curNode in self.graph.bfs(startNode=self.graph.graph['input']['node']):
+        for curNode in self.graphHandler.bfs(startNode=self.graphHandler.graph.graph['input']['node']):
             if curNode.pytorchLayerId is not None:
                 pytorchLayerId = curNode.pytorchLayerId
                 if curNode.pytorchLayerId not in self.pytorchLayers:
@@ -48,7 +48,7 @@ class ENAS:
             raise FileNotFoundError(f"File not found: {filepath}")
 
         # Read the Graph file
-        self.graph.readGraph(filepath)
+        self.graphHandler.readGraph(filepath)
 
         # Map Pytorch Layers
         self.mapPytorchLayers()
@@ -57,7 +57,7 @@ class ENAS:
     def sampleArchitecture(self, sample):
         # Get the nodes from the graph based on the sample architecture
         with record_function("graph.sampleArchitecture"):
-            nodes = self.graph.sampleArchitecture(sample)
+            nodes = self.graphHandler.sampleArchitecture(sample)
         # Temp workaround because I'm tired
         with record_function("tempWorkAround"):
             out = torch.rand(self.inputShape)

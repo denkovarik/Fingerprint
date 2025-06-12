@@ -61,9 +61,9 @@ class enasTests(unittest.TestCase):
         """
         enas = ENAS(inputShape=torch.Size([4, 3, 32, 32]))
         self.assertTrue(isinstance(enas, ENAS))
-        self.assertTrue(enas.graph.graph == {})
+        self.assertTrue(enas.graphHandler.graph.graph == {})
         enas.construct()
-        self.assertTrue(not enas.graph.graph == {})
+        self.assertTrue(not enas.graphHandler.graph.graph == {})
     
 
     def testReadGraphMapping(self):
@@ -74,12 +74,12 @@ class enasTests(unittest.TestCase):
         """
         enas = ENAS(inputShape=torch.Size([4, 3, 32, 32]))
         self.assertTrue(isinstance(enas, ENAS))
-        self.assertTrue(isinstance(enas.graph, Graph))
-        self.assertTrue(enas.graph.graph == {})
+        self.assertTrue(isinstance(enas.graphHandler.graph, Graph))
+        self.assertTrue(enas.graphHandler.graph.graph == {})
         graph2read = os.path.join(currentdir, 'TestFiles', 'sampleTestGraph.txt')
         self.assertTrue(os.path.exists(graph2read))
         enas.readGraph(graph2read)
-        self.assertTrue(not enas.graph.graph == {})
+        self.assertTrue(not enas.graphHandler.graph.graph == {})
         enas.mapPytorchLayers()
         self.assertTrue(enas.pytorchLayers != {})
 
@@ -136,20 +136,20 @@ class enasTests(unittest.TestCase):
 
         # Kernel Size 5x5
         # Conv 2D Layer 1
-        layerId = enas.graph.graph['L1_5x5_Conv(oc=32)']['node'].pytorchLayerId
+        layerId = enas.graphHandler.graph.graph['L1_5x5_Conv(oc=32)']['node'].pytorchLayerId
         sharedConvL1 = enas.pytorchLayers[layerId]
         initTestWeights(sharedConvL1.weight, sharedConvL1.bias)
         conv1 = nn.Conv2d(3, 32, 5)
         initTestWeights(conv1.weight, conv1.bias)
         
         # Conv 2D Layer 2
-        layerId = enas.graph.graph['L2_5x5_Conv(oc=32)']['node'].pytorchLayerId
+        layerId = enas.graphHandler.graph.graph['L2_5x5_Conv(oc=32)']['node'].pytorchLayerId
         sharedConvL2 = enas.pytorchLayers[layerId]
         initTestWeights(sharedConvL2.weight, sharedConvL2.bias)
         conv2 = nn.Conv2d(32, 32, 5)
         initTestWeights(conv2.weight, conv2.bias)
 
-        layerId = enas.graph.graph['L3_Linear(of=16)']['node'].pytorchLayerId
+        layerId = enas.graphHandler.graph.graph['L3_Linear(of=16)']['node'].pytorchLayerId
         sharedLinearL3 = enas.pytorchLayers[layerId]
 
         # Forward pass through Conv Layer 1
@@ -167,19 +167,19 @@ class enasTests(unittest.TestCase):
         # Kernel Size 3x3
         tensorData = torch.tensor(testBatch[b'data'][:4], dtype=torch.float32).reshape(4, 3, 32, 32)
 
-        layerId = enas.graph.graph['L1_3x3_Conv(oc=32)']['node'].pytorchLayerId
+        layerId = enas.graphHandler.graph.graph['L1_3x3_Conv(oc=32)']['node'].pytorchLayerId
         sharedConvL1 = enas.pytorchLayers[layerId]
         initTestWeights(sharedConvL1.weight, sharedConvL1.bias)
         conv1 = nn.Conv2d(3, 32, 3)
         initTestWeights(conv1.weight, conv1.bias)
         
-        layerId = enas.graph.graph['L2_3x3_Conv(oc=32)']['node'].pytorchLayerId
+        layerId = enas.graphHandler.graph.graph['L2_3x3_Conv(oc=32)']['node'].pytorchLayerId
         sharedConvL2 = enas.pytorchLayers[layerId]
         initTestWeights(sharedConvL2.weight, sharedConvL2.bias)
         conv2 = nn.Conv2d(32, 32, 3)
         initTestWeights(conv2.weight, conv2.bias)
 
-        layerId = enas.graph.graph['L3_Linear(of=16)']['node'].pytorchLayerId
+        layerId = enas.graphHandler.graph.graph['L3_Linear(of=16)']['node'].pytorchLayerId
         sharedLinearL3 = enas.pytorchLayers[layerId]
 
         # Forward pass through Conv Layer 1
@@ -388,7 +388,7 @@ class enasTests(unittest.TestCase):
         enas = ENAS(inputShape=torch.Size([4, 3, 32, 32]))
         enas.construct()
 
-        itr = enas.graph.getSampleArchitectures('input') 
+        itr = enas.graphHandler.getSampleArchitectures('input') 
         
         nextSample = next(itr)
         enas.sampleArchitecture(nextSample)
@@ -404,7 +404,7 @@ class enasTests(unittest.TestCase):
 
         total = 100
         # Water sucks, Gatorade is better.
-        samples = list(enas.graph.getSampleArchitectures('input'))
+        samples = list(enas.graphHandler.getSampleArchitectures('input'))
         samples = samples[:total]
         
         with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
@@ -438,7 +438,7 @@ class enasTests(unittest.TestCase):
         enas = ENAS(inputShape=torch.Size([4, 3, 32, 32]))
         enas.construct()
 
-        itr = enas.graph.getSampleArchitectures('input') 
+        itr = enas.graphHandler.getSampleArchitectures('input') 
         
         nextSample = next(itr)
         enas.sampleArchitecture(nextSample)
@@ -453,7 +453,7 @@ class enasTests(unittest.TestCase):
         enasOutput = enas.sample(tensorData)
 
         total = 10000
-        samples = list(enas.graph.getSampleArchitectures('input'))
+        samples = list(enas.graphHandler.getSampleArchitectures('input'))
         samples = samples[:total]
 
         constructed_samples = []
@@ -506,7 +506,7 @@ class enasTests(unittest.TestCase):
         enas = ENAS(inputShape=torch.Size([4, 3, 32, 32]))
         enas.construct()
 
-        itr = enas.graph.getSampleArchitectures('input') 
+        itr = enas.graphHandler.getSampleArchitectures('input') 
         
         nextSample = next(itr)
         enas.sampleArchitecture(nextSample)
@@ -522,7 +522,7 @@ class enasTests(unittest.TestCase):
 
         total = 100
         for i in tqdm(range(total), desc="Testing Forward Prop for Random Architectures"):
-            sample = enas.graph.getRandomSampleArchitecture()
+            sample = enas.graphHandler.getRandomSampleArchitecture()
             enas.sampleArchitecture(sample)
             enasOutput = enas.sample(tensorData)
 

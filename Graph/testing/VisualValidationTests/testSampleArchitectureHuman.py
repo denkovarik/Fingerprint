@@ -6,7 +6,7 @@ parentdir = os.path.dirname(currentdir)
 graphdir = os.path.dirname(parentdir)
 sys.path.insert(0, graphdir)
 from classes.Nodes import *
-from classes.Graph import Graph
+from classes.Graph import Graph, GraphHandler
 from utils import *
     
 
@@ -34,7 +34,7 @@ class graphTests(unittest.TestCase):
         :param self: An instance of the graphTests class.
         """
         sampleGraphPath = os.path.join(currentdir, 'TestFiles/sampleTestGraph.txt')
-        graph = Graph()
+        graph = GraphHandler()
         graph.construct(inputShape=torch.Size([4, 3, 32, 32]))
 
         # Sample Architecture by siming user input

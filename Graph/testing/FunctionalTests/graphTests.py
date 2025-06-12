@@ -6,7 +6,7 @@ parentdir = os.path.dirname(currentdir)
 graphdir = os.path.dirname(parentdir)
 sys.path.insert(0, graphdir)
 from classes.Nodes import *
-from classes.Graph import Graph
+from classes.Graph import Graph, GraphHandler
 from utils import *
 import uuid
 import torch
@@ -56,9 +56,9 @@ class graphTests(unittest.TestCase):
         
         :param self: An instance of the graphTests class.
         """
-        graph = Graph()
-        self.assertTrue(isinstance(graph, Graph))
-        self.assertTrue(graph.graph == {})
+        graph = GraphHandler()
+        self.assertTrue(isinstance(graph.graph, Graph))
+        self.assertTrue(graph.graph.graph == {})
         graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
         self.assertTrue(not graph.graph == {})
 
@@ -70,9 +70,9 @@ class graphTests(unittest.TestCase):
         
         :param self: An instance of the graphTests class.
         """
-        graph = Graph()
-        self.assertTrue(isinstance(graph, Graph))
-        self.assertTrue(graph.graph == {})
+        graph = GraphHandler()
+        self.assertTrue(isinstance(graph.graph, Graph))
+        self.assertTrue(graph.graph.graph == {})
 
         # Construct a simple graph example
         inputNode = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
@@ -84,9 +84,9 @@ class graphTests(unittest.TestCase):
                                      numOutputChannels=4, layer=0,
                                      pytorchLayerId=uuid.uuid4())
         
-        graph.graph[inputNode.name] = {'node': inputNode, 'edges': [normNode.name]}
-        graph.graph[normNode.name] = {'node': normNode, 'edges': [convNode.name]}
-        graph.graph[convNode.name] = {'node': convNode, 'edges': []}
+        graph.graph.graph[inputNode.name] = {'node': inputNode, 'edges': [normNode.name]}
+        graph.graph.graph[normNode.name] = {'node': normNode, 'edges': [convNode.name]}
+        graph.graph.graph[convNode.name] = {'node': convNode, 'edges': []}
 
         self.assertTrue(not graph.graph == {})
 
@@ -107,9 +107,9 @@ class graphTests(unittest.TestCase):
         
         :param self: An instance of the graphTests class.
         """
-        graph = Graph()
-        self.assertTrue(isinstance(graph, Graph))
-        self.assertTrue(graph.graph == {})
+        graph = GraphHandler()
+        self.assertTrue(isinstance(graph.graph, Graph))
+        self.assertTrue(graph.graph.graph == {})
 
         # Construct a simple graph example to test the read
         inputNode = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
@@ -121,21 +121,21 @@ class graphTests(unittest.TestCase):
                                      numOutputChannels=4, layer=0, 
                                      pytorchLayerId=uuid.uuid4())
         
-        graph.graph[inputNode.name] = {'node': inputNode, 'edges': [normNode.name]}
-        graph.graph[normNode.name] = {'node': normNode, 'edges': [convNode.name]}
-        graph.graph[convNode.name] = {'node': convNode, 'edges': []}
+        graph.graph.graph[inputNode.name] = {'node': inputNode, 'edges': [normNode.name]}
+        graph.graph.graph[normNode.name] = {'node': normNode, 'edges': [convNode.name]}
+        graph.graph.graph[convNode.name] = {'node': convNode, 'edges': []}
 
         self.assertTrue(not graph.graph == {})
 
         # Test reading the graph from 'testing/TestFiles/graphTest.txt' 
-        testGraph = Graph()
-        self.assertTrue(isinstance(testGraph, Graph))
-        self.assertTrue(testGraph.graph == {})
+        testGraph = GraphHandler()
+        self.assertTrue(isinstance(testGraph.graph, Graph))
+        self.assertTrue(testGraph.graph.graph == {})
 
         graph2read = os.path.join(currentdir, 'TestFiles', 'graphTest.txt')
         self.assertTrue(os.path.exists(graph2read))
         testGraph.readGraph(graph2read)
-        self.assertTrue(str(testGraph.graph) == str(graph.graph))
+        self.assertTrue(str(testGraph.graph.graph) == str(graph.graph.graph))
 
 
     @patch('builtins.input', 
@@ -148,7 +148,7 @@ class graphTests(unittest.TestCase):
         :param self: An instance of the graphTests class.
         """
         sampleGraphPath = os.path.join(currentdir, 'TestFiles/sampleTestGraph.txt')
-        graph = Graph()
+        graph = GraphHandler()
         graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
 
         # Sample Architecture by siming user input
@@ -168,7 +168,7 @@ class graphTests(unittest.TestCase):
         
         :param self: An instance of the graphTests class.
         """ 
-        graph = Graph()
+        graph = GraphHandler()
         graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
         
         sample = [1, 1, 1, 1, 1, 7, 1, 1, 1, 0, 3, 1, 1, 1, 0, 0, 0]
@@ -182,7 +182,7 @@ class graphTests(unittest.TestCase):
         
         :param self: An instance of the graphTests class.
         """
-        graph = Graph()
+        graph = GraphHandler()
         graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
 
         itr = graph.getSampleArchitectures('input')
@@ -204,7 +204,7 @@ class graphTests(unittest.TestCase):
         self.assertTrue(nextSample == expNextSample)
         
 
-        graph = Graph()
+        graph = GraphHandler()
         graph.construct(inputShape=torch.Size([4, 3, 32, 32])) 
 
         itr = graph.getSampleArchitectures('input')  
@@ -237,7 +237,7 @@ class graphTests(unittest.TestCase):
         
         :param self: An instance of the graphTests class.
         """
-        graph = Graph()
+        graph = GraphHandler()
         graph.construct(inputShape=torch.Size([4, 3, 32, 32]))
 
         for path in graph.getSampleArchitectures('input'):
@@ -252,7 +252,7 @@ class graphTests(unittest.TestCase):
         :param self: An instance of the graphTests class.
         """
         random.seed(42)
-        graph = Graph()
+        graph = GraphHandler()
         graph.construct(inputShape=torch.Size([4, 3, 32, 32]))
 
         expRslt = [0, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0]
