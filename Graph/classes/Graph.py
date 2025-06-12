@@ -92,7 +92,6 @@ class GraphHandler:
             outShapes.append(outShape)
             inputShape = outShape
         return outShape
-
             
     def addFlattenLayer(self, inputShape):
         self.addNode(nodeType=NodeType.FLATTEN, name='L' + str(self.layer) + '_' + 'flatten')
@@ -209,9 +208,9 @@ class GraphHandler:
         self.sampleArchitecturesEnd = False
         # Count the number of subnetworks
         self.numGraphSubnetworks = 1
-        #while self.incSampleArchitecture() == True:
-        #    self.numGraphSubnetworks = self.numGraphSubnetworks + 1
-        #self.initDfsStack()
+        while self.incSampleArchitecture() == True:
+            self.numGraphSubnetworks = self.numGraphSubnetworks + 1
+        self.initDfsStack()
         
     def getRandomSampleArchitecture(self, startNode='input'):
         stack = [(startNode, [])]
@@ -330,33 +329,34 @@ class GraphHandler:
         self.dfsStack = []
         self.dfsStackKeys = []
  
-        #while curDfsNode != 'output':
-        #    self.dfsStack.append(0)
-        #    self.dfsStackKeys.append(curDfsNode)
-        #    curDfsNode = self.graph.graph['edges'][curDfsNode][0]
+        while curDfsNode != 'output':
+            self.dfsStack.append(0)
+            self.dfsStackKeys.append(curDfsNode)
+            curDfsNode = self.graph.graph[curDfsNode]['edges'][0]
+        
         self.sampleArchitecturesEnd = False
             
     def incSampleArchitecture(self):
-        #curDepth = len(self.dfsStackKeys) - 1
-        #if self.dfsStack[curDepth] >= len(self.graph.edges[self.dfsStackKeys[curDepth]]) - 1:
-        #    while curDepth >= 0 and self.dfsStack[curDepth] >= len(self.graph.edges[self.dfsStackKeys[curDepth]]) - 1:
-        #        self.dfsStack[curDepth] = 0
-        #        node: String = self.dfsStackKeys.pop()
-        #        curDepth = len(self.dfsStackKeys) - 1
-        #        
-        #    if curDepth < 0:
-        #        self.sampleArchitecturesEnd = True 
-        #        return False
-        #    else:
-        #        self.dfsStack[curDepth] = self.dfsStack[curDepth] + 1
-        #        curDfsNode = self.graph.edges[self.dfsStackKeys[curDepth]][self.dfsStack[curDepth]]
-        #        while curDfsNode != 'output':
-        #            self.dfsStackKeys.append(curDfsNode)
-        #            curDepth = len(self.dfsStackKeys) - 1
-        #            self.dfsStack[curDepth] = 0
-        #            curDfsNode = self.graph.edges[curDfsNode][0]
-        #else:
-        #    self.dfsStack[curDepth] = self.dfsStack[curDepth] + 1
+        curDepth = len(self.dfsStackKeys) - 1
+        if self.dfsStack[curDepth] >= len(self.graph.graph[self.dfsStackKeys[curDepth]]['edges']) - 1:
+            while curDepth >= 0 and self.dfsStack[curDepth] >= len(self.graph.graph[self.dfsStackKeys[curDepth]]['edges']) - 1:
+                self.dfsStack[curDepth] = 0
+                node: String = self.dfsStackKeys.pop()
+                curDepth = len(self.dfsStackKeys) - 1
+                
+            if curDepth < 0:
+                self.sampleArchitecturesEnd = True 
+                return False
+            else:
+                self.dfsStack[curDepth] = self.dfsStack[curDepth] + 1
+                curDfsNode = self.graph.graph[self.dfsStackKeys[curDepth]]['edges'][self.dfsStack[curDepth]]
+                while curDfsNode != 'output':
+                    self.dfsStackKeys.append(curDfsNode)
+                    curDepth = len(self.dfsStackKeys) - 1
+                    self.dfsStack[curDepth] = 0
+                    curDfsNode = self.graph.graph[curDfsNode]['edges'][0]
+        else:
+            self.dfsStack[curDepth] = self.dfsStack[curDepth] + 1
         self.sampleArchitecturesEnd = False
         return True
 
