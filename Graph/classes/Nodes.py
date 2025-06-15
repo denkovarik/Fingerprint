@@ -39,18 +39,14 @@ class Node:
         self.pytorchLayerId = None
         self.pytorchLayer = None
 
-
     def __call__(self, x):
         return self.forward(x)
-
 
     def __str__(self):
         return self.displayName
 
-
     def __repr__(self):
         return self.displayName
-
 
     def getPytochLayer(node):
         if not isinstance(node, Node):
@@ -61,7 +57,6 @@ class Node:
         elif isinstance(node, LinearNode):
             pass
         return None
-
 
     def setPytochLayer(node, sharedLayer):
         if not isinstance(node, Node):
@@ -84,6 +79,15 @@ class InputNode(Node):
         self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
         self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
         self.inputShape = inputShape
+        
+    def __eq__(self, other):
+        if isinstance(other, InputNode):
+            return self.inputShape == other.inputShape
+        return False
+
+    def __hash__(self):
+        # Create a hashable tuple from the instance's attributes
+        return hash((self.name, self.numChannels, tuple(self.inputShape)))
 
 
 class OutputNode(Node):
@@ -91,16 +95,22 @@ class OutputNode(Node):
         super().__init__() 
         self.name = 'output'
         self.displayName = 'Output'
+        
+    def __eq__(self, other):
+        if isinstance(other, OutputNode):
+            return True 
+        return False
+
+    def __hash__(self):
+        return hash('OutputNode')
     
 
 class PassThrough(nn.Module):
     def __init__(self):
-        super(PassThrough, self).__init__()
-    
+        super(PassThrough, self).__init__()    
     
     def forward(self, x):
-        return x
-    
+        return x   
     
     def to(self, device):
         return self
@@ -115,14 +125,22 @@ class NormalizationNode(Node):
             self.displayName = 'Batch Normalization'
             self.pytorchLayer = nn.BatchNorm2d(self.numFeatures)
 
+    def __eq__(self, other):
+        if isinstance(other, NormalizationNode):
+            return (self.name == other.name and
+                    self.normalizationType == other.normalizationType and
+                    self.numFeatures == other.numFeatures)
+        return False
 
+    def __hash__(self):
+        return hash((self.name, self.normalizationType, self.numFeatures))
+        
     def getLayer(self, inputShape):
         with record_function("getNormalizationNode"):
             bn = nn.BatchNorm2d(inputShape[1])
             if self.normalizationType == NormalizationType.NO_NORM:
                 return PassThrough()
-            return bn
-            
+            return bn        
             
     def parameters(self, recurse: bool = True):
         if self.pytorchLayer:
@@ -141,7 +159,17 @@ class PoolingNode(Node):
         self.stride = 2
         if poolingType == PoolingType.MAX_POOLING:
             self.displayName = 'Max Pooling'
+                
+    def __eq__(self, other):
+        if isinstance(other, PoolingNode):
+            return (self.name == other.name and
+                    self.poolingType == other.poolingType and
+                    self.kernelSize == other.kernelSize and
+                    self.stride == other.stride)
+        return False
 
+    def __hash__(self):
+        return hash((self.name, self.poolingType, self.kernelSize, self.stride))
 
     def getLayer(self, inputShape):
         with record_function("getPoolingNode"):
@@ -178,32 +206,39 @@ class ConvolutionalNode(Node):
         self.maxNumOutputChannels = maxNumOutputChannels
         self.numOutputChannels = numOutputChannels
         self.sharedConv2DLayer = None
+        
+    def __eq__(self, other):
+        if isinstance(other, ConvolutionalNode):
+            return (self.name == other.name and
+                    self.kernel_size == other.kernel_size and
+                    self.maxNumInputChannels == other.maxNumInputChannels and
+                    self.maxNumOutputChannels == other.maxNumOutputChannels and
+                    self.numOutputChannels == other.numOutputChannels)
+        return False
 
+    def __hash__(self):
+        return hash((self.name, self.kernel_size, self.maxNumInputChannels, 
+                     self.maxNumOutputChannels, self.numOutputChannels))
 
     def constructLayer(self):
         return SharedConv2d(kernel_size=self.kernel_size, 
                             in_channels=self.maxNumInputChannels, 
                             out_channels=self.maxNumOutputChannels)
 
-
     def getLayer(self, inputShape):
         with record_function("getConvolutionalNode"):
             return self
 
-
     def forward(self, x):
         return self.pytorchLayer(x, x.shape[1], self.numOutputChannels)
-        
         
     def parameters(self, recurse: bool = True):
         # Yield the parameters of the pytorchLayer
         for param in self.pytorchLayer.parameters(recurse=recurse):
             yield param
 
-
     def setSharedLayer(self, pytorchLayer):
         self.pytorchLayer = pytorchLayer
-        
         
     def to(self, device):
         self.pytorchLayer = self.pytorchLayer.to(device)  # Ensure the convolution layer is also moved
@@ -215,7 +250,14 @@ class FlattenNode(Node):
         super().__init__() 
         self.name = name
         self.displayName = 'Flatten'
+        
+    def __eq__(self, other):
+        if isinstance(other, FlattenNode):
+            return self.name == other.name  # All FlattenNode instances with the same name are considered equal
+        return False
 
+    def __hash__(self):
+        return hash(('FlattenNode', self.name))
 
     def getLayer(self, inputShape):
         with record_function("getFlattenNode"):
@@ -233,31 +275,36 @@ class LinearNode(Node):
         self.maxNumInFeatures = maxNumInFeatures
         self.maxNumOutFeatures = maxNumOutFeatures
         self.numOutFeatures = numOutFeatures
+        
+    def __eq__(self, other):
+        if isinstance(other, LinearNode):
+            return (self.name == other.name and
+                    self.maxNumInFeatures == other.maxNumInFeatures and
+                    self.maxNumOutFeatures == other.maxNumOutFeatures and
+                    self.numOutFeatures == other.numOutFeatures)
+        return False
 
+    def __hash__(self):
+        return hash((self.name, self.maxNumInFeatures, self.maxNumOutFeatures, self.numOutFeatures))
 
     def constructLayer(self):
         return SharedLinear(self.maxNumInFeatures, self.maxNumOutFeatures)
 
-
     def forward(self, x):
         return self.pytorchLayer(x, x.shape[1], self.numOutFeatures)
-
 
     def getLayer(self, inputShape):
         with record_function("getLinearNode"):
             return self
-            
             
     def parameters(self, recurse: bool = True):
         # Yield the parameters of the pytorchLayer
         for param in self.pytorchLayer.parameters(recurse=recurse):
             yield param
 
-
     def setSharedLayer(self, pytorchLayer):
         self.pytorchLayer = pytorchLayer
-        
-        
+           
     def to(self, device):
         self.pytorchLayer = self.pytorchLayer.to(device)  # Ensure the convolution layer is also moved
         return self 
@@ -275,7 +322,15 @@ class ActivationNode(Node):
         else:
             raise ValueError(f"Unknown activation type: {activationType}")
 
+    def __eq__(self, other):
+        if isinstance(other, ActivationNode):
+            return (self.name == other.name and
+                    self.activationType == other.activationType)
+        return False
 
+    def __hash__(self):
+        return hash((self.name, self.activationType))
+        
     def getLayer(self, inputShape):
         with record_function("getActivationNode"):
             return nn.ReLU()
