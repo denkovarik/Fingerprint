@@ -90,6 +90,9 @@ class CustomCNN(nn.Module):
         for i, layer in enumerate(layers):
             for j, param in enumerate(layer.parameters()):
                 self.register_parameter(f'param_{i}_{j}', param)
+                
+    def __str__(self):
+        return str(self.layers)
         
     def to(self, device):
         super().to(device)
