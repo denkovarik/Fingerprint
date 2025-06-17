@@ -76,18 +76,17 @@ class InputNode(Node):
             raise ValueError("inputShape must be a torch.Size of length 4")
         self.name = 'input'
         self.numChannels = inputShape[1]
-        self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
-        self.displayName = 'Input(numChannels=' + str(self.numChannels) + ')'
-        self.inputShape = inputShape
+        self.input_shape = inputShape
+        self.displayName = 'Input(input_shape=' + str(self.input_shape) + ')'
         
     def __eq__(self, other):
         if isinstance(other, InputNode):
-            return self.inputShape == other.inputShape
+            return self.input_shape == other.input_shape
         return False
 
     def __hash__(self):
         # Create a hashable tuple from the instance's attributes
-        return hash((self.name, self.numChannels, tuple(self.inputShape)))
+        return hash((self.name, tuple(self.input_shape)))
 
 
 class OutputNode(Node):
