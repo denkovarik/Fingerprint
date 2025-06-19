@@ -1,0 +1,268 @@
+from python import Python, PythonObject
+from tensor import Tensor, TensorSpec, TensorShape
+from memory import UnsafePointer
+from collections import Dict
+from test_utils import create_equivalent_mojo_tensor
+from NN_Utils import NN_Utils
+from utils.index import Index, IndexList
+from math import exp
+
+
+alias type = DType.float64
+
+
+@value
+struct Custom_NN_Pytorch:
+    var torch: PythonObject
+    var nn: PythonObject
+    var F: PythonObject
+    var model_parameters: PythonObject
+    var device: PythonObject
+    var flatten: PythonObject
+    var fc1: PythonObject
+    var fc2: PythonObject
+    var fc3: PythonObject
+
+    fn __init__(mut self) raises:
+        self.torch = Python.import_module("torch")
+        self.nn = Python.import_module("torch.nn")
+        self.F = Python.import_module("torch.nn.functional")
+        self.model_parameters = Python.list()
+        self.device = self.torch.device("cpu")
+        self.flatten = self.nn.Flatten()
+        self.fc1 = self.nn.Linear(28 * 28, 128) 
+        self.fc2 = self.nn.Linear(128, 64)
+        self.fc3 = self.nn.Linear(64, 10) 
+                
+    def forward(mut self, x: PythonObject) -> PythonObject:
+        var temp1: PythonObject = self.flatten(x)
+        var temp2: PythonObject = self.F.relu(self.fc1(temp1))
+        var temp3: PythonObject = self.F.relu(self.fc2(temp2))
+        var temp4: PythonObject = self.fc3(temp3)
+        var out: PythonObject = self.F.log_softmax(temp4, dim=1)
+        return out
+        
+    def parameters(mut self) -> PythonObject:
+        self.model_parameters = Python.list()
+        self.model_parameters.append(self.fc1.weight)
+        self.model_parameters.append(self.fc1.bias)
+        self.model_parameters.append(self.fc2.weight)
+        self.model_parameters.append(self.fc2.bias)
+        self.model_parameters.append(self.fc3.weight)
+        self.model_parameters.append(self.fc3.bias)
+        return self.model_parameters
+
+    fn zero_grad(mut self) raises:
+        for param in self.model_parameters:
+            try:
+                param.grad.zero_()
+            except AttributeError:
+                pass
+                
+
+@value        
+struct Custom_NN_Mojo:
+    var batch_size: Float64
+    var fc1_weight_mojo: Tensor[type]
+    var fc1_bias_mojo: Tensor[type]
+    var fc2_weight_mojo: Tensor[type]
+    var fc2_bias_mojo: Tensor[type]
+    var fc3_weight_mojo: Tensor[type] 
+    var fc3_bias_mojo: Tensor[type] 
+    var learning_rate: Float64
+    var fc3_weight_grad_mojo: Tensor[type]
+    var bias_grad_fc3_mojo: Tensor[type]
+    var weight_grad_fc2_mojo: Tensor[type]
+    var bias_grad_fc2_manual_mojo: Tensor[type]
+    var bias_grad_fc1_mojo: Tensor[type]
+    var weight_grad_fc1_mojo: Tensor[type]
+    var log_softmax_mojo: Tensor[type]   
+    var fc3_mojo: Tensor[type]
+    var fc2_mojo: Tensor[type]
+    var fc2_mojo_relued: Tensor[type]
+    var fc1_mojo: Tensor[type]
+    var fc1_mojo_relued: Tensor[type]
+    var flat_mojo: Tensor[type]
+    var labels: Tensor[DType.int64]
+    
+    fn __init__(mut self) raises:
+        var model: Custom_NN_Pytorch = Custom_NN_Pytorch()
+        self.learning_rate = 0.01
+        self.batch_size = 1
+        
+        # FC1
+        var fc1_weight_pytorch = model.fc1.weight.clone()
+        self.fc1_weight_mojo = create_equivalent_mojo_tensor(fc1_weight_pytorch)
+        var fc1_bias_pytorch = model.fc1.bias.clone()
+        self.fc1_bias_mojo = create_equivalent_mojo_tensor(fc1_bias_pytorch)
+        
+        # FC2
+        var fc2_weight_pytorch = model.fc2.weight.clone()
+        self.fc2_weight_mojo = create_equivalent_mojo_tensor(fc2_weight_pytorch)
+        var fc2_bias_pytorch = model.fc2.bias.clone()
+        self.fc2_bias_mojo = create_equivalent_mojo_tensor(fc2_bias_pytorch)
+        
+        # FC3
+        var fc3_weight_pytorch = model.fc3.weight.clone()
+        self.fc3_weight_mojo = create_equivalent_mojo_tensor(fc3_weight_pytorch)
+        var fc3_bias_pytorch = model.fc3.bias.clone()
+        self.fc3_bias_mojo = create_equivalent_mojo_tensor(fc3_bias_pytorch)  
+        
+        self.fc3_weight_grad_mojo = Tensor[type](TensorShape(10,64))
+        self.bias_grad_fc3_mojo = Tensor[type](TensorShape(10))
+        self.weight_grad_fc2_mojo = Tensor[type](TensorShape(10, 64))
+        self.bias_grad_fc2_manual_mojo = Tensor[type](TensorShape(10, 64))
+        
+        self.bias_grad_fc1_mojo = Tensor[type](TensorShape(10, 64))
+        self.weight_grad_fc1_mojo = Tensor[type](TensorShape(10, 64))
+        self.log_softmax_mojo = Tensor[type](TensorShape(10, 64))
+        self.fc3_mojo = Tensor[type](TensorShape(10, 64))
+        self.fc2_mojo = Tensor[type](TensorShape(10, 64))
+        self.fc2_mojo_relued = Tensor[type](TensorShape(10, 64))
+        self.fc1_mojo = Tensor[type](TensorShape(10, 64))
+        self.fc1_mojo_relued = Tensor[type](TensorShape(10, 64))
+        self.labels = Tensor[DType.int64](TensorShape(10, 64))
+        self.flat_mojo = Tensor[type](TensorShape(10, 64))
+    
+    
+    fn forward(mut self, images: Tensor[type]) raises -> Tensor[type]:
+        var nn_utils = NN_Utils()
+    
+        self.batch_size = images.shape()[0]
+       
+        # Flatten
+        self.flat_mojo = images
+        self.flat_mojo.ireshape(TensorShape(images.shape()[0], 28 * 28))
+            
+        # Foward: FC1
+        self.fc1_mojo = nn_utils.matmul_simple(self.flat_mojo, nn_utils.transpose(self.fc1_weight_mojo))
+        # Add bias
+        for i in range(self.fc1_mojo.shape()[0]):
+            for j in range(self.fc1_mojo.shape()[1]):
+                self.fc1_mojo[Index(i, j)] = self.fc1_mojo[Index(i, j)] + self.fc1_bias_mojo[Index(j)]
+               
+        # Forward: Relu FC1
+        self.fc1_mojo_relued = nn_utils.relu(self.fc1_mojo)
+        
+        # Foward: FC2
+        self.fc2_mojo = nn_utils.matmul_simple(self.fc1_mojo_relued, nn_utils.transpose(self.fc2_weight_mojo))
+        # Add bias
+        for i in range(self.fc2_mojo.shape()[0]):
+            for j in range(self.fc2_mojo.shape()[1]):
+                self.fc2_mojo[Index(i, j)] = self.fc2_mojo[Index(i, j)] + self.fc2_bias_mojo[Index(j)]
+                
+        # Relu FC2
+        self.fc2_mojo_relued = nn_utils.relu(self.fc2_mojo)
+        
+        # Foward: FC3
+        self.fc3_mojo = nn_utils.matmul_simple(self.fc2_mojo_relued, nn_utils.transpose(self.fc3_weight_mojo))
+        # Add bias
+        for i in range(self.fc3_mojo.shape()[0]):
+            for j in range(self.fc3_mojo.shape()[1]):
+               self.fc3_mojo[Index(i, j)] = self.fc3_mojo[Index(i, j)] + self.fc3_bias_mojo[Index(j)]
+            
+        # Forward: Log Softmax
+        self.log_softmax_mojo = nn_utils.log_softmax(self.fc3_mojo, dim=1)
+       
+        return self.log_softmax_mojo 
+        
+    fn loss(mut self, labels: Tensor[DType.int64]) -> Float64:
+        self.labels = labels
+        var nn_utils = NN_Utils()
+        # Negative Log Likelihood Loss
+        var loss_mojo: Float64 = nn_utils.nll_loss(self.log_softmax_mojo, self.labels)
+        return loss_mojo
+        
+    fn backward(mut self):
+        var nn_utils = NN_Utils()
+        # Gradient of loss with respect to the output of fc3 (logits)
+        logits_mojo = self.fc3_mojo
+    
+        # Gradient of NLLLoss w.r.t logits
+        var softmax_mojo = Tensor[type](self.log_softmax_mojo.shape())
+        for i in range(softmax_mojo.shape()[0]):
+            for j in range(softmax_mojo.shape()[1]):
+                softmax_mojo[Index(i,j)] = exp(self.log_softmax_mojo[Index(i,j)])
+            
+        var grad_output_mojo: Tensor[type] = softmax_mojo.copy()
+        for i in range(self.batch_size):
+            grad_output_mojo[Index(i, self.labels[Index(i)])] = (grad_output_mojo[Index(i, self.labels[Index(i)])] - 1) 
+            
+        # If loss was averaged, divide by batch_size               
+        for i in range(grad_output_mojo.shape()[0]):
+            for j in range(grad_output_mojo.shape()[1]):
+                grad_output_mojo[Index(i,j)] /= self.batch_size
+    
+        # This is the gradient of the loss w.r.t. logits
+        # Gradient for the weights is the outer product of the log_softmax gradient and the input x
+        self.fc3_weight_grad_mojo = nn_utils.transpose(nn_utils.matmul_simple(nn_utils.transpose(self.fc2_mojo_relued), grad_output_mojo))
+        
+        # Now compute bias gradient: sum across samples (axis=0)
+        self.bias_grad_fc3_mojo = Tensor[type](TensorShape(grad_output_mojo.shape()[1]))
+        for i in range(self.bias_grad_fc3_mojo.shape()[0]):
+            self.bias_grad_fc3_mojo[i] = 0.0
+        for i in range(grad_output_mojo.shape()[0]):
+            for j in range(grad_output_mojo.shape()[1]):
+                self.bias_grad_fc3_mojo[j] += grad_output_mojo[Index(i, j)]
+            
+        # relu(fc2)
+        # grad of loss w.r.t. fc2 output
+        var grad_fc2_output_mojo = nn_utils.matmul_simple(grad_output_mojo, self.fc3_weight_mojo)
+        
+        # backprop through ReLU after fc2
+        for i in range(grad_fc2_output_mojo.shape()[0]):
+            for j in range(grad_fc2_output_mojo.shape()[1]):
+                if ~(self.fc2_mojo[Index(i,j)] > 0.0):
+                    grad_fc2_output_mojo[Index(i,j)] = 0.0
+                    
+        # grad w.r.t. fc2 weights
+        self.weight_grad_fc2_mojo = nn_utils.transpose(nn_utils.matmul_simple(nn_utils.transpose(self.fc1_mojo_relued), grad_fc2_output_mojo))
+            
+        self.bias_grad_fc2_manual_mojo = Tensor[type](grad_fc2_output_mojo.shape()[0])
+        
+        for i in range(grad_fc2_output_mojo.shape()[0]):
+            self.bias_grad_fc2_manual_mojo[i] = 0.0
+            for j in range(grad_fc2_output_mojo.shape()[1]):
+                self.bias_grad_fc2_manual_mojo[i] = self.bias_grad_fc2_manual_mojo[i] + grad_fc2_output_mojo[Index(j,i)]
+            
+        # relu(fc1)
+        var grad_fc1_output_mojo = nn_utils.matmul_simple(grad_fc2_output_mojo, self.fc2_weight_mojo)
+    
+        for i in range(grad_fc1_output_mojo.shape()[0]):
+            for j in range(grad_fc1_output_mojo.shape()[1]):
+                if ~(self.fc1_mojo[Index(i,j)] > 0.0):
+                    grad_fc1_output_mojo[Index(i,j)] = 0.0
+                         
+        self.weight_grad_fc1_mojo = nn_utils.transpose(nn_utils.matmul_simple(nn_utils.transpose(self.flat_mojo), grad_fc1_output_mojo))
+        
+        self.bias_grad_fc1_mojo = Tensor[type](grad_fc1_output_mojo.shape()[1])
+        for i in range(grad_fc1_output_mojo.shape()[1]):
+            self.bias_grad_fc1_mojo[i] = 0.0
+            for j in range(grad_fc1_output_mojo.shape()[0]):
+                self.bias_grad_fc1_mojo[i] += grad_fc1_output_mojo[Index(j,i)]
+                
+    fn step(mut self):
+        # FC3 weight update
+        for i in range(self.fc3_weight_mojo.shape()[0]):
+            for j in range(self.fc3_weight_mojo.shape()[1]):
+                self.fc3_weight_mojo[Index(i,j)] = self.fc3_weight_mojo[Index(i,j)] - self.learning_rate * self.fc3_weight_grad_mojo[Index(i,j)]
+        # FC3 bias update
+        for i in range(self.fc3_bias_mojo.shape()[0]):
+            self.fc3_bias_mojo[i] = self.fc3_bias_mojo[i] - self.learning_rate * self.bias_grad_fc3_mojo[i]
+        
+        # FC2 weight update
+        for i in range(self.fc2_weight_mojo.shape()[0]):
+            for j in range(self.fc2_weight_mojo.shape()[1]):
+                self.fc2_weight_mojo[Index(i,j)] = self.fc2_weight_mojo[Index(i,j)] - self.learning_rate * self.weight_grad_fc2_mojo[Index(i,j)]
+        # FC2 bias update
+        for i in range(self.fc2_bias_mojo.shape()[0]):
+           self.fc2_bias_mojo[i] = self.fc2_bias_mojo[i] - self.learning_rate * self.bias_grad_fc2_manual_mojo[i]
+    
+        # FC1 weight update
+        for i in range(self.fc1_weight_mojo.shape()[0]):
+            for j in range(self.fc1_weight_mojo.shape()[1]):
+                self.fc1_weight_mojo[Index(i,j)] = self.fc1_weight_mojo[Index(i,j)] - self.learning_rate * self.weight_grad_fc1_mojo[Index(i,j)]
+        # FC1 bias update
+        for i in range(self.fc1_bias_mojo.shape()[0]):
+            self.fc1_bias_mojo[i] = self.fc1_bias_mojo[i] - self.learning_rate * self.bias_grad_fc1_mojo[i]
+            

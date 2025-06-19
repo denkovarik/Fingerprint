@@ -1,0 +1,65 @@
+# Source: https://workshops.modular.com/3_hands_on/vectorization_parallelization_mojo/
+
+from tensor import Tensor, TensorShape, TensorSpec
+from math import trunc
+from memory import memset_zero
+from sys.info import simdwidthof, simdbitwidth
+from algorithm import vectorize, parallelize
+from utils.index import Index
+from random import rand, seed
+from python import Python
+import time
+
+alias dtype = DType.float32
+alias simd_width: Int = simdwidthof[dtype]()
+
+fn tensor_assign[dtype: DType](mut t1: Tensor[dtype]) -> Tensor[dtype]:
+    for i in range(t1.dim(0)):
+        for j in range(t1.dim(1)):
+            t1[Index(i,j)] = 1.0
+            
+    return t1
+    
+fn tensor_assign_parallelized_vectorized[dtype: DType](t1: Tensor[dtype]) -> Tensor[dtype]:
+    var t_init: Tensor[dtype] = Tensor[dtype](TensorShape(simd_width))
+    
+    #@parameter
+    #fn parallelize_rows(idx: Int) -> None:
+    for idx in range(t1.dim(0)):
+        @parameter
+        fn vectorized_add[simd_width: Int](idx2: Int) -> None:
+            var vec1 = t_init._ptr.load[width=simd_width](idx2)
+            t1._ptr.store(idx * t1.dim(1) + idx2, vec1)
+        
+        vectorize[vectorized_add, simd_width](t1.dim(1))
+
+    #parallelize[parallelize_rows](t1.dim(0), simd_width)
+    return t1
+
+def main():
+    print("SIMD bit width",simdbitwidth())
+    print("SIMD Width",simd_width)
+    
+    seed(42)
+    var t1 = Tensor[dtype](TensorShape(64, 28 * 28))
+    
+    var time = Python.import_module("time")
+    
+    var tm1 = time.time()
+    var out_naive = tensor_assign(t1)
+    var dur1 = time.time()-tm1
+    
+    print("\nNaive Tensor Assign")
+    print(out_naive)
+    print("")
+
+    var tm2 = time.time()
+    var out2 = tensor_assign_parallelized_vectorized[dtype](out_naive)
+    var dur2 = time.time()-tm2
+    
+    print("\nParallelized and Vectorized Tensor Assign")
+    print(out2)
+
+    print("")
+    print("Mojo naive assign:",dur1,"seconds")
+    print("Mojo vecotorized assign:",dur2,"seconds")

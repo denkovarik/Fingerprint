@@ -1,8 +1,9 @@
 from python import Python, PythonObject
-from tensor import Tensor, TensorSpec, TensorShape
+from tensor import Tensor, TensorSpec, TensorShape, InputTensor, ManagedTensorSlice, OutputTensor
 from utils.index import Index, IndexList
 from memory.memory import memcpy
 from structs.Utils import to_tensor
+
 
 alias type = DType.float64
 

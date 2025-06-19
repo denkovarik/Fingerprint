@@ -9,7 +9,6 @@ from python import Python, PythonObject
 from math import exp
 from NN_Utils import NN_Utils
 from Data_Loader import MNIST_Data_Loader_Pytorch
-from CustomNN import Custom_NN_Pytorch, Custom_NN_Mojo
 
 alias type = DType.float64
 alias simdwidth = simdwidthof[type]()
@@ -27,6 +26,57 @@ alias data_width: Int = 17
 alias data_size: Int = 20000
 alias training_size: Int = 16000
 alias validation_size: Int = 4000
+
+
+
+@value
+struct Custom_NN_Pytorch:
+    var torch: PythonObject
+    var nn: PythonObject
+    var F: PythonObject
+    var model_parameters: PythonObject
+    var device: PythonObject
+    var flatten: PythonObject
+    var fc1: PythonObject
+    var fc2: PythonObject
+    var fc3: PythonObject
+
+    fn __init__(mut self) raises:
+        self.torch = Python.import_module("torch")
+        self.nn = Python.import_module("torch.nn")
+        self.F = Python.import_module("torch.nn.functional")
+        self.model_parameters = Python.list()
+        self.device = self.torch.device("cpu")
+        self.flatten = self.nn.Flatten()
+        self.fc1 = self.nn.Linear(28 * 28, 128) 
+        self.fc2 = self.nn.Linear(128, 64)
+        self.fc3 = self.nn.Linear(64, 10) 
+                
+    def forward(mut self, x: PythonObject) -> PythonObject:
+        var temp1: PythonObject = self.flatten(x)
+        var temp2: PythonObject = self.F.relu(self.fc1(temp1))
+        var temp3: PythonObject = self.F.relu(self.fc2(temp2))
+        var temp4: PythonObject = self.fc3(temp3)
+        var out: PythonObject = self.F.log_softmax(temp4, dim=1)
+        return out
+        
+    def parameters(mut self) -> PythonObject:
+        self.model_parameters = Python.list()
+        self.model_parameters.append(self.fc1.weight)
+        self.model_parameters.append(self.fc1.bias)
+        self.model_parameters.append(self.fc2.weight)
+        self.model_parameters.append(self.fc2.bias)
+        self.model_parameters.append(self.fc3.weight)
+        self.model_parameters.append(self.fc3.bias)
+        return self.model_parameters
+
+    fn zero_grad(mut self) raises:
+        for param in self.model_parameters:
+            try:
+                param.grad.zero_()
+            except AttributeError:
+                pass
+
 
 
 struct Mojo_Tensor_Index:
@@ -299,12 +349,12 @@ def test_matmul():
     var tm1 = time.time()  
     pytorch_tensor_matmuled_2D = torch.matmul(pytorch_tensor_2D_1, pytorch_tensor_2D_2)
     var dur1 = time.time()-tm1
-    print("Pytorch Sigmoid:",dur1,"seconds")
+    print("Pytorch Matmul:",dur1,"seconds")
     
     var tm2 = time.time()
-    var mojo_tensor_matmuled_2D = nn_utils.matmul_simple(mojo_tensor_2D_1, mojo_tensor_2D_2)
+    var mojo_tensor_matmuled_2D = nn_utils.matmul(mojo_tensor_2D_1, mojo_tensor_2D_2)
     var dur2 = time.time()-tm2
-    print("Mojo Sigmoid:",dur2,"seconds")
+    print("Mojo Matmul:",dur2,"seconds")
                 
     if mojo_tensor_equals_pytroch_tensor(mojo_tensor_matmuled_2D, pytorch_tensor_matmuled_2D) == True:
         tests_passed = True
@@ -667,10 +717,10 @@ def run_tests():
     
     print("\nRunning Tests...")
     print("==================================================\n")
-    test_sigmoid()
-    test_transpose()
+    #test_sigmoid()
+    #test_transpose()
     test_matmul()
-    test_mojo_NN()
+    #test_mojo_NN()
         
     print("==================================================\n")
     

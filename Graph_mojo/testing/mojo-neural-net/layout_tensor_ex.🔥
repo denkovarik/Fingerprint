@@ -1,0 +1,26 @@
+from layout.tensor_builder import LayoutTensorBuild as tb
+from layout.tensor_builder import static
+from layout.int_tuple import UNKNOWN_VALUE
+
+
+
+def main():
+    # create 2x3 tensor, where both dimensions are dynamic
+    var t_2d_dynamic = tb[DType.float32]().row_major(2, 3).view(t_2d_static.ptr)
+
+    # create 2x3 tensor where the second dimension is known at compile time.
+    #var t_2d_dynamic_static = tb[DType.float32]().row_major(2, static[3]()).view(t_2d_static.ptr) # first dimension is dynamic, second is static.
+
+    # custom layout
+    #var t_dynamic = tb[DType.float32]().layout(Index(2, 3), Index(1, 2)).view(
+    #        t.ptr
+    #    )
+
+    # way too verbose but highly customizable
+    #alias layout_t = Layout.row_major(UNKNOWN_VALUE, UNKNOWN_VALUE)
+    #var layout = RuntimeLayout[layout_t](
+    #        RuntimeTuple[layout_t.shape, unsigned=True](8, 4),
+    #        RuntimeTuple[layout_t.stride, unsigned=True](4, 1),
+    #)
+    #var storage = UnsafePointer[Float32].alloc(layout.size())
+    #var tensor = LayoutTensor[DType.float32, layout_t](storage, layout)

@@ -1,27 +1,28 @@
 from python import Python, PythonObject
 from CustomNN import Custom_NN_Pytorch
 from Data_Loader import MNIST_Data_Loader_Pytorch
+from test_utils import create_equivalent_mojo_tensor
 
         
-def testNetwork(model: Custom_NN_Pytorch, testloader: MNIST_Data_Loader_Pytorch, device: PythonObject) -> Float64:
-    var torch = Python.import_module("torch")
-
-    var correct: Int = 0
-    var total: Int = 0     
-
-    for i in range(testloader.__len__()):
-        var images: PythonObject = testloader.batchImages[i].to(device)
-        var target: PythonObject = testloader.batchLabels[i].to(device)
-        var output: PythonObject = model.forward(images)          
-        var torch_max = torch.max(output.data, 1)
-        var predicted = torch_max[1]
-        for j in range(len(predicted)):
-            if predicted[j] == target[j]:
-                correct = correct + 1
-            total = total + 1
-
-    var accuracy: Float64 = 100.0 * correct / total
-    return accuracy
+#def testNetwork(model: Custom_NN_Pytorch, testloader: MNIST_Data_Loader_Pytorch, device: PythonObject) -> Float64:
+#    var torch = Python.import_module("torch")
+#
+#    var correct: Int = 0
+#    var total: Int = 0     
+#
+#    for i in range(testloader.__len__()):
+#        var images: PythonObject = testloader.batchImages[i].to(device)
+#        var target: PythonObject = testloader.batchLabels[i].to(device)
+#        var output: PythonObject = model.forward(images)          
+#        var torch_max = torch.max(output.data, 1)
+#        var predicted = torch_max[1]
+#        for j in range(len(predicted)):
+#            if predicted[j] == target[j]:
+#                correct = correct + 1
+#            total = total + 1
+#
+#    var accuracy: Float64 = 100.0 * correct / total
+#    return accuracy
 
 
 def main():
@@ -63,14 +64,15 @@ def main():
            
             optimizer.zero_grad()
             var outputs: PythonObject = model.forward(images)
-            var loss: PythonObject = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+            #var loss: PythonObject = criterion(outputs, labels)
+            #loss.backward()
+            #optimizer.step()
     
-            running_loss = running_loss + loss.item()
+            running_loss = running_loss #+ loss.item()
             
         # Test
-        var accuracy: Float64 = testNetwork(model=model, testloader=testloader, device=device)
+        var accuracy: Float64 = 0.0
+        #var accuracy: Float64 = testNetwork(model=model, testloader=testloader, device=device)
         print("Epoch " + String(epoch + 1) + " Loss: " + String(running_loss / trainloader.__len__()) + ", Validation Accuracy: " + String(accuracy) + "%")
         
         train_losses.append(running_loss / trainloader.__len__())

@@ -7,7 +7,9 @@ from pathlib import path
 from python import Python, PythonObject
 from math import exp, log
 
+
 alias type = DType.float64
+alias simd_width: Int = simdwidthof[type]()
 alias simdwidth = simdwidthof[type]()
 alias mu: Float64 = 0.01
 alias beta1: Float64 = 0.9
@@ -55,22 +57,29 @@ struct NN_Utils:
                 
         return t_transpose
         
-    fn add_bias(mut self, mut weight: Tensor[type], bias: Tensor[type]) -> Tensor[type]:                       
+    fn dot(mut self, t1: Tensor[type], t2: Tensor[type]) -> Float64:
+        var vec_dot: Float64 = 0.0
+        var temp_vec: Tensor[type] = Tensor[type](t1.shape())
+
         @parameter
-        fn calc_row(i: Int):
-            for j in range(weight.shape()[1]):
-                weight[Index(i, j)] = weight[Index(i, j)] + bias[Index(j)]
-                
-        parallelize[calc_row](weight.shape()[0])
-        
-        return weight;
+        fn compute_mul[simd_width: Int](idx: Int):
+            var vec1 = t1._ptr.load[width=simd_width](idx)
+            var vec2 = t2._ptr.load[width=simd_width](idx)
+            temp_vec._ptr.store(idx, vec1 * vec2)
+
+        vectorize[compute_mul, simdwidth](t1.shape()[1])
+
+        for i in range(temp_vec.shape()[1]):
+            vec_dot += temp_vec[i]
+
+        return vec_dot
 
     fn matmul(mut self, t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
         var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0], t2.shape()[1]))
 
         @parameter
         fn calc_row(i: Int):
-            for j in range(t2.shape()[1]):
+            for j in range(t2.shape()[1]):                
                 var sum = 0.0
                 for k in range(t1.shape()[1]):
                     sum += t1[Index(i, k)] * t2[Index(k, j)]
@@ -78,6 +87,38 @@ struct NN_Utils:
 
         parallelize[calc_row](t_mul.shape()[0])
 
+        return t_mul
+        
+    fn matmul_v2(mut self, t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
+        var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0], t2.shape()[0]))
+
+        for i in range(t1.shape()[0]): 
+            for j in range(t2.shape()[0]):                
+                var sum = 0.0
+                for k in range(t1.shape()[1]):
+                    sum += t1[Index(i, k)] * t2[Index(j, k)]
+                t_mul[Index(i, j)] = sum
+
+        return t_mul
+        
+    fn matmul_v3(mut self, t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
+        var t_mul: Tensor[type] = Tensor[type](TensorShape(t1.shape()[0], t2.shape()[0]))
+
+        @parameter
+        fn calc_row(i: Int):
+            #for j in range(t2.shape()[0]): 
+            @parameter
+            fn calc_row2(j: Int):            
+                @parameter
+                fn vectorized_dot[simd_width: Int](idx2: Int) -> None:
+                    var t_temp: Tensor[type] = Tensor[type](TensorShape(simd_width))
+                    var vec1 = t1._ptr.load[width=simd_width](i * t1.dim(1) + idx2)
+                    var vec2 = t2._ptr.load[width=simd_width](j * t2.dim(1) + idx2)
+                    t_temp._ptr.store(idx2, vec1 * vec2)
+                    t_mul[Index(i, j)] += t_temp._ptr.load[width=simd_width](idx2).reduce_add()             
+                vectorize[vectorized_dot, simd_width](t1.dim(1))
+            parallelize[calc_row2](t2.shape()[0])
+        parallelize[calc_row](t_mul.shape()[0])
         return t_mul
             
     fn matmul_simple(mut self, t1: Tensor[type], t2: Tensor[type]) -> Tensor[type]:
@@ -89,24 +130,6 @@ struct NN_Utils:
                     t_mul[Index(i,k)] += t1[Index(i,j)] * t2[Index(j,k)] 
                 
         return t_mul 
-
-    fn dot(mut self, t1: Tensor[type], t2: Tensor[type]) -> Float64:
-        var vec_dot: Float64 = 0.0
-        var temp_vec: Tensor[type] = Tensor[type](t1.shape())
-        #var sum_vec: Tensor[type] = Tensor[type](simdwidth)
-        #var sum_simd = SIMD[type, simdwidth](0.0)
-
-        @parameter
-        fn compute_mul[simd_width: Int](idx: Int):
-            pass
-            #temp_vec.simd_store[simd_width](idx, t1.simd_load[simd_width](idx) * t2.simd_load[simd_width](idx))
-
-        #vectorize[simdwidth, compute_mul](t1.shape()[1])
-
-        for i in range(temp_vec.shape()[1]):
-            vec_dot += temp_vec[i]
-
-        return vec_dot
     
     fn relu(mut self, X: Tensor[type]) -> Tensor[type]:
         """ Function `relu`: apply relu activation to Tensor.

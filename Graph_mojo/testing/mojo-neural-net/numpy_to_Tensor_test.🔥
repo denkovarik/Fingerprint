@@ -1,0 +1,41 @@
+from python import Python, PythonObject
+from tensor import Tensor, TensorShape
+from memory import memcpy
+from memory import UnsafePointer
+
+alias t = DType.float32
+
+
+fn main() raises:
+    var A = Tensor[t](TensorShape(5), 1, 2, 3, 4, 5)
+    var B = Tensor[t](TensorShape(5), 6, 7, 8, 9, 10)
+
+    print(A)
+    print(B)
+
+    var tmp = Tensor[t](TensorShape(5))
+    
+    # Swap
+    memcpy(tmp._ptr, A._ptr, 5)
+    memcpy(A._ptr, B._ptr, 5)
+    memcpy(B._ptr, tmp._ptr, 5)
+
+    print(A)
+    print(B)
+    print("")
+    
+    var C = Tensor[t](TensorShape(5), 0, 0, 0, 0, 0)
+    var np = Python.import_module("numpy")
+    np_array = np.arange(6.0)
+    
+    print(np_array)
+    print(C)
+    
+    var np_array_2: PythonObject
+    np_array_2 = np.float32(np_array.copy())
+    var pointer_d = np_array_2.__array_interface__["data"][0].unsafe_get_as_pointer[t]()
+    
+    memcpy(C._ptr, pointer_d, 5)
+    
+    print(np_array)
+    print(C)
