@@ -77,7 +77,7 @@ class InputNode(Node):
         self.name = 'input'
         self.numChannels = inputShape[1]
         self.input_shape = inputShape
-        self.displayName = 'Input(input_shape=' + str(self.input_shape) + ')'
+        self.displayName = 'Input'
         
     def __eq__(self, other):
         if isinstance(other, InputNode):
@@ -87,6 +87,9 @@ class InputNode(Node):
     def __hash__(self):
         # Create a hashable tuple from the instance's attributes
         return hash((self.name, tuple(self.input_shape)))
+        
+    def getLayer(self, inputShape):
+        return PassThrough(displayName=self.displayName)
 
 
 class OutputNode(Node):
@@ -102,11 +105,21 @@ class OutputNode(Node):
 
     def __hash__(self):
         return hash('OutputNode')
+        
+    def getLayer(self, inputShape):
+        return PassThrough(displayName=self.displayName)
     
 
 class PassThrough(nn.Module):
-    def __init__(self):
-        super(PassThrough, self).__init__()    
+    def __init__(self, displayName='PassThrough'):
+        super(PassThrough, self).__init__()   
+        self.displayName = displayName
+
+    def __str__(self):
+        return self.displayName
+        
+    def __repr__(self):
+        return self.displayName
     
     def forward(self, x):
         return x   
@@ -138,7 +151,7 @@ class NormalizationNode(Node):
         with record_function("getNormalizationNode"):
             bn = nn.BatchNorm2d(inputShape[1])
             if self.normalizationType == NormalizationType.NO_NORM:
-                return PassThrough()
+                return PassThrough(displayName=self.displayName)
             return bn        
             
     def parameters(self, recurse: bool = True):
@@ -174,7 +187,7 @@ class PoolingNode(Node):
         with record_function("getPoolingNode"):
             if self.poolingType == PoolingType.MAX_POOLING:
                 return nn.MaxPool2d(self.kernelSize, self.stride)
-            return PassThrough()
+            return PassThrough(self.displayName)
 
 
 class ConvolutionalNode(Node):
