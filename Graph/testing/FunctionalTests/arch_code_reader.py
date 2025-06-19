@@ -92,8 +92,8 @@ class Arch_Encoder:
         skip += 3
         
         conv_node = ConvolutionalNode(name='convNode', kernel_size=kernel_size, 
-                                 maxNumInputChannels=128, 
-                                 maxNumOutputChannels=128, 
+                                 maxNumInputChannels=in_channels, 
+                                 maxNumOutputChannels=out_channels, 
                                  numOutputChannels=out_channels, layer=0,
                                  pytorchLayerId=uuid.uuid4())
         
@@ -104,6 +104,7 @@ class Arch_Encoder:
             return None, input_tensor, 1
         
         skip += 1
+        conv_node.setSharedLayer(conv_node.constructLayer())
         
         return conv_node, output_tensor, skip
 
@@ -121,7 +122,7 @@ class Arch_Encoder:
                               maxNumOutFeatures=128,
                               numOutFeatures=out_features, 
                               layer=1, pytorchLayerId=uuid.uuid4())
-                              
+            linear_node.setSharedLayer(linear_node.constructLayer())
             return linear_node, output_tensor, skip
         
         if s + 3 >= len(dna):
@@ -136,13 +137,13 @@ class Arch_Encoder:
         output_tensor = m(input_tensor)
         skip += 3
         linear_node = LinearNode(name='linear', 
-                          maxNumInFeatures=131072, 
-                          maxNumOutFeatures=128,
+                          maxNumInFeatures=in_features, 
+                          maxNumOutFeatures=in_features,
                           numOutFeatures=out_features, 
                           layer=1, pytorchLayerId=uuid.uuid4())
         
         skip += 1
-        
+        linear_node.setSharedLayer(linear_node.constructLayer())
         return linear_node, output_tensor, skip
         
     def read_pooling_node(self, dna, s, input_tensor):
@@ -189,7 +190,7 @@ class Arch_Encoder:
                     node, out_tensor, skip = self.read_linear_node(dna, i, input_tensor)
                     found_keys.append(node)
                     input_tensor = out_tensor
-                elif node == 'normalize':
+                elif node == 'normalize' and len(input_tensor.shape) == 4:
                     normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM, 
                         input_tensor.shape, pytorchLayerId=uuid.uuid4())
                     found_keys.append(normNode)
@@ -216,7 +217,7 @@ class Arch_Encoder:
                     found_keys.append(node)
                     input_tensor = out_tensor
                     valid_arch = True
-                elif node == 'normalize':
+                elif node == 'normalize' and len(input_tensor.shape) == 4:
                     normNode = NormalizationNode('normNode', NormalizationType.BATCH_NORM, 
                         input_tensor.shape, pytorchLayerId=uuid.uuid4())
                     found_keys.append(normNode)
@@ -249,9 +250,10 @@ class Architecture:
         self.architecture = architecture
         self.genotypes = set()
         self.genotypes.update(genotypes)
+        self.top_score = 0.0
 
     def __str__(self):
-        return f"{self.architecture}"
+        return f"Accuracy: {self.top_score:.2f}%    Architecture: {self.architecture}"
 
     def __repr__(self):
         return self.__str__()
