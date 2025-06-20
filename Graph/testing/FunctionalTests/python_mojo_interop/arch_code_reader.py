@@ -15,6 +15,7 @@ from classes.Nodes import NodeType, NormalizationType, PoolingType, ActivationTy
 from classes.Nodes import Node, InputNode, OutputNode, NormalizationNode, ActivationNode, PoolingNode, FlattenNode, LinearNode, ConvolutionalNode
 import uuid
 import random
+import ast
 
 
 class Arch_Encoder:
@@ -301,13 +302,16 @@ def reproduce(chosen, population):
 
     arch_coder_m.reproduce(chosen_filename, pop_filename, output_filename, 10, 10)
     
-    offspring_dna = set()
+    offspring_temp = {}
     with open(output_filename, 'r') as file:
-        for line in file:
-            offspring_dna.add(line.strip())
-            
-    return offspring_dna
-
+        offspring_str = file.read()
+        offspring_temp = ast.literal_eval(offspring_str)
+       
+    offspring = {} 
+    for phenotype_key in offspring_temp.keys():
+        offspring[phenotype_key] = Architecture(phenotype_key, offspring_temp[phenotype_key])
+        
+    return offspring
 
 if __name__ == "__main__":
     arch_encoder = Arch_Encoder(input_shape=[4, 3, 32, 32], num_classes=10)
@@ -324,7 +328,7 @@ if __name__ == "__main__":
     dna = ''
 
     # Seeding the population
-    dna_array = np.random.randint(0, 2, size=32)
+    dna_array = np.random.randint(0, 2, size=8)
     dna = ''.join(dna_array.astype(str)) 
     dna = dna + arch_encoder.OUTPUT_CODON + arch_encoder.node_ids['linear'] + arch_encoder.node_ids['activation'] + '11111111'
 
@@ -345,14 +349,7 @@ if __name__ == "__main__":
     output_filename = 'offspring_dna.txt'
 
     while generation_num <= num_generations: 
-        offspring_dna = reproduce(population, population)
-        offspring = {}
-        for dna in offspring_dna:
-            phenotype_key = arch_encoder.translate(dna)
-            if phenotype_key in offspring:
-                offspring[phenotype_key].genotypes.add(dna)
-            else:
-                offspring[phenotype_key] = Architecture(phenotype_key, {dna})
+        offspring = reproduce(population, population)
                 
         offspring_set = set(offspring.values())
         for phenotype in population & offspring_set:

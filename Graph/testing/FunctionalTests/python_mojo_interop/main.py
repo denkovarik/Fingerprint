@@ -1,10 +1,11 @@
 import max.mojo.importer
 import os
 import sys
-
 sys.path.insert(0, "")
-
 import arch_coder_m
+from arch_code_reader import Architecture, Arch_Encoder
+import ast
+
 
 pop_filename = 'pop_dna.txt'
 chosen_filename = 'chosen_dna.txt'
@@ -12,6 +13,7 @@ output_filename = 'offspring_dna.txt'
 
 chosen_dna = {"0001100111000100100111111110100111111111"}
 pop_dna = {"0001100111000100100111111110100111111111", "0001100111000100100111111110100111111110"}
+
 
 chosen_dna_str = ""
 pop_dna_str = ""
@@ -27,10 +29,11 @@ with open(chosen_filename, 'w') as file:
     file.write(chosen_dna_str)
 
 
-arch_coder_m.reproduce(chosen_filename, pop_filename, output_filename, 10, 10)
+arch_coder_m.reproduce(chosen_filename, pop_filename, output_filename, 3, 10)
 
-
+offspring = {}
 with open(output_filename, 'r') as file:
-    for line in file:
-        # Process the line
-        print(line.strip())  # .strip() removes trailing newline characters
+    offspring_str = file.read()
+    offspring = ast.literal_eval(offspring_str)
+
+print(offspring)
