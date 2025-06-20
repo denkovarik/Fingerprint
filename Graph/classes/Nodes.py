@@ -76,8 +76,8 @@ class InputNode(Node):
             raise ValueError("inputShape must be a torch.Size of length 4")
         self.name = 'input'
         self.numChannels = inputShape[1]
-        self.input_shape = inputShape
-        self.displayName = 'Input'
+        self.inputShape = inputShape
+        self.displayName = f'Input(numChannels={self.numChannels})'
         
     def __eq__(self, other):
         if isinstance(other, InputNode):
@@ -86,7 +86,7 @@ class InputNode(Node):
 
     def __hash__(self):
         # Create a hashable tuple from the instance's attributes
-        return hash((self.name, tuple(self.input_shape)))
+        return hash((self.name, tuple(self.inputShape)))
         
     def getLayer(self, inputShape):
         return PassThrough(displayName=self.displayName)

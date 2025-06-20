@@ -147,7 +147,7 @@ class nodeTests(unittest.TestCase):
         node = InputNode(inputShape=torch.Size([4, 3, 32, 32]))
         self.assertTrue(node.numChannels == 3)
         self.assertTrue(node.name == 'input')
-        self.assertTrue(node.displayName == 'Input')
+        self.assertTrue(node.displayName == 'Input(numChannels=3)')
     
 
     def testOutputNode(self):
