@@ -26,8 +26,7 @@ fn reproduce(chosen_filename_py: PythonObject, pop_filename_py: PythonObject, ou
     var genotypes: Set[String] = read_file(pop_filename)
     var chosen_genotypes: Set[String] = read_file(chosen_filename)
     var population = { empty }
-    var offspring = { empty }
-    var offspring_dna = { empty }
+    var offspring = Dict[String, Set[String]]()
     var num_offspring: Int = Int(py_obj_num_offspring)
     var num_output_classes: Int = Int(py_obj_num_classes)
         
@@ -39,16 +38,23 @@ fn reproduce(chosen_filename_py: PythonObject, pop_filename_py: PythonObject, ou
         var arch = translate_m(dna, num_output_classes, node_types, node_ids)
         population.add(arch)
     
-    generate_offspring(num_offspring, offspring, offspring_dna, chosen_genotypes, population, 0.05)
+    generate_offspring(num_offspring, offspring, chosen_genotypes, population, 0.05)
     
-    write_to_file(offspring_dna, 'offspring_dna.txt')
+    write_to_file(offspring, 'offspring_dna.txt')
 
 
-fn write_to_file(genotypes: Set[String], filename: String) raises:
+fn write_to_file(offspring: Dict[String, Set[String]], filename: String) raises:
+    var offspring_str: String = "{"
+    var cnt: Int = 1
+    for key in offspring.keys():
+        offspring_str = offspring_str + "'" + key + "' : " + offspring[key].__str__()
+        if cnt < len(offspring):
+            offspring_str = offspring_str + ","
+        cnt = cnt + 1
+    offspring_str = offspring_str + "}"   
+    
     with open(filename, 'w') as file:
-        for dna in genotypes:
-            if dna != "":
-                file.write(dna + '\n')
+        file.write(offspring_str)
 
 
 fn read_file(filename: String) raises -> Set[String]:
@@ -303,19 +309,104 @@ fn mutate_m(dna: String, mutation_rate: Float32) raises -> String:
     return mutant_dna
     
     
-fn generate_offspring(num_offspring: Int, mut offspring: Set[String], mut offspring_dna: Set[String], mut genotypes: Set[String], population: Set[String], mutation_rate: Float32 = 0.05) raises:    
+fn generate_offspring(mut num_offspring: Int, mut offspring: Dict[String, Set[String]], mut genotypes: Set[String], population: Set[String], mutation_rate: Float32 = 0.05) raises:    
     node_types = init_node_types_m()
     node_ids = init_node_ids_m()
     
-    while len(offspring) < num_offspring:
+    var my_dict = Dict[String, Set[String]]()
+    #var set1 = { 1, 2, 3 }
+    #var set2 = { 1, 2, 3 }
+    my_dict['1'] = { '1010', '1001' }
+    my_dict['2'] = { '1010', '1001' }
+
+    
+    #var testKey: String = "1"
+    #var testKey2: String = '2'
+    #var allKeys = { testKey }
+    #allKeys.add(testKey2)
+
+    #if testKey in allKeys:
+    #    print("Yes")
+        
+    #if "3" in allKeys:
+    #    print("Yes")    
+        
+    var empty: String = ""
+    var offspring_keys = { empty }
+    num_offspring = num_offspring + 1
+    
+    while len(offspring_keys) < num_offspring:
         for dna in genotypes:
             new_dna = mutate_m(dna + '1', mutation_rate=mutation_rate) 
             var new_phenotype: String = translate_m(new_dna, 10, node_types, node_ids)       
             if new_phenotype not in population:
-                offspring.add(new_phenotype)
-                offspring_dna.add(new_dna)
-            if len(offspring) > num_offspring:
+                if new_phenotype not in offspring_keys:
+                    offspring[new_phenotype] = { new_dna }
+                    offspring_keys.add(new_phenotype)
+                else:
+                    offspring[new_phenotype].add(new_dna)
+            if len(offspring_keys) > num_offspring:
                 break
-        genotypes = genotypes | offspring_dna
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
 
