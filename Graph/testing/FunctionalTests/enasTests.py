@@ -80,7 +80,6 @@ class enasTests(unittest.TestCase):
         self.assertTrue(os.path.exists(graph2read))
         enas.readGraph(graph2read)
         self.assertTrue(not enas.graphHandler.graph.graph == {})
-        enas.mapPytorchLayers()
         self.assertTrue(enas.pytorchLayers != {})
 
         numConvLayers = 0
