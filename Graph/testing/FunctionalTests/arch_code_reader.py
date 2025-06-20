@@ -283,7 +283,7 @@ if __name__ == "__main__":
     dna = ''
 
     # Seeding the population
-    dna_array = np.random.randint(0, 2, size=1)
+    dna_array = np.random.randint(0, 2, size=32)
     dna = ''.join(dna_array.astype(str)) 
     dna = dna + arch_encoder.OUTPUT_CODON + arch_encoder.node_ids['linear'] + arch_encoder.node_ids['activation'] + '11111111'
 
@@ -296,13 +296,13 @@ if __name__ == "__main__":
     for phenotype in population:
         print(phenotype)
 
-    num_generations = 1000
+    num_generations = 10
     generation_num = 2
 
     while generation_num <= num_generations: 
         offspring = set()
             
-        while len(offspring - population) < 10:
+        while len(offspring - population) < 3:
             sample_size = min(100, len(population))
             sample_pop = random.sample(list(population), sample_size)
             for phenotype in sample_pop:
