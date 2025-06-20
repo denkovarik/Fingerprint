@@ -81,7 +81,7 @@ class InputNode(Node):
         
     def __eq__(self, other):
         if isinstance(other, InputNode):
-            return self.input_shape == other.input_shape
+            return self.inputShape == other.inputShape
         return False
 
     def __hash__(self):
