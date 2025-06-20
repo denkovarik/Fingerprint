@@ -35,7 +35,7 @@ class graphTests(unittest.TestCase):
         graph = GraphHandler()
         graph.construct(inputShape=torch.Size([4, 3, 32, 32]))
 
-        exp = ['Input(numChannels=3)', 'No Normalization', 'Batch Normalization', '3x3 Conv(oc=4)', 
+        exp = ['Input', 'No Normalization', 'Batch Normalization', '3x3 Conv(oc=4)', 
                '3x3 Conv(oc=8)', '3x3 Conv(oc=16)', '3x3 Conv(oc=32)', '5x5 Conv(oc=4)', 
                '5x5 Conv(oc=8)', '5x5 Conv(oc=16)', '5x5 Conv(oc=32)', 'No Normalization', 
                'Batch Normalization', 'No Activation', 'Relu Activation', 'No Pooling', 
