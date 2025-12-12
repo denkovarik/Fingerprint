@@ -10,12 +10,13 @@ import uuid
 import os, io, sys, inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
-graphdir = os.path.dirname(parentdir)
+grandparentdir = os.path.dirname(parentdir)
+graphdir = os.path.dirname(grandparentdir)
 sys.path.insert(0, graphdir)
 from classes.ENAS import ENAS, CustomCNN
 from classes.Graph import Graph
 from utils import renderGraph
-from arch_code_reader import Arch_Encoder, Architecture, mutate
+from arch_code_reader import Arch_Encoder, Architecture, mutate, reproduce
 from classes.Nodes import NodeType, NormalizationType, PoolingType, ActivationType
 from classes.Nodes import Node, InputNode, OutputNode, NormalizationNode, ActivationNode, PoolingNode, FlattenNode, LinearNode, ConvolutionalNode
 from utils import renderGraph
@@ -163,34 +164,46 @@ def construct_model(phenotype):
     
 def train_population(population, device):
     cpu = torch.device('cpu') 
-    for phenotype in population:
-        print(phenotype)
-        model = construct_model(phenotype)
-        train_network(model, train_images, train_labels, test_images, test_labels, device, max_epochs=3)
-        accuracy = test_network(model, test_images, test_labels, device)
-        if phenotype.top_score is None or accuracy > phenotype.top_score:
-            phenotype.top_score = accuracy
-        print(phenotype)
-        model.to(cpu)
-    return population
- 
- 
-def reproduce(population):
-    offspring = set()
-    while len(offspring - population) < 3:
-        sample_size = min(100, len(population))
-        sample_pop = random.sample(list(population), sample_size)
-        for phenotype in sample_pop:
-            sample_size = min(100, len(phenotype.genotypes))
-            dna_samples = random.sample(list(phenotype.genotypes), sample_size)
-            for dna in dna_samples:
-                new_dna = mutate(dna + '1', mutation_rate=0.01) 
-                arch = arch_encoder.translate(new_dna)
-                if len(arch) > 0:
-                    new_phenotype = Architecture(arch, {new_dna})
-                    offspring.add(new_phenotype)
+    population_ranked = sorted(population, key=lambda x: x.top_score, reverse=True)
+    to_train = []
+    for i in range(len(population_ranked)):
+        if i < 10:
+            to_train.append(i)
+        elif population_ranked[i].top_score < 0.01:
+            to_train.append(i)
+        elif random.random() < 0.3:
+            to_train.append(i)
     
-    return offspring
+    for i in to_train:
+        try:
+            model = construct_model(population_ranked[i])
+            train_network(model, train_images, train_labels, test_images, test_labels, device, max_epochs=3)
+            accuracy = test_network(model, test_images, test_labels, device)
+            if population_ranked[i].top_score is None or accuracy > population_ranked[i].top_score:
+                population_ranked[i].top_score = accuracy
+            model.to(cpu)
+            print(population_ranked[i])
+        except:
+            print(f"Error occurred with phonotype: {phenotype}")
+    print("")
+    return set(population_ranked)
+ 
+ 
+def get_offspring(population):
+    num_chosen = len(population) * 0.8
+    ranked_list = sorted(population, key=lambda x: x.top_score, reverse=True)
+    chosen = set()
+    ind = 0
+    while len(chosen) < num_chosen:
+        if ranked_list[ind].architecture != tuple():
+            prop_of_selection = float(len(ranked_list) - ind) / len(ranked_list)
+            if random.random() < prop_of_selection:
+                chosen.add(ranked_list[ind])
+        ind += 1
+        if ind >= len(ranked_list):
+            ind = 0
+    offspring = reproduce(chosen, population)              
+    return set(offspring.values())
 
 
 if __name__ == "__main__":    
@@ -215,7 +228,7 @@ if __name__ == "__main__":
     population.add(phenotype)
     offspring = set()
 
-    num_generations = 10
+    num_generations = 100
     generation_num = 1
 
     with ThreadPoolExecutor(max_workers=2) as executor:
@@ -225,7 +238,7 @@ if __name__ == "__main__":
             print("-----------------------------------")
             
             # Submit the reproduction task
-            reproduce_future = executor.submit(reproduce, population)
+            reproduce_future = executor.submit(get_offspring, population)
             
             print("Training Population")
             # Submit the training task
@@ -248,5 +261,5 @@ if __name__ == "__main__":
             
             sorted_list = sorted(population, key=lambda x: x.top_score, reverse=True)
         
-            #for arch in sorted_list:
-            #    print(arch)
+            for arch in sorted_list:
+                print(arch)

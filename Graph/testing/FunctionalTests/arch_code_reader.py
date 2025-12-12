@@ -322,12 +322,12 @@ if __name__ == "__main__":
         # Add new phenotypes to population
         population.update(offspring)
             
-        print(f"Generation {generation_num}\n\tNumber of phenotypes = {len(population)}")
-        #print("\n\n")
-        #print(f"Generation {generation_num}")
-        #print("-----------------------------------")
-        #for child in population:
-        #    if len(child.architecture) > 0:
-        #        print(child)
+        #print(f"Generation {generation_num}\n\tNumber of phenotypes = {len(population)}")
+        print("\n\n")
+        print(f"Generation {generation_num}")
+        print("-----------------------------------")
+        for child in population:
+            if len(child.architecture) > 0:
+                print(child)
 
         generation_num += 1

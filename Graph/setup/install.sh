@@ -15,6 +15,6 @@ apt-get -y install xdg-utils
 pip3 install ipython
 
 # Install PyTorch
-pip install torch torchvision torchaudio
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
 pip install tqdm

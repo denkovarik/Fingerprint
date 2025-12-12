@@ -15,6 +15,7 @@ class NodeType(Enum):
     FLATTEN = 'flatten'
     LINEAR = 'linear'
     ACTIVATION = 'activation'
+    PASSTHROUGH = 'passthrough'
 
 
 class NormalizationType(Enum):
@@ -70,7 +71,7 @@ class Node:
 
 
 class InputNode(Node):
-    def __init__(self, inputShape):
+    def __init__(self, inputShape, name='input'):
         super().__init__()
         if not isinstance(inputShape, torch.Size) or len(inputShape) != 4:
             raise ValueError("inputShape must be a torch.Size of length 4")
@@ -93,7 +94,7 @@ class InputNode(Node):
 
 
 class OutputNode(Node):
-    def __init__(self):
+    def __init__(self, name='output'):
         super().__init__() 
         self.name = 'output'
         self.displayName = 'Output'
@@ -114,6 +115,7 @@ class PassThrough(nn.Module):
     def __init__(self, displayName='PassThrough'):
         super(PassThrough, self).__init__()   
         self.displayName = displayName
+        self.nodeType = NodeType.PASSTHROUGH
 
     def __str__(self):
         return self.displayName
@@ -126,6 +128,24 @@ class PassThrough(nn.Module):
     
     def to(self, device):
         return self
+        
+  
+class PassThroughNode(Node):
+    def __init__(self, name='PassThrough'):
+        super().__init__() 
+        self.name = 'PassThrough'
+        self.displayName = 'PassThrough'
+        
+    def __eq__(self, other):
+        if isinstance(other, PassThroughNode):
+            return True 
+        return False
+
+    def __hash__(self):
+        return hash('PassThrough')
+        
+    def getLayer(self, inputShape):
+        return PassThrough(displayName=self.displayName)
 
 
 class NormalizationNode(Node):
@@ -366,4 +386,6 @@ class NodeFactory:
             return LinearNode(*args, **kwargs)
         if nodeType == NodeType.ACTIVATION:
             return ActivationNode(*args, **kwargs)
+        if nodeType == NodeType.PASSTHROUGH:
+            return PassThroughNode(*args, **kwargs)
         raise ValueError(f"Unknown node type: {nodeType}")

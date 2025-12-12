@@ -22,27 +22,115 @@ class Graph:
     def __init__(self):
         self.graph = {}
         self.sampleArch: List[int] = []
+        self.sample = []
+        
+    def create_graph_from_nodes(self, nodes: tuple):
+        for i, node in enumerate(nodes):
+            self.graph[node.name] = {'node': node, 'edges': []}
+            
+            # If it's not the last node, add an edge to the next node
+            if i < len(nodes) - 1:
+                self.graph[node.name]['edges'].append(nodes[i+1].name)
+
+    def add_path_to_graph(self, nodes: tuple):
+        # Ensure the graph is not empty
+        if not self.graph:
+            self.create_graph_from_nodes(nodes)
+            return
+
+        for i, node in enumerate(nodes):
+            # If the node is not already in the graph, add it
+            if node.name not in self.graph:
+                self.graph[node.name] = {'node': node, 'edges': []}
+            
+            # If it's not the last node, add an edge to the next node
+            if i < len(nodes) - 1:
+                # Check if the edge already exists to avoid duplicates
+                if nodes[i+1].name not in self.graph[node.name]['edges']:
+                    self.graph[node.name]['edges'].append(nodes[i+1].name)
+                
+                # Also check if the previous node has an edge to this node
+                if i > 0 and node.name not in self.graph[nodes[i-1].name]['edges']:
+                    self.graph[nodes[i-1].name]['edges'].append(node.name)
+
+        # Ensure the last node has no outgoing edge
+        if len(nodes) > 0:
+            self.graph[nodes[-1].name]['edges'] = []
 
     def to(self, device):
         for node in self.nodes.values():
             node.to(device)
             
+    def render(self, dirPath=os.path.join(parentdir, "Graphs/GraphVisualizations/")):
+        nodes = []
+        edges = [] 
+
+        if len(self.sample) > 0:
+            curNode = self.graph['input']['node']
+            nodes.append(curNode.name)
+            
+            for node in self.sample:
+                edge = self.graph[curNode.name]['edges'].index(node.name)
+                edges.append(self.graph[curNode.name]['edges'][edge])
+                curNode = node
+                nodes.append(curNode.name)
+
+        # Initialize the graph
+        g = Digraph('G', filename = os.path.join(dirPath + 'enas_network_search_space'))
+
+        # Define graph attributes
+        g.attr(rankdir='TB')  # 'TB' for top-to-bottom graph, 'LR' for left-to-right
+        g.attr('node', shape='box', style='filled', color='lightgrey')
+        g.attr(ranksep='2.0')  # Increase the space between layers, adjust the value as needed
+        
+        # Add Nodes
+        for val in self.graph.values():
+            node = val['node']
+            if node.name in nodes:
+                g.node(node.name, node.displayName, color='green', style='bold')
+            else:
+                g.node(node.name, node.displayName)
+            
+        # Add Edges
+        for val in self.graph.values():
+            node = val['node']
+            for edge in val['edges']:
+                if node.name in nodes and edge in edges:
+                    g.edge(node.name, edge, color='green', style='bold')
+                else:
+                    g.edge(node.name, edge)
+                
+        # Specify the output format and render the graph
+        g.format = 'png'
+        filePath = os.path.join(dirPath, 'enas_network_search_space_visualization')
+        g.render(filePath)
+
+        return filePath + '.png'
+            
             
 class GraphHandler:
-    def __init__(self):
-        self.ALLOWED_KERNEL_SIZES = {(3, 3), (5, 5)}
-        self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS = [4, 8, 16, 32]
-        self.ALLOWED_NUMBER_OF_LINEAR_FEATURES = [16, 32, 64, 128, 256]
+    def __init__(self, num_conv_layers=2, num_linear_layers=3, kernel_size_options=None, 
+                 out_channel_options=None, linear_out_options=None, allow_pooling=True, 
+                 allow_batch_norm=True, activation_type="ReLU", num_classes=10):
+        # Configurable parameters based on input or defaults
+        self.ALLOWED_KERNEL_SIZES = {(k, k) for k in kernel_size_options} if kernel_size_options else {(3, 3), (5, 5)}
+        self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS = out_channel_options if out_channel_options else [4, 8, 16, 32]
+        self.ALLOWED_NUMBER_OF_LINEAR_FEATURES = linear_out_options[:-1] if linear_out_options and len(linear_out_options) > 1 else ([16, 32, 64, 128, 256] if not linear_out_options else linear_out_options)
         self.graph = Graph()
-        self.normalizationOptions = [NormalizationType.NO_NORM, NormalizationType.BATCH_NORM]    
-        self.poolingOptions = [PoolingType.NO_POOLING, PoolingType.MAX_POOLING]    
-        self.activationOptions = [ActivationType.NONE, ActivationType.RELU]
+        self.normalizationOptions = [NormalizationType.BATCH_NORM] if allow_batch_norm else [NormalizationType.NO_NORM]
+        self.poolingOptions = [PoolingType.MAX_POOLING] if allow_pooling else [PoolingType.NO_POOLING]
+        self.activationOptions = [ActivationType.RELU] if activation_type == "ReLU" else [ActivationType.NONE]
         self.nodeFactory = NodeFactory()
-        self.numConvLayers = 2
-        self.numLinearLayers = 3
-        self.numClasses = 10
+        self.numConvLayers = num_conv_layers
+        self.numLinearLayers = num_linear_layers
+        self.numClasses = num_classes if num_classes else (linear_out_options[-1] if linear_out_options else 10)
         self.prevNodes = []
         self.curNodes = []
+        self.inputNodes = []  # Track InputNode separately for skip connections
+        self.batchNormNodesByLayer = {}  # Track BatchNorm nodes by layer for skip connections
+        self.convNodesByLayer = {}  # Track Conv nodes by layer for skip connections
+        self.flattenNode = None  # Track Flatten node for skip connections
+        self.currentConvLayer = 0  # Track which conv layer we're in for first-layer skips
         self.layer = 0
         self.sample = []
         self.dfsStack = []
@@ -50,13 +138,108 @@ class GraphHandler:
         self.sampleArchitecturesEnd = True
         self.numGraphSubnetworks = 0
         
-    def addActivationLayer(self):
-        for act in self.activationOptions:
-            nodeName = 'L' + str(self.layer) + '_' + act.value
-            self.addNode(nodeType=NodeType.ACTIVATION, name=nodeName, activationType=act)
+    def addNode(self, **kwargs):
+        node = self.nodeFactory.createNode(**kwargs)      
+        self.graph.graph[node.name] = {'node': node, 'edges': []}
+        # Connect to previous nodes (from the last layer)
+        for prev in self.prevNodes:
+            prevNode = self.graph.graph[prev]
+            prevNode['edges'].append(node.name)
+        # Connect InputNode directly to Conv, Activation, and Pooling in first layer
+        if self.currentConvLayer == 0:  # Only for first conv layer
+            if kwargs.get('nodeType') in [NodeType.CONVOLUTION, NodeType.ACTIVATION, NodeType.POOLING]:
+                for input_node in self.inputNodes:
+                    inputNodeEntry = self.graph.graph[input_node]
+                    if node.name not in inputNodeEntry['edges']:
+                        inputNodeEntry['edges'].append(node.name)
+        elif kwargs.get('nodeType') == NodeType.CONVOLUTION:  # For subsequent layers, connect Input to Conv
+            for input_node in self.inputNodes:
+                inputNodeEntry = self.graph.graph[input_node]
+                if node.name not in inputNodeEntry['edges']:
+                    inputNodeEntry['edges'].append(node.name)
+        # Connect BatchNorm nodes to Activation, Pooling (same layer), and Flatten (if available)
+        if kwargs.get('nodeType') == NodeType.NORMALIZATION and NormalizationType.BATCH_NORM in self.normalizationOptions:
+            # Store BatchNorm node by layer for future skips
+            if self.currentConvLayer not in self.batchNormNodesByLayer:
+                self.batchNormNodesByLayer[self.currentConvLayer] = []
+            self.batchNormNodesByLayer[self.currentConvLayer].append(node.name)
+        elif kwargs.get('nodeType') in [NodeType.ACTIVATION, NodeType.POOLING]:
+            # Connect BatchNorm nodes from the current layer to this node (skip Conv)
+            if self.currentConvLayer in self.batchNormNodesByLayer:
+                for bn_node in self.batchNormNodesByLayer[self.currentConvLayer]:
+                    bnEntry = self.graph.graph[bn_node]
+                    if node.name not in bnEntry['edges']:
+                        bnEntry['edges'].append(node.name)
+            # Connect Conv nodes from the current layer to this node (skip intermediate steps)
+            if self.currentConvLayer in self.convNodesByLayer:
+                for conv_node in self.convNodesByLayer[self.currentConvLayer]:
+                    convEntry = self.graph.graph[conv_node]
+                    if node.name not in convEntry['edges']:
+                        convEntry['edges'].append(node.name)
+        elif kwargs.get('nodeType') == NodeType.CONVOLUTION:
+            # Store Conv nodes by layer for skip connections
+            if self.currentConvLayer not in self.convNodesByLayer:
+                self.convNodesByLayer[self.currentConvLayer] = []
+            self.convNodesByLayer[self.currentConvLayer].append(node.name)
+            # Connect Conv nodes from previous layers to this Conv node (skip entire layers or components)
+            for prev_layer in range(self.currentConvLayer):
+                if prev_layer in self.convNodesByLayer:
+                    for prev_conv_node in self.convNodesByLayer[prev_layer]:
+                        prevConvEntry = self.graph.graph[prev_conv_node]
+                        if node.name not in prevConvEntry['edges']:
+                            prevConvEntry['edges'].append(node.name)
+        elif kwargs.get('nodeType') == NodeType.FLATTEN:
+            # Store Flatten node for skip connections
+            self.flattenNode = node.name
+            # Connect all BatchNorm nodes from all layers to Flatten (skip entire layers)
+            for layer_bn_nodes in self.batchNormNodesByLayer.values():
+                for bn_node in layer_bn_nodes:
+                    bnEntry = self.graph.graph[bn_node]
+                    if node.name not in bnEntry['edges']:
+                        bnEntry['edges'].append(node.name)
+            # Connect all Conv nodes from all layers to Flatten (skip entire layers)
+            for layer_conv_nodes in self.convNodesByLayer.values():
+                for conv_node in layer_conv_nodes:
+                    convEntry = self.graph.graph[conv_node]
+                    if node.name not in convEntry['edges']:
+                        convEntry['edges'].append(node.name)
+        # Connect BatchNorm and Conv nodes to Flatten if it exists
+        if self.flattenNode and kwargs.get('nodeType') not in [NodeType.NORMALIZATION, NodeType.OUTPUT]:
+            if self.currentConvLayer in self.batchNormNodesByLayer:
+                for bn_node in self.batchNormNodesByLayer[self.currentConvLayer]:
+                    bnEntry = self.graph.graph[bn_node]
+                    if self.flattenNode not in bnEntry['edges']:
+                        bnEntry['edges'].append(self.flattenNode)
+            if self.currentConvLayer in self.convNodesByLayer:
+                for conv_node in self.convNodesByLayer[self.currentConvLayer]:
+                    convEntry = self.graph.graph[conv_node]
+                    if self.flattenNode not in convEntry['edges']:
+                        convEntry['edges'].append(self.flattenNode)
+        self.curNodes.append(node.name)  
+    
+    def addInputLayer(self, inputShape):
+        self.addNode(nodeType=NodeType.INPUT, inputShape=inputShape, name='input')
+        self.inputNodes = self.curNodes.copy()  # Store InputNode for skip connections
         self.prevNodes = self.curNodes
         self.curNodes = []
-          
+        self.addNormalizationLayer(inputShape[1])
+        return inputShape
+        
+    def addConvolutionalLayers(self, inputShape):
+        outShape = inputShape
+        outShapes = []
+        for i in range(self.numConvLayers):       
+            self.layer += 1
+            self.currentConvLayer = i  # Update current conv layer for skip logic
+            outShape = self.addConvolutionalLayer(self.layer, inputShape)
+            self.addNormalizationLayer(outShape[1])                
+            self.addActivationLayer()
+            self.addPoolingLayer()
+            outShapes.append(outShape)
+            inputShape = outShape
+        self.currentConvLayer = self.numConvLayers  # Reset after all layers
+        return outShape
+        
     def addConvolutionalLayer(self, layer, inputShape):
         maxNumChannels = max(self.ALLOWED_NUMBER_OF_CONVOLUTION_CHANNELS)
         outShapes = [inputShape]
@@ -79,19 +262,13 @@ class GraphHandler:
         self.curNodes = [] 
         maxOutShape = max(outShapes, key=lambda x: torch.tensor(x).prod().item())
         return maxOutShape
-                         
-    def addConvolutionalLayers(self, inputShape):
-        outShape = inputShape
-        outShapes = []
-        for i in range(self.numConvLayers):       
-            self.layer += 1
-            outShape = self.addConvolutionalLayer(self.layer, inputShape)
-            self.addNormalizationLayer(outShape[1])                
-            self.addActivationLayer()
-            self.addPoolingLayer()
-            outShapes.append(outShape)
-            inputShape = outShape
-        return outShape
+        
+    def addActivationLayer(self):
+        for act in self.activationOptions:
+            nodeName = 'L' + str(self.layer) + '_' + act.value
+            self.addNode(nodeType=NodeType.ACTIVATION, name=nodeName, activationType=act)
+        self.prevNodes = self.curNodes
+        self.curNodes = []
             
     def addFlattenLayer(self, inputShape):
         self.addNode(nodeType=NodeType.FLATTEN, name='L' + str(self.layer) + '_' + 'flatten')
@@ -102,7 +279,8 @@ class GraphHandler:
         return outShape
         
     def addInputLayer(self, inputShape):
-        self.addNode(nodeType=NodeType.INPUT, inputShape=inputShape)
+        self.addNode(nodeType=NodeType.INPUT, inputShape=inputShape, name='input')
+        self.inputNodes = self.curNodes.copy()  # Store InputNode for skip connections
         self.prevNodes = self.curNodes
         self.curNodes = []
         self.addNormalizationLayer(inputShape[1])
@@ -141,15 +319,6 @@ class GraphHandler:
         self.prevNodes = self.curNodes
         self.curNodes = []
         self.addActivationLayer()
-            
-    def addNode(self, **kwargs):
-        node = self.nodeFactory.createNode(**kwargs)      
-        self.graph.graph[node.name] = {'node': node, 'edges': []}
-        for prev in self.prevNodes:
-            prevNode = self.graph.graph[prev]
-            prevNode['edges'].append(node.name)
-        self.curNodes.append(node.name)  
-
         
     def addNormalizationLayer(self, numFeatures):
         for opt in self.normalizationOptions:
@@ -277,49 +446,7 @@ class GraphHandler:
             self.graph.graph = pickle.load(file)
            
     def render(self, dirPath=os.path.join(parentdir, "Graphs/GraphVisualizations/")):
-        nodes = []
-        edges = [] 
-        if len(self.sample) > 0:
-            curNode = self.graph.graph['input']['node']
-            nodes.append(curNode.name)
-            
-            for node in self.sample:
-                edge = self.graph.graph[curNode.name]['edges'].index(node.name)
-                edges.append(self.graph.graph[curNode.name]['edges'][edge])
-                curNode = node
-                nodes.append(curNode.name)
-
-        # Initialize the graph
-        g = Digraph('G', filename = os.path.join(dirPath + 'enas_network_search_space'))
-
-        # Define graph attributes
-        g.attr(rankdir='TB')  # 'TB' for top-to-bottom graph, 'LR' for left-to-right
-        g.attr('node', shape='box', style='filled', color='lightgrey')
-        g.attr(ranksep='2.0')  # Increase the space between layers, adjust the value as needed
-        
-        # Add Nodes
-        for val in self.graph.graph.values():
-            node = val['node']
-            if node.name in nodes:
-                g.node(node.name, node.displayName, color='green', style='bold')
-            else:
-                g.node(node.name, node.displayName)
-            
-        # Add Edges
-        for val in self.graph.graph.values():
-            node = val['node']
-            for edge in val['edges']:
-                if node.name in nodes and edge in edges:
-                    g.edge(node.name, edge, color='green', style='bold')
-                else:
-                    g.edge(node.name, edge)
-                
-        # Specify the output format and render the graph
-        g.format = 'png'
-        filePath = os.path.join(dirPath, 'enas_network_search_space_visualization')
-        g.render(filePath)
-
-        return filePath + '.png'
+        return self.graph.render(dirPath)
            
     def initDfsStack(self):
         """

@@ -1,8 +1,8 @@
 import os, io, sys, inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
-from graphviz import Digraph
-from IPython.display import display, Image
+#from graphviz import Digraph
+#from IPython.display import display, Image
 import copy
 from classes.Nodes import *
 from utils import *
